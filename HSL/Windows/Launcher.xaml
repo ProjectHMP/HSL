@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:HSL.Windows"
+        xmlns:converters="clr-namespace:HSL.Converters"
         mc:Ignorable="d"
         Title="HMP Server Launcher" Height="450" Width="935"
         Background="Black"
@@ -53,10 +54,12 @@
             <Setter Property="BorderThickness" Value=".5"></Setter>
             <Setter Property="BorderBrush" Value="#4682B4"></Setter>
         </Style>
-        <Style TargetType="MenuItem">
+        <Style x:Key="menuItemStyle" TargetType="MenuItem">
             <Setter Property="Background" Value="Transparent"></Setter>
             <Setter Property="Foreground" Value="Black"></Setter>
         </Style>
+
+        <Style TargetType="MenuItem" BasedOn="{StaticResource menuItemStyle}"></Style>
     </Window.Resources>
 
     <Grid Background="{StaticResource bgColor}">
@@ -82,35 +85,35 @@
             </Grid.RowDefinitions>
             <!-- Tool Bar -->
             <DockPanel>
-                <Menu x:Name="menu_hmp" HorizontalContentAlignment="Center" VerticalAlignment="Center" Background="Transparent" Foreground="{StaticResource txtColor}">
+                <Menu x:Name="menu_hmp" DataContext="{Binding FallbackValue={x:Null}, IsAsync=True}" HorizontalContentAlignment="Center" VerticalAlignment="Center" Background="Transparent" Foreground="{StaticResource txtColor}">
                     <MenuItem Background="Transparent" Header="File" Foreground="{StaticResource txtColor}">
                         <MenuItem x:Name="mi_OpenServerPath" Header="Open Server Path" UsesItemContainerTemplate="False"></MenuItem>
                         <MenuItem Header="Create New Server"></MenuItem>
                     </MenuItem>
-                    <MenuItem Background="Transparent" Header="Server" Foreground="{StaticResource txtColor}">
-                        <MenuItem Header="Start">
+                    <MenuItem  Background="Transparent" Header="Server" Foreground="{StaticResource txtColor}">
+                        <MenuItem x:Name="mi_StartServer" Header="Start">
                             <MenuItem.Style>
-                                <Style TargetType="{x:Type MenuItem}">
+                                <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Path=currentInstance, ElementName=state}" Value="0">
+                                        <DataTrigger Binding="{Binding Path=currentInstance.state, UpdateSourceTrigger=PropertyChanged, Mode=OneWay, NotifyOnSourceUpdated=True, IsAsync=True, Delay=100}" Value="Started">
                                             <Setter Property="IsEnabled" Value="False"></Setter>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
                             </MenuItem.Style>
                         </MenuItem>
-                        <MenuItem Header="Stop">
+                        <MenuItem x:Name="mi_StopServer" Header="Stop" DisplayMemberPath="state">
                             <MenuItem.Style>
-                                <Style TargetType="{x:Type MenuItem}">
+                                <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Path=currentInstance, ElementName=state}" Value="2">
+                                        <DataTrigger Binding="{Binding  Path=currentInstance.state, UpdateSourceTrigger=PropertyChanged, Mode=OneWay, NotifyOnSourceUpdated=True, IsAsync=True, Delay=100}" Value="Stopped">
                                             <Setter Property="IsEnabled" Value="False"></Setter>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
                             </MenuItem.Style>
                         </MenuItem>
-                        <MenuItem Header="Restart"></MenuItem>
+                        <MenuItem x:Name="mi_RestartServer" Header="Restart"></MenuItem>
                         <MenuItem Header="Delete"></MenuItem>
                         <MenuItem.Style>
                             <Style TargetType="{x:Type MenuItem}">
@@ -197,7 +200,7 @@
                         </Button.Style>
                     </Button>
                     <Separator Height="25"></Separator>
-                    <Button x:Name="btn_RestartAllResources">Restart All</Button>
+                    <Button x:Name="btn_ReloadAllResources">Reload All</Button>
                     <Button x:Name="btn_StopAllResources">Stop All</Button>
                 </StackPanel>
 

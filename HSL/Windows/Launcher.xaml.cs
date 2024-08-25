@@ -2,6 +2,7 @@
 using System;
 using System.ComponentModel;
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 
@@ -11,18 +12,19 @@ namespace HSL.Windows
     {
 
         public ServerManager manager { get; private set; }
-        public ServerInstance currentInstance { get; private set; }
+        public ServerInstance currentInstance { get; private set; } = default(ServerInstance);
         public event PropertyChangedEventHandler PropertyChanged;
 
         public Launcher()
         {
             InitializeComponent();
-            menu_hmp.DataContext = this;
             manager = new ServerManager();
 
             lv_ServerList.DataContext = manager;
             // test
-            manager.Create( @"D:\Servers\ProjectHMP\HappinessMP.Server.exe", Guid.NewGuid(), true);
+            currentInstance = manager.Create( @"D:\Servers\ProjectHMP\HappinessMP.Server.exe", Guid.NewGuid(), false);
+
+            menu_hmp.DataContext = this;
             RegisterListenered();
         }
 
@@ -40,7 +42,7 @@ namespace HSL.Windows
 
             currentInstance = instance;
             rtb_ServerLog.ScrollToVerticalOffset(rtb_ServerLog.ActualHeight);
-            currentInstance.StdOutput += (s, e) => rtb_ServerLog.ScrollToEnd();
+            currentInstance.StdOutput += (s, e) => Dispatcher.Invoke(() => rtb_ServerLog.ScrollToEnd());
             rtb_ServerLog.DataContext = instance;
             lv_ResourceList.ItemsSource = instance.resources;
 
@@ -85,6 +87,82 @@ namespace HSL.Windows
                 if(currentInstance != null)
                 {
                     currentInstance.ClearServerLog();
+                }
+            };
+
+            btn_StartResource.Click +=  (s, e) => { 
+                if(lv_ResourceList.SelectedIndex >= 0)
+                {
+                    if (currentInstance != null && lv_ResourceList.SelectedItem is string resource && !string.IsNullOrEmpty(resource))
+                    {
+                        currentInstance.SendInput("start " + resource);
+                    }
+                }
+            };
+
+            btn_StopResource.Click += (s, e) => { 
+                if(currentInstance != null && lv_ResourceList.SelectedItem is string resource && !string.IsNullOrEmpty(resource))
+                {
+                    currentInstance.SendInput("stop " + resource);
+                }
+            };
+
+            btn_ReloadResource.Click += async (s, e) =>
+            {
+                if(currentInstance != null && lv_ResourceList.SelectedItem is string resource && !string.IsNullOrEmpty(resource))
+                {
+                    currentInstance.SendInput("stop " + resource);
+                    await Task.Delay(100);
+                    currentInstance.SendInput("start " + resource);
+                }
+            };
+
+            btn_StopAllResources.Click += async (s, e) => { 
+                if(currentInstance != null && currentInstance.resources.Count > 0)
+                {
+                    foreach(string resource in currentInstance.resources)
+                    {
+                        currentInstance.SendInput("stop " + resource);
+                        await Task.Delay(100);
+                    }
+                }
+            };
+
+            btn_ReloadAllResources.Click += async (s, e) => {
+                if(currentInstance != null && currentInstance.resources.Count > 0)
+                {
+                    foreach(string resource in currentInstance.resources)
+                    {
+                        currentInstance.SendInput("stop " + resource);
+                        await Task.Delay(100);
+                        currentInstance.SendInput("start " + resource);
+                        await Task.Delay(100);
+                    }
+                }
+            };
+
+            mi_StartServer.Click += (s, e) =>
+            {
+                if(currentInstance != null)
+                {
+                    currentInstance.Start();
+                }
+            };
+
+            mi_StopServer.Click += (s, e) => {
+                if(currentInstance != null)
+                {
+                    currentInstance.Stop();
+                }
+            };
+
+            mi_RestartServer.Click += async (s, e) =>
+            {
+                if(currentInstance != null)
+                {
+                    currentInstance.Stop();
+                    await Task.Delay(1000);
+                    currentInstance.Start();
                 }
             };
 

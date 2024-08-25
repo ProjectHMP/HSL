@@ -14,6 +14,7 @@ using System.Xml;
 namespace HSL
 {
 
+    [TypeConverter(typeof(Converters.EnumConverter))]
     public enum ServerState : byte
     {
         Stopped = 0x0,
@@ -142,22 +143,23 @@ namespace HSL
             }
         }
 
-        internal bool IsProcessRunning() => serverProcess != null || !serverProcess.HasExited || cts != null || !cts.IsCancellationRequested;
+        internal bool IsProcessRunning() => serverProcess != null && !serverProcess.HasExited && cts != null && !cts.IsCancellationRequested;
         internal bool Stop()
         {
-            if (!IsProcessRunning())
+            if (IsProcessRunning())
             {
-                return false;
+                Dispose();
             }
-            Dispose();
+            OnPropertyChanged(nameof(state));
             return true;
         }
 
         internal bool Start()
         {
 
-            if (!IsProcessRunning())
+            if (IsProcessRunning())
             {
+                Trace.WriteLine("Process already running");
                 return false;
             }
 
@@ -213,12 +215,14 @@ namespace HSL
 
             if (serverProcess.Start())
             {
+                Trace.WriteLine("Starting Process: " + Name);
                 OnPropertyChanged(nameof(state));
                 ProcessStarted?.Invoke(null, null);
                 serverTask = new Task(() => ServerUpdateThread(), cts.Token);
                 serverTask.Start();
                 return true;
             }
+            else Trace.WriteLine("Failed to start process: " + Name);
             return false;
         }
 
@@ -265,7 +269,7 @@ namespace HSL
                     }
                 }
             }
-            Dispose();
+            Stop();
         }
 
     }
