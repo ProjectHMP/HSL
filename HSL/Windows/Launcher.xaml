@@ -82,16 +82,45 @@
             </Grid.RowDefinitions>
             <!-- Tool Bar -->
             <DockPanel>
-                <Menu HorizontalContentAlignment="Center" VerticalAlignment="Center" Background="Transparent" Foreground="{StaticResource txtColor}">
+                <Menu x:Name="menu_hmp" HorizontalContentAlignment="Center" VerticalAlignment="Center" Background="Transparent" Foreground="{StaticResource txtColor}">
                     <MenuItem Background="Transparent" Header="File" Foreground="{StaticResource txtColor}">
                         <MenuItem x:Name="mi_OpenServerPath" Header="Open Server Path" UsesItemContainerTemplate="False"></MenuItem>
                         <MenuItem Header="Create New Server"></MenuItem>
                     </MenuItem>
                     <MenuItem Background="Transparent" Header="Server" Foreground="{StaticResource txtColor}">
-                        <MenuItem Header="Start"></MenuItem>
-                        <MenuItem Header="Stop"></MenuItem>
+                        <MenuItem Header="Start">
+                            <MenuItem.Style>
+                                <Style TargetType="{x:Type MenuItem}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=currentInstance, ElementName=state}" Value="0">
+                                            <Setter Property="IsEnabled" Value="False"></Setter>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </MenuItem.Style>
+                        </MenuItem>
+                        <MenuItem Header="Stop">
+                            <MenuItem.Style>
+                                <Style TargetType="{x:Type MenuItem}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=currentInstance, ElementName=state}" Value="2">
+                                            <Setter Property="IsEnabled" Value="False"></Setter>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </MenuItem.Style>
+                        </MenuItem>
                         <MenuItem Header="Restart"></MenuItem>
                         <MenuItem Header="Delete"></MenuItem>
+                        <MenuItem.Style>
+                            <Style TargetType="{x:Type MenuItem}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Path=currentInstance, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, IsAsync=True, NotifyOnSourceUpdated=True, Delay=500}" Value="{x:Null}">
+                                        <Setter Property="IsEnabled" Value="False"></Setter>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </MenuItem.Style>
                     </MenuItem>
                     <MenuItem Header="Settings" Foreground="{StaticResource txtColor}"></MenuItem>
                 </Menu>

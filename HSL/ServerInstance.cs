@@ -14,18 +14,17 @@ using System.Xml;
 namespace HSL
 {
 
-    internal enum ServerState
+    public enum ServerState : byte
     {
-        Stopped,
-        Started,
-        Restarting
+        Stopped = 0x0,
+        Started = 0x2,
+        Restarting = 0x4
     }
 
-    internal class ServerInstance : INotifyPropertyChanged, IDisposable
+    public class ServerInstance : INotifyPropertyChanged, IDisposable
     {
         public event PropertyChangedEventHandler PropertyChanged;
         public List<string> serverLog { get; private set; }
-        
         public Guid Guid { get; private set; }
         public string Name { get; private set; }
         public ServerState state { get; private set; }
@@ -34,7 +33,6 @@ namespace HSL
         public string exeFile { get; private set; }
         public string logFile { get; private set; }
         public string resDir { get; private set; }
-
 
         internal event EventHandler<string> StdOutput;
         internal event EventHandler Exited;
@@ -61,12 +59,14 @@ namespace HSL
             state = ServerState.Stopped;
             resources = new List<string>();
             serverLog = new List<string>();
+
             resourceWatcher = new FileSystemWatcher(resDir)
             {
                 EnableRaisingEvents = true,
                 NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.CreationTime | NotifyFilters.DirectoryName,
                 IncludeSubdirectories = true
             };
+
             resourceWatcher.Changed += _watcherHandler;
             resourceWatcher.Created += _watcherHandler;
             resourceWatcher.Deleted += _watcherHandler;
@@ -88,10 +88,7 @@ namespace HSL
             }
         }
 
-        private void OnPropertyChanged(string prop)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
-        }
+        private void OnPropertyChanged(string prop) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
 
         private void RefreshServerInformation()
         {
@@ -105,8 +102,11 @@ namespace HSL
 
         internal void ClearServerLog()
         {
-            serverLog.Clear();
-            OnPropertyChanged(nameof(serverLog));
+            lock(_serverLogLock)
+            {
+                serverLog.Clear();
+                OnPropertyChanged(nameof(serverLog));
+            }
         }
 
         private void _watcherHandler(object sender, FileSystemEventArgs e)
@@ -135,17 +135,28 @@ namespace HSL
 
         public void Dispose()
         {
-            lock (_serverLogLock)
-            {
-                cts?.Cancel();
-                serverProcess?.Dispose();
+            cts?.Cancel();
+            if(serverProcess != null && !serverProcess.HasExited) {
+                serverProcess.Kill();
+                serverProcess.Dispose();
             }
+        }
+
+        internal bool IsProcessRunning() => serverProcess != null || !serverProcess.HasExited || cts != null || !cts.IsCancellationRequested;
+        internal bool Stop()
+        {
+            if (!IsProcessRunning())
+            {
+                return false;
+            }
+            Dispose();
+            return true;
         }
 
         internal bool Start()
         {
 
-            if (serverProcess != null && !serverProcess.HasExited && cts != null && !cts.IsCancellationRequested)
+            if (!IsProcessRunning())
             {
                 return false;
             }
@@ -202,6 +213,7 @@ namespace HSL
 
             if (serverProcess.Start())
             {
+                OnPropertyChanged(nameof(state));
                 ProcessStarted?.Invoke(null, null);
                 serverTask = new Task(() => ServerUpdateThread(), cts.Token);
                 serverTask.Start();
@@ -212,7 +224,7 @@ namespace HSL
 
         internal bool SendInput(string data)
         {
-            if (cts != null && !cts.IsCanceled() && serverProcess != null && !serverProcess.HasExited)
+            if (IsProcessRunning())
             {
                 serverProcess.StandardInput.Flush();
                 serverProcess.StandardInput.WriteLine(data);
@@ -244,7 +256,6 @@ namespace HSL
                                 {
                                     serverLog.Add(buffer);
                                 }
-                                Trace.WriteLine(buffer);
                                 StdOutput?.Invoke(null, buffer);
                                 OnPropertyChanged(nameof(serverLog));
                                 continue;

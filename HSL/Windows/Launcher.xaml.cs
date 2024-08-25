@@ -1,26 +1,33 @@
 ﻿using Microsoft.Win32;
 using System;
+using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
 
 namespace HSL.Windows
 {
-    public partial class Launcher : Window
+    public partial class Launcher : Window, INotifyPropertyChanged
     {
 
-        private ServerManager manager;
-        private ServerInstance currentInstance;
+        public ServerManager manager { get; private set; }
+        public ServerInstance currentInstance { get; private set; }
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public Launcher()
         {
             InitializeComponent();
+            menu_hmp.DataContext = this;
             manager = new ServerManager();
 
             lv_ServerList.DataContext = manager;
             // test
             manager.Create( @"D:\Servers\ProjectHMP\HappinessMP.Server.exe", Guid.NewGuid(), true);
             RegisterListenered();
+        }
+
+        private void OnPropertyChanged(string name) {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
 
         private void ShowServerContext(ServerInstance instance)
@@ -36,6 +43,8 @@ namespace HSL.Windows
             currentInstance.StdOutput += (s, e) => rtb_ServerLog.ScrollToEnd();
             rtb_ServerLog.DataContext = instance;
             lv_ResourceList.ItemsSource = instance.resources;
+
+            OnPropertyChanged(nameof(currentInstance));
         }
 
         private void RegisterListenered()
@@ -53,7 +62,7 @@ namespace HSL.Windows
                 if (currentInstance != null && e.Key == Key.Enter)
                 {
                     currentInstance.SendInput(tb_ServerCmd.Text);
-                    tb_ServerCmd.Text = string.Empty;
+                    tb_ServerCmd.Clear();
                 }
             };
 

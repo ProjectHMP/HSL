@@ -42,14 +42,12 @@
   <ItemGroup>
     <Compile Remove="MainWindow.xaml.cs" />
     <Compile Remove="Natives.cs" />
+    <Compile Remove="Windows\MainWindow.xaml.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <Page Remove="MainWindow.xaml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Views\" />
+    <Page Remove="Windows\MainWindow.xaml" />
   </ItemGroup>
 
 </Project>
