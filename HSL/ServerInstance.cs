@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -8,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Threading;
 using System.Xml;
 
 namespace HSL
@@ -24,28 +26,28 @@ namespace HSL
     public class ServerInstance : INotifyPropertyChanged, IDisposable
     {
         public event PropertyChangedEventHandler PropertyChanged;
+
         public List<string> serverLog { get; private set; }
-        public Guid Guid { get; private set; }
         public string Name { get; private set; }
         public ServerState state { get; private set; }
         public List<string> resources { get; private set; }
-        public string servDir { get; private set; }
-        public string exeFile { get; private set; }
-        public string logFile { get; private set; }
-        public string resDir { get; private set; }
+
+        internal Guid Guid { get; private set; }
+        internal string servDir { get; private set; }
+        internal string exeFile { get; private set; }
+        internal string logFile { get; private set; }
+        internal string resDir { get; private set; }
 
         internal event EventHandler<string> StdOutput;
-        internal event EventHandler Exited;
-        internal event EventHandler ProcessStarted;
+        internal event EventHandler ProcessStarted, ProcessStopped;
 
-        internal XmlDocument XMLData;
+        internal Process process { get; set; }
 
-        private Process serverProcess;
-        private Task serverTask;
-        private CancellationTokenSource cts;
+        private Task task { get; set; }
+        private CancellationTokenSource cts, _resourceCts;
         private FileSystemWatcher resourceWatcher;
 
-        private object resourceWatcherLock = new object();
+        private object _stdOutLock = new object();
         private object _resourceListLock = new object();
         private object _serverLogLock = new object();
 
@@ -75,9 +77,9 @@ namespace HSL
             string xml = servDir.CombineAsPath("settings.xml");
             if (File.Exists(xml))
             {
-                XMLData = new XmlDocument();
-                XMLData.Load(xml);
-                Name = XMLData.DocumentElement.SelectSingleNode("hostname").InnerText;
+                XmlDocument document = new XmlDocument();
+                document.Load(xml);
+                Name = document.DocumentElement.SelectSingleNode("hostname").InnerText;
             }
 
             RefreshServerInformation();
@@ -95,8 +97,13 @@ namespace HSL
             lock (_resourceListLock)
             {
                 resources.Clear();
-                resources.AddRange(Directory.GetFileSystemEntries(resDir).Where(path => File.Exists(path.CombineAsPath("meta.xml"))).Select(Path.GetFileName));
+                var _resources = Directory.GetFileSystemEntries(resDir).Where(path => File.Exists(path.CombineAsPath("meta.xml"))).Select(Path.GetFileName);
+                foreach(var resource in _resources)
+                {
+                    resources.Add(resource);
+                }
                 OnPropertyChanged(nameof(resources));
+                Trace.WriteLine("Resources Updated");
             }
         }
 
@@ -115,34 +122,54 @@ namespace HSL
              * Due too an old "issue/bug" with FSW, it can send duplicate events at a time.
              * Using Monitor (lock), we instead want to capture one call per 100 ms, and discard any other (duplicates).
              */
-            if (!Monitor.TryEnter(resourceWatcherLock, 100))
+
+            if(_resourceCts != null && !_resourceCts.Token.CanBeCanceled)
             {
                 return;
             }
+            _resourceCts = new CancellationTokenSource();
 
-            // reload resource if was enabled, 
-
-            Match match = Regex.Match(e.FullPath, @"""[\\\/]resource[\\\/]([A-Za-z0-9\-\s]*)[\\\/]?""");
-            if (match.Success && match.Groups.Count > 0)
+            try
             {
-                Trace.WriteLine("Resource Updating: " + match.Groups[0].Value);
-            }
+                // reload resource if was enabled
+                Match match = Regex.Match(e.FullPath, @"[\\\/]{1}resources[\\\/]{1}(.*)[\\\/]{1}?");
+                if (match.Success && match.Groups.Count > 0)
+                {
+                    RefreshServerInformation();
 
-            // MUST EXIT
-            Monitor.Exit(resourceWatcher);
+                    // reload resource if was enabled
+                    /*
+                    if (IsProcessRunning())
+                    {
+                        // reload resource if enabled
+                        SendInput("stop " + match.Groups[1].Value);
+                        SendInput("start " + match.Groups[1].Value);
+                    }
+                    */
+                    Trace.WriteLine("Resource Updating: " + match.Groups[1].Value);
+                }
+            }  catch { }
+
+            try
+            {
+                _resourceCts.CancelAfter(500);
+            }
+            catch { }
         }
 
 
         public void Dispose()
         {
+            Trace.WriteLine("Dispose called for  " + Name);
+            resourceWatcher?.Dispose();
             cts?.Cancel();
-            if (serverProcess != null && !serverProcess.HasExited)
+            if (process != null && !process.HasExited)
             {
-                serverProcess.Kill();
+                process.Kill();
             }
         }
 
-        internal bool IsProcessRunning() => serverProcess != null && !serverProcess.HasExited && cts != null && !cts.IsCancellationRequested;
+        internal bool IsProcessRunning() => process != null && !process.HasExited && cts != null && !cts.IsCanceled();
         internal bool Stop()
         {
             if (IsProcessRunning())
@@ -150,6 +177,7 @@ namespace HSL
                 Dispose();
             }
             ClearServerLog();
+            state = ServerState.Stopped;
             OnPropertyChanged(nameof(state));
             return true;
         }
@@ -166,9 +194,9 @@ namespace HSL
             cts?.Cancel();
             cts = new CancellationTokenSource();
 
-            Process[] processes = Process.GetProcessesByName(Path.GetFileNameWithoutExtension(exeFile));
+            IEnumerable<Process> processes = Process.GetProcessesByName(Path.GetFileNameWithoutExtension(exeFile)).Where(x => x.MainModule.FileName == exeFile);
 
-            if (processes != null)
+            if (processes != null && processes.Count() > 0)
             {
 
                 if(MessageBox.Show("This server is already running. Do you want to terminate and start new?", "Hmm..", MessageBoxButton.YesNo) == MessageBoxResult.No)
@@ -197,7 +225,7 @@ namespace HSL
                 File.Copy(logFile, tmpLog);
             }
 
-            serverProcess = new Process()
+            process = new Process()
             {
                 StartInfo = {
                     FileName = exeFile,
@@ -210,23 +238,23 @@ namespace HSL
                 EnableRaisingEvents = true,
             };
 
-            serverProcess.Disposed += (s, e) => cts?.Dispose();
-            serverProcess.Exited += (s, e) =>
+            process.Disposed += (s, e) => cts?.Dispose();
+            process.Exited += (s, e) =>
             {
                 state = ServerState.Stopped;
                 cts?.Cancel();
-                Exited?.Invoke(null, null);
+                ProcessStopped?.Invoke(null, null);
             };
 
             processes = null;
 
-            if (serverProcess.Start())
+            if (process.Start())
             {
                 state = ServerState.Started;
                 OnPropertyChanged(nameof(state));
                 ProcessStarted?.Invoke(null, null);
-                serverTask = new Task(async () => await ServerUpdateThread(), cts.Token);
-                serverTask.Start();
+                task = new Task(async ()=>await ServerUpdateThread(), cts.Token);
+                task.Start();
                 return true;
             }
             else Trace.WriteLine("Failed to start process: " + Name);
@@ -237,13 +265,16 @@ namespace HSL
 
         internal bool SendInput(string data)
         {
-            if (IsProcessRunning())
+            lock (_stdOutLock)
             {
-                serverProcess.StandardInput.Flush();
-                serverProcess.StandardInput.WriteLine(data);
-                return true;
+                if (IsProcessRunning())
+                {
+                    //process.StandardInput.Flush();
+                    process.StandardInput.WriteLine(data);
+                    return true;
+                }
+                return false;
             }
-            return false;
         }
 
         private async Task<Task> ServerUpdateThread()
@@ -260,8 +291,7 @@ namespace HSL
                     long cpos = length;
                     long pos = 0;
                     string buffer = "";
-
-                    while (cts != null && !cts.IsCanceled())
+                    while (cts != null && !cts.IsCanceled() && IsProcessRunning())
                     {
                         await fs.FlushAsync();
                         pos = fs.Length;

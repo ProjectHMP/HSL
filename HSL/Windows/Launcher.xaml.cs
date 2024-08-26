@@ -11,50 +11,143 @@ using System.Windows.Input;
 
 namespace HSL.Windows
 {
-    public partial class Launcher : Window, INotifyPropertyChanged
+    public partial class Launcher : Window, IDisposable, INotifyPropertyChanged
     {
 
         public ServerManager manager { get; private set; }
         public ServerInstance currentInstance { get; private set; } = default(ServerInstance);
+
         public event PropertyChangedEventHandler PropertyChanged;
 
+        private HSLConfig config;
         private OpenFileDialog ofd;
+        private object _configLock { get; set; } = new object();
+
+        public void Dispose()
+        {
+            if(manager != null)
+            {
+                Dispatcher.Invoke(manager.Dispose);
+            }
+        }
 
         public Launcher()
         {
             InitializeComponent();
-            manager = new ServerManager();
-            lv_ServerList.DataContext = manager;
-            // test
-            manager.Create(@"D:\Servers\ProjectHMP\HappinessMP.Server.exe", Guid.NewGuid(), false);
 
-            menu_hmp.DataContext = this;
+            AppDomain.CurrentDomain.UnhandledException += async (s, e) =>
+            {
+                Trace.WriteLine(e.ToString());
+                string cr = Utils.CurrentDirectory.CombineAsPath("crash-report.txt");
+                if(File.Exists(cr))
+                {
+                    File.Delete(cr);
+                }
+                await File.WriteAllTextAsync(cr, e.ToString());
+            };
+
+            Closing += (s, e) => Dispose();
+
+            Trace.WriteLine("Loading Configuration");
+            LoadConfiguration().ConfigureAwait(false).GetAwaiter(); // intentional thread lock
+            Trace.WriteLine("Configuration Loaded");
+
+            DataContext = this;
+
+            manager = new ServerManager();
+            manager.OnProcessStarted += Manager_OnProcessStarted;
+            manager.OnProcessStopped += Manager_OnProcessStopped;
+            manager.OnCreated += Manager_OnCreated;
+            manager.OnDeleted += Manager_OnDeleted;
+
+            // load servers
+
+            bool markdirty = false;
+
+            foreach (var e in config.servers)
+            {
+                // check if path is still valid.
+                if(!Directory.Exists(Path.GetDirectoryName(e.Value.exe_file)) || !File.Exists(e.Value.exe_file))
+                {
+                    if(MessageBox.Show(String.Format("Failed to load pre-existing server: {0}{1}Would you like to change location?", "Error", MessageBoxButton.YesNo)) == MessageBoxResult.Yes)
+                    {
+                        ofd ??= new OpenFileDialog() {
+                            Multiselect = false,
+                            Filter = "HappinessMP.Server.Exe | *.exe"
+                        };
+
+                        if(!(ofd?.ShowDialog() ?? false) || string.IsNullOrEmpty(ofd.FileName) || config.servers.Any(x => x.Value.exe_file == ofd.FileName))
+                        {
+                            continue;
+                        }
+                        config.servers[e.Key].exe_file = ofd.FileName;
+                        markdirty = true;
+                    }
+                }
+                manager.Create(e.Value.exe_file, e.Value.guid, e.Value.auto_start);
+            }
+
+            if (markdirty)
+            {
+                config.Save().ConfigureAwait(false).GetAwaiter(); // intentional thread lock
+            }
             RegisterListenered();
+        }
+
+        private async Task LoadConfiguration() {
+            config = await HSLConfig.Load("hsl.json");
+        }
+
+        private async void Manager_OnDeleted(object sender, ServerInstance e)
+        {
+            if(config.servers.ContainsKey(e.Guid))
+            {
+                config.servers.Remove(e.Guid);
+                await config.Save();
+            }
+        }
+
+        private async void Manager_OnCreated(object sender, ServerInstance e)
+        {
+            if (!config.servers.ContainsKey(e.Guid))
+            {
+                config.servers.Add(e.Guid, new HSLConfig.ServerConfig()
+                {
+                    exe_file = e.exeFile,
+                    guid = e.Guid,
+                });
+            }
+            await config.Save();
+        }
+
+        private async void Manager_OnProcessStopped(object sender, ServerInstance e)
+        {
+            if(config.servers.ContainsKey(e.Guid) && config.servers[e.Guid].auto_start) {
+                await Task.Delay(1000);
+                e.Start();
+            }
+        }
+
+        private void Manager_OnProcessStarted(object sender, ServerInstance e)
+        {
         }
 
         private void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
         private void ShowServerContext(ServerInstance instance)
         {
-
             if (currentInstance != null)
             {
                 currentInstance.StdOutput -= null;
             }
-
             currentInstance = instance;
-            rtb_ServerLog.ScrollToVerticalOffset(rtb_ServerLog.ActualHeight);
-            currentInstance.StdOutput += (s, e) => Dispatcher.Invoke(() => rtb_ServerLog.ScrollToEnd());
-            rtb_ServerLog.DataContext = instance;
-            lv_ResourceList.ItemsSource = instance.resources;
-
             OnPropertyChanged(nameof(currentInstance));
+            rtb_ServerLog.ScrollToVerticalOffset(rtb_ServerLog.ActualHeight);
+            currentInstance.StdOutput += (s, e) => Dispatcher.Invoke(() => rtb_ServerLog.ScrollToVerticalOffset(rtb_ServerLog.ActualHeight));
         }
 
-        private async void RegisterListenered()
+        private void RegisterListenered()
         {
-
-            Trace.WriteLine(await Utils.GetLatestServerURL());
 
             lv_ServerList.SelectionChanged += (s, e) =>
             {
@@ -85,7 +178,6 @@ namespace HSL.Windows
                         return;
                     }
                     ShowServerContext(manager.Create(ofd.FileName, false));
-                    lv_ServerList.ItemsSource = manager.servers;
                 }
             };
 
@@ -110,38 +202,34 @@ namespace HSL.Windows
                 }
             };
 
-            btn_ReloadResource.Click += async (s, e) =>
+            btn_ReloadResource.Click +=  (s, e) =>
             {
                 if (currentInstance != null && lv_ResourceList.SelectedItem is string resource && !string.IsNullOrEmpty(resource))
                 {
                     currentInstance.SendInput("stop " + resource);
-                    await Task.Delay(100);
                     currentInstance.SendInput("start " + resource);
                 }
             };
 
-            btn_StopAllResources.Click += async (s, e) =>
+            btn_StopAllResources.Click +=  (s, e) =>
             {
                 if (currentInstance != null && currentInstance.resources.Count > 0)
                 {
                     foreach (string resource in currentInstance.resources)
                     {
                         currentInstance.SendInput("stop " + resource);
-                        await Task.Delay(100);
                     }
                 }
             };
 
-            btn_ReloadAllResources.Click += async (s, e) =>
+            btn_ReloadAllResources.Click +=  (s, e) =>
             {
                 if (currentInstance != null && currentInstance.resources.Count > 0)
                 {
                     foreach (string resource in currentInstance.resources)
                     {
                         currentInstance.SendInput("stop " + resource);
-                        await Task.Delay(100);
                         currentInstance.SendInput("start " + resource);
-                        await Task.Delay(100);
                     }
                 }
             };
@@ -158,6 +246,16 @@ namespace HSL.Windows
                     await Task.Delay(1000);
                     currentInstance.Start();
                 }
+            };
+
+            mi_DeleteServer.Click += (s, e) =>
+            {
+                if(MessageBox.Show("Are you sure you want to delete" + currentInstance.Name + "? Files will NOT be deleted!", "Delete Server?", MessageBoxButton.YesNo) == MessageBoxResult.No)
+                {
+                    return;
+                }
+
+                manager.Delete(currentInstance);
             };
 
             mi_CreateServer.Click += async (s, e) =>
@@ -205,7 +303,7 @@ namespace HSL.Windows
                 }
 
                 string filename = url.Split("/")[^1];
-                MessageBox.Show(filename + " || " + url);
+
                 byte[] _server_archive = await Utils.HTTP.GetBinaryAsync(url);
 
                 if (_server_archive == null || _server_archive.Length < 1024)
@@ -251,7 +349,6 @@ namespace HSL.Windows
                                 Trace.WriteLine("Extracting " + file);
                                 archive.Entries[i].ExtractToFile(filepath);
                             }
-
                         }
                     }
                     Directory.Delete(tmpFolder);
@@ -271,13 +368,8 @@ namespace HSL.Windows
                     MessageBox.Show("Failed to install server files: " + ee.ToString(), "Line 2412");
                     return;
                 }
-
-                string exe = Directory.GetFiles(directory, "*.exe").FirstOrDefault();
-                manager.Create(exe, false);
-
+                manager.Create(Directory.GetFiles(directory, "*.exe").FirstOrDefault(), false);
             };
-
         }
-
     }
 }

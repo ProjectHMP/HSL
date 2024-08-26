@@ -1,15 +1,28 @@
-﻿using System.IO;
-using System.Text.Json;
+﻿using System;
+using System.IO;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Threading;
+using System.Windows;
 
 namespace HSL
 {
     internal class HSLConfig
     {
 
-        private string _fileName = string.Empty;
+        public class ServerConfig
+        {
+            public Guid guid { get; set; } = Guid.NewGuid();
+            public string exe_file { get; set; } = string.Empty;
+            public bool auto_start { get; set; } = false;
+            public bool auto_reload_resources { get; set; } = false;
+            public TimeSpan restar_timer { get; set; } = TimeSpan.Zero;
+        }
 
-        public string ServerExe { get; set; } = string.Empty;
+        private string _fileName = string.Empty;
+        private CancellationTokenSource save_cts;
+
+        public Dictionary<Guid, ServerConfig> servers { get; set; } = new Dictionary<Guid, ServerConfig>();
 
         private HSLConfig()
         {
@@ -26,69 +39,48 @@ namespace HSL
             file = Utils.CurrentDirectory.CombineAsPath(file);
             bool exists = File.Exists(file);
             HSLConfig config = null;
-            using (FileStream fs = File.Open(file, FileMode.OpenOrCreate, FileAccess.ReadWrite))
+            if (exists)
             {
-                if (exists && fs.Length >= 2) // {}, []
+                try
                 {
-                    try
-                    {
-                        config = await JsonSerializer.DeserializeAsync<HSLConfig>(fs);
-                        config._fileName = file;
-                    }
-                    catch
-                    {
-                        string tmpFile = file + ".tmp";
-                        if (File.Exists(tmpFile))
-                        {
-                            File.Delete(tmpFile);
-                        }
-                        using (FileStream tfs = File.Open(tmpFile, FileMode.OpenOrCreate, FileAccess.ReadWrite))
-                        {
-                            byte[] buffer = new byte[fs.Length];
-                            int read = 0;
-                            int hasread = 0;
-                            fs.Position = 0;
-                            while (read != buffer.Length)
-                            {
-                                hasread = await fs.ReadAsync(buffer, read, buffer.Length - read);
-                                if (hasread == 0)
-                                    break;
-                                read += hasread;
-                            }
-                        }
-                        File.Move(file, file + ".tmp");
-                        File.Delete(file);
-                        config = new HSLConfig(file);
-                        exists = false;
-                    }
+                    config = Newtonsoft.Json.JsonConvert.DeserializeObject<HSLConfig>(await File.ReadAllTextAsync(file));
+                    config._fileName = file;
                 }
-                else config = new HSLConfig(file);
-                if (!exists)
+                catch
                 {
-                    fs.SetLength(fs.Position = 0);
-                    fs.Seek(0, SeekOrigin.Begin);
-                    await fs.FlushAsync();
-                    await JsonSerializer.SerializeAsync<HSLConfig>(fs, config);
-                    await fs.FlushAsync();
+                    string tmpFile = file + ".tmp";
+                    if (File.Exists(tmpFile))
+                    {
+                        File.Delete(tmpFile);
+                    }
+                    File.Move(file, tmpFile);
+                    config = new HSLConfig(file);
+                    exists = false;
                 }
+            }
+            config ??= new HSLConfig(file);
+            if (!exists)
+            {
+                await File.WriteAllTextAsync(file, Newtonsoft.Json.JsonConvert.SerializeObject(config));
             }
             return config;
         }
 
         internal async Task<bool> Save()
         {
-            if (!string.IsNullOrEmpty(_fileName))
+
+            if(save_cts != null && !save_cts.IsCancellationRequested)
             {
-                using (FileStream fs = File.Open(_fileName, FileMode.OpenOrCreate, FileAccess.Write))
-                {
-                    fs.SetLength(fs.Position = 0);
-                    fs.Seek(0, SeekOrigin.Begin);
-                    await fs.FlushAsync();
-                    await JsonSerializer.SerializeAsync<HSLConfig>(fs, this);
-                    await fs.FlushAsync();
-                }
-                return true;
+                return false;
             }
+            save_cts = new CancellationTokenSource();
+            try
+            {
+                await File.WriteAllTextAsync(_fileName, Newtonsoft.Json.JsonConvert.SerializeObject(this));
+            }
+            catch { MessageBox.Show("Failed to save HSL configuration."); }
+
+            save_cts.Cancel();
             return false;
         }
 

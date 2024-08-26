@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:HSL.Windows"
+        xmlns:hsl="clr-namespace:HSL"
         mc:Ignorable="d"
         Title="HMP Server Launcher" Height="450" Width="935"
         Background="Black"
@@ -32,8 +33,7 @@
             </Grid.RowDefinitions>
             <!-- Tool Bar -->
             <DockPanel>
-                <Menu x:Name="menu_hmp" DataContext="{Binding FallbackValue={x:Null}, IsAsync=True}" HorizontalContentAlignment="Center" VerticalAlignment="Center" Background="Transparent">
-
+                <Menu x:Name="menu_hmp"  HorizontalContentAlignment="Center" VerticalAlignment="Center" Background="Transparent">
                     <MenuItem Background="Transparent" Header="File" Foreground="{StaticResource txtColor}">
                         <MenuItem x:Name="mi_OpenServerPath" Header="Open Server Path" UsesItemContainerTemplate="False"></MenuItem>
                         <MenuItem x:Name="mi_CreateServer" Header="Create New Server"></MenuItem>
@@ -43,7 +43,7 @@
                             <MenuItem.Style>
                                 <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Path=currentInstance.state, UpdateSourceTrigger=PropertyChanged, Mode=OneWay, NotifyOnSourceUpdated=True, IsAsync=True, Delay=100}" Value="Started">
+                                        <DataTrigger Binding="{Binding Path=currentInstance.state, UpdateSourceTrigger=PropertyChanged, Mode=OneWay, NotifyOnSourceUpdated=True, IsAsync=True, Delay=100}" Value="{x:Static hsl:ServerState.Started}">
                                             <Setter Property="IsEnabled" Value="False"></Setter>
                                         </DataTrigger>
                                     </Style.Triggers>
@@ -54,7 +54,7 @@
                             <MenuItem.Style>
                                 <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding  Path=currentInstance.state, UpdateSourceTrigger=PropertyChanged, Mode=OneWay, NotifyOnSourceUpdated=True, IsAsync=True, Delay=100}" Value="Stopped">
+                                        <DataTrigger Binding="{Binding  Path=currentInstance.state, UpdateSourceTrigger=PropertyChanged, Mode=OneWay, NotifyOnSourceUpdated=True, IsAsync=True, Delay=100}" Value="{x:Static hsl:ServerState.Stopped}">
                                             <Setter Property="IsEnabled" Value="False"></Setter>
                                         </DataTrigger>
                                     </Style.Triggers>
@@ -62,17 +62,17 @@
                             </MenuItem.Style>
                         </MenuItem>
                         <MenuItem x:Name="mi_RestartServer" Header="Restart"></MenuItem>
-                        <MenuItem Header="Delete"></MenuItem>
+                        <MenuItem x:Name="mi_DeleteServer" Header="Delete"></MenuItem>
                         <MenuItem.Style>
                             <Style TargetType="{x:Type MenuItem}">
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding Path=currentInstance, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, Delay=500}" Value="{x:Null}">
                                         <Setter Property="IsEnabled" Value="False"></Setter>
                                     </DataTrigger>
-                                    <DataTrigger Binding="{Binding Path=currentInstance.state, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" Value="Started">
+                                    <DataTrigger Binding="{Binding Path=currentInstance.state, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" Value="{x:Static hsl:ServerState.Started}">
                                         <Setter Property="Foreground" Value="Green"></Setter>
                                     </DataTrigger>
-                                    <DataTrigger Binding="{Binding Path=currentInstance.state, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" Value="Stopped">
+                                    <DataTrigger Binding="{Binding Path=currentInstance.state, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" Value="{x:Static hsl:ServerState.Stopped}">
                                         <Setter Property="Foreground" Value="Red"></Setter>
                                     </DataTrigger>
                                 </Style.Triggers>
@@ -89,17 +89,40 @@
                     <ColumnDefinition Width=".3*"></ColumnDefinition>
                     <ColumnDefinition Width="*"></ColumnDefinition>
                 </Grid.ColumnDefinitions>
-                <ListView x:Name="lv_ServerList" ItemsSource="{Binding servers, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, Mode=OneWay, IsAsync=True, Delay=500}" Background="Transparent" SelectionMode="Single" Foreground="{StaticResource txtColor}" BorderThickness="0 .2 0 .2" DisplayMemberPath="Name"></ListView>
-                <RichTextBox DataContext="{Binding}" x:Name="rtb_ServerLog" Grid.Column="1" Background="{StaticResource cmdBgColor}" IsReadOnly="True" IsReadOnlyCaretVisible="True" BorderThickness=".2 .2 .2 0" Foreground="{StaticResource txtColor}">
+                <ListView x:Name="lv_ServerList" ItemsSource="{Binding manager.servers, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, Mode=OneWay, IsAsync=True, Delay=500}" Background="Transparent" SelectionMode="Single" Foreground="{StaticResource txtColor}" BorderThickness="0 .2 0 .2" DisplayMemberPath="Name"></ListView>
+                <RichTextBox DataContext="{Binding currentInstance, UpdateSourceTrigger=PropertyChanged, Mode=OneWay, IsAsync=True, Delay=500}" x:Name="rtb_ServerLog" Grid.Column="1" Background="{StaticResource cmdBgColor}" IsReadOnly="True" IsReadOnlyCaretVisible="True" BorderThickness=".2 .2 .2 0" Foreground="{StaticResource txtColor}">
                     <FlowDocument>
-                        <Paragraph>
+                        <Paragraph FontSize="13" Padding="5">
                             <ItemsControl ItemsSource="{Binding serverLog, UpdateSourceTrigger=PropertyChanged, Mode=OneWay, IsAsync=True, NotifyOnSourceUpdated=True, Delay=500}"></ItemsControl>
                         </Paragraph>
                     </FlowDocument>
                 </RichTextBox>
                 <Button x:Name="btn_ClearServerLog" Grid.Column="1" Background="Transparent" Width="40" Height="20" HorizontalAlignment="Right" VerticalAlignment="Bottom" FontSize="10" BorderThickness=".005">CLEAR</Button>
             </Grid>
-            <TextBox x:Name="tb_ServerCmd" Grid.Row="3" Background="{StaticResource cmdBgColor}" Foreground="{StaticResource txtColor}" VerticalContentAlignment="Center" Padding="3 0 0 0" BorderThickness="0 .2 .2 0"></TextBox>
+            <TextBox x:Name="tb_ServerCmd" Grid.Row="3" Background="{StaticResource cmdBgColor}" Foreground="{StaticResource txtColor}" VerticalContentAlignment="Center" Padding="3 0 0 0" BorderThickness="0 .2 .2 0">
+                <TextBox.Style>
+                    <Style TargetType="{x:Type TextBox}">
+                        <Setter Property="IsEnabled" Value="False"></Setter>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding currentInstance.state}" Value="{x:Static hsl:ServerState.Started}">
+                                <Setter Property="IsEnabled" Value="True"></Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBox.Style>
+            </TextBox>
+            <TextBox Grid.Row="3" Background="Transparent" Foreground="White" Margin="0" Padding="5 0 0 0" VerticalContentAlignment="Center" IsHitTestVisible="False" Opacity="0.2" Text="Enter Command Here">
+                <TextBox.Style>
+                    <Style TargetType="{x:Type TextBox}">
+                        <Setter Property="Visibility" Value="Hidden"></Setter>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ElementName=tb_ServerCmd, Path=Text.Length}" Value="0">
+                                <Setter Property="Visibility" Value="Visible"></Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBox.Style>
+            </TextBox>
         </Grid>
 
         <!-- Right Panel -->
@@ -114,7 +137,7 @@
                     <ColumnDefinition Width="*"></ColumnDefinition>
                     <ColumnDefinition Width="*"></ColumnDefinition>
                 </Grid.ColumnDefinitions>
-                <ListView x:Name="lv_ResourceList" Background="Transparent" BorderThickness="0 .2 .2 .2" Foreground="{StaticResource txtColor}"></ListView>
+                <ListView x:Name="lv_ResourceList" ItemsSource="{Binding currentInstance.resources,UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, Mode=OneWay, IsAsync=True, Delay=500}" Background="Transparent" BorderThickness="0 .2 .2 .2" Foreground="{StaticResource txtColor}"></ListView>
                 <StackPanel Grid.Column="1" Orientation="Vertical">
                     <Button x:Name="btn_StartResource" Content="Start">
                         <Button.Style>
@@ -165,6 +188,17 @@
                     <CheckBox Padding="0" VerticalAlignment="Bottom" VerticalContentAlignment="Bottom" Margin="5 0 0 0" Cursor="Hand">
                         <Label Foreground="White" Margin="5 0 0 0" FontSize="12" Padding="0" VerticalContentAlignment="Center" >Enable Auto Restart</Label>
                     </CheckBox>
+
+                    <StackPanel.Style>
+                        <Style TargetType="{x:Type StackPanel}">
+                            <Setter Property="IsEnabled" Value="False"></Setter>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding currentInstance.state, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static hsl:ServerState.Started}">
+                                    <Setter Property="IsEnabled" Value="True"></Setter>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
                 </StackPanel>
 
             </Grid>
@@ -225,6 +259,15 @@
                     </Grid>
                 </Border>
             </Grid>
+            <Grid.Style>
+                <Style TargetType="{x:Type Grid}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding currentInstance}" Value="{x:Null}">
+                            <Setter Property="IsHitTestVisible" Value="False"></Setter>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
         </Grid>
     </Grid>
 </Window>
