@@ -15,22 +15,21 @@ namespace HSL.Windows
         public ServerInstance currentInstance { get; private set; } = default(ServerInstance);
         public event PropertyChangedEventHandler PropertyChanged;
 
+        private OpenFileDialog ofd;
+
         public Launcher()
         {
             InitializeComponent();
             manager = new ServerManager();
-
             lv_ServerList.DataContext = manager;
             // test
-            currentInstance = manager.Create( @"D:\Servers\ProjectHMP\HappinessMP.Server.exe", Guid.NewGuid(), false);
+            manager.Create( @"D:\Servers\ProjectHMP\HappinessMP.Server.exe", Guid.NewGuid(), false);
 
             menu_hmp.DataContext = this;
             RegisterListenered();
         }
 
-        private void OnPropertyChanged(string name) {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-        }
+        private void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
         private void ShowServerContext(ServerInstance instance)
         {
@@ -61,7 +60,7 @@ namespace HSL.Windows
 
             tb_ServerCmd.KeyUp += (s, e) =>
             {
-                if (currentInstance != null && e.Key == Key.Enter)
+                if (e.Key == Key.Enter && currentInstance != null)
                 {
                     currentInstance.SendInput(tb_ServerCmd.Text);
                     tb_ServerCmd.Clear();
@@ -70,12 +69,13 @@ namespace HSL.Windows
 
             mi_OpenServerPath.Click += (s, e) =>
             {
-                OpenFileDialog ofd = new OpenFileDialog();
+                ofd ??= new OpenFileDialog();
                 ofd.Filter = "HappinessMP.Server.Exe | *.exe";
                 if(ofd.ShowDialog() ?? false)
                 {
                     if (!File.Exists(Path.GetDirectoryName(ofd.FileName).CombineAsPath("settings.xml")))
                     {
+                        MessageBox.Show("This path does not contain a valid HappinessMP server.", "Error", MessageBoxButton.OK);
                         return;
                     }
                     ShowServerContext(manager.Create(ofd.FileName, false));
@@ -83,12 +83,7 @@ namespace HSL.Windows
                 }
             };
 
-            btn_ClearServerLog.Click += (s, e) => { 
-                if(currentInstance != null)
-                {
-                    currentInstance.ClearServerLog();
-                }
-            };
+            btn_ClearServerLog.Click += (s, e) => currentInstance?.ClearServerLog();
 
             btn_StartResource.Click +=  (s, e) => { 
                 if(lv_ResourceList.SelectedIndex >= 0)
@@ -141,20 +136,9 @@ namespace HSL.Windows
                 }
             };
 
-            mi_StartServer.Click += (s, e) =>
-            {
-                if(currentInstance != null)
-                {
-                    currentInstance.Start();
-                }
-            };
+            mi_StartServer.Click += (s, e) => currentInstance?.Start();
 
-            mi_StopServer.Click += (s, e) => {
-                if(currentInstance != null)
-                {
-                    currentInstance.Stop();
-                }
-            };
+            mi_StopServer.Click += (s, e) => currentInstance?.Stop();
 
             mi_RestartServer.Click += async (s, e) =>
             {

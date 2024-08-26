@@ -139,7 +139,6 @@ namespace HSL
             cts?.Cancel();
             if(serverProcess != null && !serverProcess.HasExited) {
                 serverProcess.Kill();
-                serverProcess.Dispose();
             }
         }
 
@@ -150,6 +149,7 @@ namespace HSL
             {
                 Dispose();
             }
+            ClearServerLog();
             OnPropertyChanged(nameof(state));
             return true;
         }
@@ -207,6 +207,7 @@ namespace HSL
             serverProcess.Disposed += (s, e) => cts?.Dispose();
             serverProcess.Exited += (s, e) =>
             {
+                state = ServerState.Stopped;
                 cts?.Cancel();
                 Exited?.Invoke(null, null);
             };
@@ -215,7 +216,7 @@ namespace HSL
 
             if (serverProcess.Start())
             {
-                Trace.WriteLine("Starting Process: " + Name);
+                state = ServerState.Started;
                 OnPropertyChanged(nameof(state));
                 ProcessStarted?.Invoke(null, null);
                 serverTask = new Task(() => ServerUpdateThread(), cts.Token);
@@ -223,6 +224,8 @@ namespace HSL
                 return true;
             }
             else Trace.WriteLine("Failed to start process: " + Name);
+            state = ServerState.Stopped;
+            OnPropertyChanged(nameof(state));
             return false;
         }
 
@@ -243,7 +246,7 @@ namespace HSL
             {
                 using (StreamReader sr = new StreamReader(fs))
                 {
-                    long cpos = 0;
+                    long cpos = fs.Length;
                     long pos = 0;
                     string buffer = "";
                     while (cts != null && !cts.IsCanceled())

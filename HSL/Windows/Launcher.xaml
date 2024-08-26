@@ -85,7 +85,7 @@
             </Grid.RowDefinitions>
             <!-- Tool Bar -->
             <DockPanel>
-                <Menu x:Name="menu_hmp" DataContext="{Binding FallbackValue={x:Null}, IsAsync=True}" HorizontalContentAlignment="Center" VerticalAlignment="Center" Background="Transparent" Foreground="{StaticResource txtColor}">
+                <Menu x:Name="menu_hmp" DataContext="{Binding FallbackValue={x:Null}, IsAsync=True}" HorizontalContentAlignment="Center" VerticalAlignment="Center" Background="Transparent">
                     <MenuItem Background="Transparent" Header="File" Foreground="{StaticResource txtColor}">
                         <MenuItem x:Name="mi_OpenServerPath" Header="Open Server Path" UsesItemContainerTemplate="False"></MenuItem>
                         <MenuItem Header="Create New Server"></MenuItem>
@@ -93,7 +93,7 @@
                     <MenuItem  Background="Transparent" Header="Server" Foreground="{StaticResource txtColor}">
                         <MenuItem x:Name="mi_StartServer" Header="Start">
                             <MenuItem.Style>
-                                <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
+                                <Style TargetType="{x:Type MenuItem}">
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding Path=currentInstance.state, UpdateSourceTrigger=PropertyChanged, Mode=OneWay, NotifyOnSourceUpdated=True, IsAsync=True, Delay=100}" Value="Started">
                                             <Setter Property="IsEnabled" Value="False"></Setter>
@@ -116,9 +116,9 @@
                         <MenuItem x:Name="mi_RestartServer" Header="Restart"></MenuItem>
                         <MenuItem Header="Delete"></MenuItem>
                         <MenuItem.Style>
-                            <Style TargetType="{x:Type MenuItem}">
+                            <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Path=currentInstance, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, IsAsync=True, NotifyOnSourceUpdated=True, Delay=500}" Value="{x:Null}">
+                                    <DataTrigger Binding="{Binding Path=currentInstance, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, Delay=500}" Value="{x:Null}">
                                         <Setter Property="IsEnabled" Value="False"></Setter>
                                     </DataTrigger>
                                 </Style.Triggers>
@@ -134,9 +134,7 @@
                     <ColumnDefinition Width=".3*"></ColumnDefinition>
                     <ColumnDefinition Width="*"></ColumnDefinition>
                 </Grid.ColumnDefinitions>
-                <ListView x:Name="lv_ServerList" ItemsSource="{Binding servers, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, Mode=OneWay, IsAsync=True, Delay=500}" Background="Transparent" SelectionMode="Single" Foreground="{StaticResource txtColor}" BorderThickness="0 .2 0 .2" DisplayMemberPath="Name">
-                    
-                </ListView>
+                <ListView x:Name="lv_ServerList" ItemsSource="{Binding servers, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, Mode=OneWay, IsAsync=True, Delay=500}" Background="Transparent" SelectionMode="Single" Foreground="{StaticResource txtColor}" BorderThickness="0 .2 0 .2" DisplayMemberPath="Name"></ListView>
                 <RichTextBox DataContext="{Binding}" x:Name="rtb_ServerLog" Grid.Column="1" Background="{StaticResource cmdBgColor}" IsReadOnly="True" IsReadOnlyCaretVisible="True" BorderThickness=".2 .2 .2 0" Foreground="{StaticResource txtColor}">
                     <FlowDocument>
                         <Paragraph>
@@ -199,9 +197,9 @@
                             </Style>
                         </Button.Style>
                     </Button>
-                    <Separator Height="25"></Separator>
-                    <Button x:Name="btn_ReloadAllResources">Reload All</Button>
-                    <Button x:Name="btn_StopAllResources">Stop All</Button>
+                    <Separator Height="25" BorderThickness="1" BorderBrush="#4682B4" Padding="0" Margin="0"></Separator>
+                    <Button x:Name="btn_ReloadAllResources" Content="Reload All"></Button>
+                    <Button x:Name="btn_StopAllResources" Content="Stop All"></Button>
                 </StackPanel>
 
             </Grid>
@@ -212,7 +210,54 @@
                 </Grid.RowDefinitions>
                 <Label Foreground="{StaticResource txtColor}" FontSize="10" VerticalContentAlignment="Center" Padding="5 0 0 0">Task Scheduler</Label>
                 <Border Grid.Row="1" Background="Transparent"  BorderBrush="#4682B4" BorderThickness="0 .2 0 .2">
-                    <Label Foreground="White">In Development</Label>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="20"></RowDefinition>
+                            <RowDefinition Height="20"></RowDefinition>
+                            <RowDefinition Height="20"></RowDefinition>
+                            <RowDefinition Height="20"></RowDefinition>
+                            <RowDefinition Height="*"></RowDefinition>
+                        </Grid.RowDefinitions>
+                        <Grid Grid.Row="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"></ColumnDefinition>
+                                <ColumnDefinition Width="*"></ColumnDefinition>
+                                <ColumnDefinition Width="*"></ColumnDefinition>
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Column="0" Foreground="White" Padding="0" Margin="0" Width="50">Hours</Label>
+                            <Separator Grid.Column="1" Width="50"></Separator>
+                            <ComboBox Grid.Column="2"></ComboBox>
+                        </Grid>
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"></ColumnDefinition>
+                                <ColumnDefinition Width="*"></ColumnDefinition>
+                                <ColumnDefinition Width="*"></ColumnDefinition>
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Column="0" Foreground="White" Padding="0" Margin="0" Width="50">Minutes</Label>
+                            <Separator Grid.Column="1" Width="50"></Separator>
+                            <ComboBox Grid.Column="2"></ComboBox>
+                        </Grid>
+                        <Grid Grid.Row="2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"></ColumnDefinition>
+                                <ColumnDefinition Width="*"></ColumnDefinition>
+                                <ColumnDefinition Width="*"></ColumnDefinition>
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Column="0" Foreground="White" Padding="0" Margin="0" Width="50">Seconds</Label>
+                            <Separator Grid.Column="1" Width="50"></Separator>
+                            <ComboBox Grid.Column="2"></ComboBox>
+                        </Grid>
+                        <Label Grid.Row="3" Foreground="White" Margin="0" VerticalContentAlignment="Center" Padding="5 0 0 0">Time: </Label>
+                        <Grid Grid.Row="4" VerticalAlignment="Bottom">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"></ColumnDefinition>
+                                <ColumnDefinition Width="*"></ColumnDefinition>
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" Content="Start"></Button>
+                            <Button Grid.Column="1" Content="Stop"></Button>
+                        </Grid>
+                    </Grid>
                 </Border>
             </Grid>
         </Grid>
