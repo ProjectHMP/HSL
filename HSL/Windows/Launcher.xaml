@@ -4,64 +4,11 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:HSL.Windows"
-        xmlns:converters="clr-namespace:HSL.Converters"
         mc:Ignorable="d"
         Title="HMP Server Launcher" Height="450" Width="935"
         Background="Black"
         WindowStyle="SingleBorderWindow" WindowStartupLocation="CenterScreen"
         >
-    <Window.Resources>
-        <SolidColorBrush x:Key="cmdBgColor" Color="#7F1B1B1B"></SolidColorBrush>
-        <SolidColorBrush x:Key="cmdTxtColor" Color="White"></SolidColorBrush>
-        <SolidColorBrush x:Key="bgColor" Color="Black"></SolidColorBrush>
-        <SolidColorBrush x:Key="txtColor" Color="White"></SolidColorBrush>
-        <Style TargetType="Button" x:Key="btnStyle">
-            <Setter Property="BorderThickness" Value=".2"></Setter>
-            <Setter Property="Margin" Value="0 0 0 .5"></Setter>
-            <Setter Property="Background" Value="#7F1B1B1B"></Setter>
-            <Setter Property="Foreground" Value="{StaticResource txtColor}"></Setter>
-            <Setter Property="Cursor" Value="Hand"></Setter>
-            <Setter Property="ForceCursor" Value="True"></Setter>
-            <Setter Property="Opacity" Value=".8"></Setter>
-            
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Foreground" Value="Black"></Setter>
-                </Trigger>
-                <Trigger Property="IsEnabled" Value="False">
-                    <Setter Property="Opacity" Value=".1"></Setter>
-                </Trigger>
-            </Style.Triggers>
-
-        </Style>
-
-        <Style TargetType="Button" BasedOn="{StaticResource btnStyle}"></Style>
-
-        <Style TargetType="RichTextBox">
-            <Setter Property="BorderThickness" Value=".2"></Setter>
-            <Setter Property="BorderBrush" Value="#4682B4"></Setter>
-        </Style>
-        <Style TargetType="ListView">
-            <Setter Property="BorderThickness" Value=".2"></Setter>
-            <Setter Property="BorderBrush" Value="#4682B4"></Setter>
-        </Style>
-        <Style TargetType="TextBox">
-            <Setter Property="BorderThickness" Value=".2"></Setter>
-            <Setter Property="BorderBrush" Value="#4682B4"></Setter>
-        </Style>
-        <Style TargetType="CheckBox">
-            <Setter Property="Background" Value="#7F1B1B1B"></Setter>
-            <Setter Property="BorderThickness" Value=".5"></Setter>
-            <Setter Property="BorderBrush" Value="#4682B4"></Setter>
-        </Style>
-        <Style x:Key="menuItemStyle" TargetType="MenuItem">
-            <Setter Property="Background" Value="Transparent"></Setter>
-            <Setter Property="Foreground" Value="Black"></Setter>
-        </Style>
-
-        <Style TargetType="MenuItem" BasedOn="{StaticResource menuItemStyle}"></Style>
-    </Window.Resources>
-
     <Grid Background="{StaticResource bgColor}">
 
         <!-- Grid Definitions -->
@@ -86,14 +33,15 @@
             <!-- Tool Bar -->
             <DockPanel>
                 <Menu x:Name="menu_hmp" DataContext="{Binding FallbackValue={x:Null}, IsAsync=True}" HorizontalContentAlignment="Center" VerticalAlignment="Center" Background="Transparent">
+
                     <MenuItem Background="Transparent" Header="File" Foreground="{StaticResource txtColor}">
                         <MenuItem x:Name="mi_OpenServerPath" Header="Open Server Path" UsesItemContainerTemplate="False"></MenuItem>
-                        <MenuItem Header="Create New Server"></MenuItem>
+                        <MenuItem x:Name="mi_CreateServer" Header="Create New Server"></MenuItem>
                     </MenuItem>
-                    <MenuItem  Background="Transparent" Header="Server" Foreground="{StaticResource txtColor}">
+                    <MenuItem Background="Transparent" Header="Server">
                         <MenuItem x:Name="mi_StartServer" Header="Start">
                             <MenuItem.Style>
-                                <Style TargetType="{x:Type MenuItem}">
+                                <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding Path=currentInstance.state, UpdateSourceTrigger=PropertyChanged, Mode=OneWay, NotifyOnSourceUpdated=True, IsAsync=True, Delay=100}" Value="Started">
                                             <Setter Property="IsEnabled" Value="False"></Setter>
@@ -116,12 +64,19 @@
                         <MenuItem x:Name="mi_RestartServer" Header="Restart"></MenuItem>
                         <MenuItem Header="Delete"></MenuItem>
                         <MenuItem.Style>
-                            <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
+                            <Style TargetType="{x:Type MenuItem}">
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding Path=currentInstance, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, Delay=500}" Value="{x:Null}">
                                         <Setter Property="IsEnabled" Value="False"></Setter>
                                     </DataTrigger>
+                                    <DataTrigger Binding="{Binding Path=currentInstance.state, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" Value="Started">
+                                        <Setter Property="Foreground" Value="Green"></Setter>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Path=currentInstance.state, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" Value="Stopped">
+                                        <Setter Property="Foreground" Value="Red"></Setter>
+                                    </DataTrigger>
                                 </Style.Triggers>
+                                <Setter Property="Foreground" Value="White"></Setter>
                             </Style>
                         </MenuItem.Style>
                     </MenuItem>
@@ -200,6 +155,16 @@
                     <Separator Height="25" BorderThickness="1" BorderBrush="#4682B4" Padding="0" Margin="0"></Separator>
                     <Button x:Name="btn_ReloadAllResources" Content="Reload All"></Button>
                     <Button x:Name="btn_StopAllResources" Content="Stop All"></Button>
+                    <Separator Height="25" BorderThickness="1" BorderBrush="#4682B4" Padding="0" Margin="0"></Separator>
+                    <CheckBox Padding="0" VerticalAlignment="Bottom" VerticalContentAlignment="Bottom" Margin="5 0 0 0" Cursor="Hand">
+                        <Label Foreground="White" Margin="5 0 0 0" FontSize="12" Padding="0" VerticalContentAlignment="Center" >Auto Reload Resources</Label>
+                    </CheckBox>
+                    <CheckBox Padding="0" VerticalAlignment="Bottom" VerticalContentAlignment="Bottom" Margin="5 0 0 0" Cursor="Hand">
+                        <Label Foreground="White" Margin="5 0 0 0" FontSize="12" Padding="0" VerticalContentAlignment="Center" >Auto Start</Label>
+                    </CheckBox>
+                    <CheckBox Padding="0" VerticalAlignment="Bottom" VerticalContentAlignment="Bottom" Margin="5 0 0 0" Cursor="Hand">
+                        <Label Foreground="White" Margin="5 0 0 0" FontSize="12" Padding="0" VerticalContentAlignment="Center" >Enable Auto Restart</Label>
+                    </CheckBox>
                 </StackPanel>
 
             </Grid>
@@ -208,11 +173,10 @@
                     <RowDefinition Height="20"></RowDefinition>
                     <RowDefinition Height="*"></RowDefinition>
                 </Grid.RowDefinitions>
-                <Label Foreground="{StaticResource txtColor}" FontSize="10" VerticalContentAlignment="Center" Padding="5 0 0 0">Task Scheduler</Label>
+                <Label Foreground="{StaticResource txtColor}" FontSize="10" VerticalContentAlignment="Center" Padding="5 0 0 0">Auto Restart Scheduler</Label>
                 <Border Grid.Row="1" Background="Transparent"  BorderBrush="#4682B4" BorderThickness="0 .2 0 .2">
                     <Grid>
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="20"></RowDefinition>
                             <RowDefinition Height="20"></RowDefinition>
                             <RowDefinition Height="20"></RowDefinition>
                             <RowDefinition Height="20"></RowDefinition>
@@ -226,7 +190,7 @@
                             </Grid.ColumnDefinitions>
                             <Label Grid.Column="0" Foreground="White" Padding="0" Margin="0" Width="50">Hours</Label>
                             <Separator Grid.Column="1" Width="50"></Separator>
-                            <ComboBox Grid.Column="2"></ComboBox>
+                            <TextBox Grid.Column="2" Background="{StaticResource cmdBgColor}"></TextBox>
                         </Grid>
                         <Grid Grid.Row="1">
                             <Grid.ColumnDefinitions>
@@ -236,7 +200,7 @@
                             </Grid.ColumnDefinitions>
                             <Label Grid.Column="0" Foreground="White" Padding="0" Margin="0" Width="50">Minutes</Label>
                             <Separator Grid.Column="1" Width="50"></Separator>
-                            <ComboBox Grid.Column="2"></ComboBox>
+                            <TextBox Grid.Column="2" Background="{StaticResource cmdBgColor}"></TextBox>
                         </Grid>
                         <Grid Grid.Row="2">
                             <Grid.ColumnDefinitions>
@@ -246,17 +210,18 @@
                             </Grid.ColumnDefinitions>
                             <Label Grid.Column="0" Foreground="White" Padding="0" Margin="0" Width="50">Seconds</Label>
                             <Separator Grid.Column="1" Width="50"></Separator>
-                            <ComboBox Grid.Column="2"></ComboBox>
+                            <TextBox Grid.Column="2" Background="{StaticResource cmdBgColor}"></TextBox>
                         </Grid>
-                        <Label Grid.Row="3" Foreground="White" Margin="0" VerticalContentAlignment="Center" Padding="5 0 0 0">Time: </Label>
-                        <Grid Grid.Row="4" VerticalAlignment="Bottom">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"></ColumnDefinition>
-                                <ColumnDefinition Width="*"></ColumnDefinition>
-                            </Grid.ColumnDefinitions>
-                            <Button Grid.Column="0" Content="Start"></Button>
-                            <Button Grid.Column="1" Content="Stop"></Button>
+                        <Grid Grid.Row="3">
+                            <RichTextBox Foreground="White" FontSize="8" Background="Transparent" Padding="5" VerticalAlignment="Center" BorderBrush="Yellow" IsReadOnly="True" IsReadOnlyCaretVisible="False" IsHitTestVisible="False">
+                                <FlowDocument>
+                                    <Paragraph Foreground="Wheat">
+                                        <Run Text="Auto Restart is only active when server is running. Changing values above will also re-start the scheduler"></Run>
+                                    </Paragraph>
+                                </FlowDocument>
+                            </RichTextBox>
                         </Grid>
+
                     </Grid>
                 </Border>
             </Grid>

@@ -4,6 +4,78 @@
              xmlns:local="clr-namespace:HSL"
              StartupUri="Windows\Launcher.xaml">
     <Application.Resources>
-         
+        <SolidColorBrush x:Key="cmdBgColor" Color="#7F1B1B1B"></SolidColorBrush>
+        <SolidColorBrush x:Key="cmdTxtColor" Color="White"></SolidColorBrush>
+        <SolidColorBrush x:Key="bgColor" Color="Black"></SolidColorBrush>
+        <SolidColorBrush x:Key="txtColor" Color="White"></SolidColorBrush>
+        <Style TargetType="Button" x:Key="btnStyle">
+            <Setter Property="BorderThickness" Value=".2"></Setter>
+            <Setter Property="Margin" Value="0 0 0 .5"></Setter>
+            <Setter Property="Background" Value="#7F1B1B1B"></Setter>
+            <Setter Property="Foreground" Value="{StaticResource txtColor}"></Setter>
+            <Setter Property="Cursor" Value="Hand"></Setter>
+            <Setter Property="ForceCursor" Value="True"></Setter>
+            <Setter Property="Opacity" Value=".8"></Setter>
+
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="Black"></Setter>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value=".1"></Setter>
+                </Trigger>
+            </Style.Triggers>
+
+        </Style>
+
+        <Style TargetType="Button" BasedOn="{StaticResource btnStyle}"></Style>
+
+        <Style TargetType="RichTextBox">
+            <Setter Property="BorderThickness" Value=".2"></Setter>
+            <Setter Property="BorderBrush" Value="#4682B4"></Setter>
+        </Style>
+        <Style TargetType="ListView">
+            <Setter Property="BorderThickness" Value=".2"></Setter>
+            <Setter Property="BorderBrush" Value="#4682B4"></Setter>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="BorderThickness" Value=".2"></Setter>
+            <Setter Property="BorderBrush" Value="#4682B4"></Setter>
+        </Style>
+        <Style TargetType="CheckBox">
+            <Setter Property="Background" Value="#7F1B1B1B"></Setter>
+            <Setter Property="BorderThickness" Value=".5"></Setter>
+            <Setter Property="BorderBrush" Value="#4682B4"></Setter>
+        </Style>
+        <Style x:Key="menuItemStyle" TargetType="MenuItem">
+            <Setter Property="Background" Value="Transparent"></Setter>
+            <Setter Property="Foreground" Value="Black"></Setter>
+        </Style>
+
+        <Style TargetType="MenuItem" BasedOn="{StaticResource menuItemStyle}"></Style>
+        <Style TargetType="{x:Type CheckBox}" x:Key="myCheckboxStyle">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type CheckBox}">
+                        <StackPanel Orientation="Horizontal">
+                            <Image x:Name="checkboxImage" Source="normal.png" Width="32"/>
+                            <ContentPresenter/>
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="checkboxImage" Property="Source" Value="checked.png"/>
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                    <Condition Property="IsChecked" Value="False"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="checkboxImage" Property="Source" Value="hover.png"/>
+                            </MultiTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Application.Resources>
 </Application>

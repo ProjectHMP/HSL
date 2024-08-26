@@ -4,6 +4,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
     <IsPublishable>False</IsPublishable>
     <PlatformTarget>x64</PlatformTarget>
     <Platforms>AnyCPU;ARM32;x64</Platforms>

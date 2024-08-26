@@ -4,11 +4,10 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text.Json.Serialization;
-using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Xml;
 
 namespace HSL
@@ -103,7 +102,7 @@ namespace HSL
 
         internal void ClearServerLog()
         {
-            lock(_serverLogLock)
+            lock (_serverLogLock)
             {
                 serverLog.Clear();
                 OnPropertyChanged(nameof(serverLog));
@@ -137,7 +136,8 @@ namespace HSL
         public void Dispose()
         {
             cts?.Cancel();
-            if(serverProcess != null && !serverProcess.HasExited) {
+            if (serverProcess != null && !serverProcess.HasExited)
+            {
                 serverProcess.Kill();
             }
         }
@@ -170,6 +170,12 @@ namespace HSL
 
             if (processes != null)
             {
+
+                if(MessageBox.Show("This server is already running. Do you want to terminate and start new?", "Hmm..", MessageBoxButton.YesNo) == MessageBoxResult.No)
+                {
+                    return false;
+                }
+
                 foreach (Process p in processes)
                 {
                     if (p.MainModule.FileName == exeFile)
@@ -219,7 +225,7 @@ namespace HSL
                 state = ServerState.Started;
                 OnPropertyChanged(nameof(state));
                 ProcessStarted?.Invoke(null, null);
-                serverTask = new Task(() => ServerUpdateThread(), cts.Token);
+                serverTask = new Task(async () => await ServerUpdateThread(), cts.Token);
                 serverTask.Start();
                 return true;
             }
@@ -240,15 +246,21 @@ namespace HSL
             return false;
         }
 
-        private async void ServerUpdateThread()
+        private async Task<Task> ServerUpdateThread()
         {
             using (FileStream fs = File.Open(logFile, FileMode.OpenOrCreate, FileAccess.Read, FileShare.ReadWrite))
             {
+
+                // if failed to delete log file, we will advance pointer to end of file and read from there.
+                long length = fs.Length;
+                fs.Position = length;
+
                 using (StreamReader sr = new StreamReader(fs))
                 {
-                    long cpos = fs.Length;
+                    long cpos = length;
                     long pos = 0;
                     string buffer = "";
+
                     while (cts != null && !cts.IsCanceled())
                     {
                         await fs.FlushAsync();
@@ -273,6 +285,7 @@ namespace HSL
                 }
             }
             Stop();
+            return Task.CompletedTask;
         }
 
     }
