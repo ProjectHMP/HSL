@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -9,13 +8,11 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Threading;
 using System.Xml;
 
 namespace HSL
 {
 
-    [TypeConverter(typeof(Converters.EnumConverter))]
     public enum ServerState : byte
     {
         Stopped = 0x0,
@@ -42,7 +39,6 @@ namespace HSL
         internal event EventHandler ProcessStarted, ProcessStopped;
 
         internal Process process { get; set; }
-
         private Task task { get; set; }
         private CancellationTokenSource cts, _resourceCts;
         private FileSystemWatcher resourceWatcher;
@@ -98,7 +94,7 @@ namespace HSL
             {
                 resources.Clear();
                 var _resources = Directory.GetFileSystemEntries(resDir).Where(path => File.Exists(path.CombineAsPath("meta.xml"))).Select(Path.GetFileName);
-                foreach(var resource in _resources)
+                foreach (var resource in _resources)
                 {
                     resources.Add(resource);
                 }
@@ -123,7 +119,7 @@ namespace HSL
              * Using Monitor (lock), we instead want to capture one call per 100 ms, and discard any other (duplicates).
              */
 
-            if(_resourceCts != null && !_resourceCts.Token.CanBeCanceled)
+            if (_resourceCts != null && !_resourceCts.Token.CanBeCanceled)
             {
                 return;
             }
@@ -148,25 +144,14 @@ namespace HSL
                     */
                     Trace.WriteLine("Resource Updating: " + match.Groups[1].Value);
                 }
-            }  catch { }
+            }
+            catch { }
 
             try
             {
                 _resourceCts.CancelAfter(500);
             }
             catch { }
-        }
-
-
-        public void Dispose()
-        {
-            Trace.WriteLine("Dispose called for  " + Name);
-            resourceWatcher?.Dispose();
-            cts?.Cancel();
-            if (process != null && !process.HasExited)
-            {
-                process.Kill();
-            }
         }
 
         internal bool IsProcessRunning() => process != null && !process.HasExited && cts != null && !cts.IsCanceled();
@@ -199,7 +184,7 @@ namespace HSL
             if (processes != null && processes.Count() > 0)
             {
 
-                if(MessageBox.Show("This server is already running. Do you want to terminate and start new?", "Hmm..", MessageBoxButton.YesNo) == MessageBoxResult.No)
+                if (MessageBox.Show("This server is already running. Do you want to terminate and start new?", "Hmm..", MessageBoxButton.YesNo) == MessageBoxResult.No)
                 {
                     return false;
                 }
@@ -253,7 +238,7 @@ namespace HSL
                 state = ServerState.Started;
                 OnPropertyChanged(nameof(state));
                 ProcessStarted?.Invoke(null, null);
-                task = new Task(async ()=>await ServerUpdateThread(), cts.Token);
+                task = new Task(async () => await ServerUpdateThread(), cts.Token);
                 task.Start();
                 return true;
             }
@@ -316,6 +301,17 @@ namespace HSL
             }
             Stop();
             return Task.CompletedTask;
+        }
+
+        public void Dispose()
+        {
+            Trace.WriteLine("Dispose called for  " + Name);
+            resourceWatcher?.Dispose();
+            cts?.Cancel();
+            if (process != null && !process.HasExited)
+            {
+                process.Kill();
+            }
         }
 
     }

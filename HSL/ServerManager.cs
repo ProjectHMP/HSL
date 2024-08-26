@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
@@ -49,7 +48,7 @@ namespace HSL
 
             instance.Dispose();
 
-            lock(_serverLock)
+            lock (_serverLock)
             {
                 if (servers.Remove(instance))
                 {
@@ -62,9 +61,9 @@ namespace HSL
 
         public void Dispose()
         {
-            lock(_serverLock)
+            lock (_serverLock)
             {
-                foreach(ServerInstance instance in servers)
+                foreach (ServerInstance instance in servers)
                 {
                     //instance.Dispose();
                 }

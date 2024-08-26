@@ -23,14 +23,6 @@ namespace HSL.Windows
         private OpenFileDialog ofd;
         private object _configLock { get; set; } = new object();
 
-        public void Dispose()
-        {
-            if(manager != null)
-            {
-                Dispatcher.Invoke(manager.Dispose);
-            }
-        }
-
         public Launcher()
         {
             InitializeComponent();
@@ -39,7 +31,7 @@ namespace HSL.Windows
             {
                 Trace.WriteLine(e.ToString());
                 string cr = Utils.CurrentDirectory.CombineAsPath("crash-report.txt");
-                if(File.Exists(cr))
+                if (File.Exists(cr))
                 {
                     File.Delete(cr);
                 }
@@ -67,16 +59,17 @@ namespace HSL.Windows
             foreach (var e in config.servers)
             {
                 // check if path is still valid.
-                if(!Directory.Exists(Path.GetDirectoryName(e.Value.exe_file)) || !File.Exists(e.Value.exe_file))
+                if (!Directory.Exists(Path.GetDirectoryName(e.Value.exe_file)) || !File.Exists(e.Value.exe_file))
                 {
-                    if(MessageBox.Show(String.Format("Failed to load pre-existing server: {0}{1}Would you like to change location?", "Error", MessageBoxButton.YesNo)) == MessageBoxResult.Yes)
+                    if (MessageBox.Show(String.Format("Failed to load pre-existing server: {0}{1}Would you like to change location?", "Error", MessageBoxButton.YesNo)) == MessageBoxResult.Yes)
                     {
-                        ofd ??= new OpenFileDialog() {
+                        ofd ??= new OpenFileDialog()
+                        {
                             Multiselect = false,
                             Filter = "HappinessMP.Server.Exe | *.exe"
                         };
 
-                        if(!(ofd?.ShowDialog() ?? false) || string.IsNullOrEmpty(ofd.FileName) || config.servers.Any(x => x.Value.exe_file == ofd.FileName))
+                        if (!(ofd?.ShowDialog() ?? false) || string.IsNullOrEmpty(ofd.FileName) || config.servers.Any(x => x.Value.exe_file == ofd.FileName))
                         {
                             continue;
                         }
@@ -94,13 +87,14 @@ namespace HSL.Windows
             RegisterListenered();
         }
 
-        private async Task LoadConfiguration() {
+        private async Task LoadConfiguration()
+        {
             config = await HSLConfig.Load("hsl.json");
         }
 
         private async void Manager_OnDeleted(object sender, ServerInstance e)
         {
-            if(config.servers.ContainsKey(e.Guid))
+            if (config.servers.ContainsKey(e.Guid))
             {
                 config.servers.Remove(e.Guid);
                 await config.Save();
@@ -122,7 +116,8 @@ namespace HSL.Windows
 
         private async void Manager_OnProcessStopped(object sender, ServerInstance e)
         {
-            if(config.servers.ContainsKey(e.Guid) && config.servers[e.Guid].auto_start) {
+            if (config.servers.ContainsKey(e.Guid) && config.servers[e.Guid].auto_start)
+            {
                 await Task.Delay(1000);
                 e.Start();
             }
@@ -202,7 +197,7 @@ namespace HSL.Windows
                 }
             };
 
-            btn_ReloadResource.Click +=  (s, e) =>
+            btn_ReloadResource.Click += (s, e) =>
             {
                 if (currentInstance != null && lv_ResourceList.SelectedItem is string resource && !string.IsNullOrEmpty(resource))
                 {
@@ -211,7 +206,7 @@ namespace HSL.Windows
                 }
             };
 
-            btn_StopAllResources.Click +=  (s, e) =>
+            btn_StopAllResources.Click += (s, e) =>
             {
                 if (currentInstance != null && currentInstance.resources.Count > 0)
                 {
@@ -222,7 +217,7 @@ namespace HSL.Windows
                 }
             };
 
-            btn_ReloadAllResources.Click +=  (s, e) =>
+            btn_ReloadAllResources.Click += (s, e) =>
             {
                 if (currentInstance != null && currentInstance.resources.Count > 0)
                 {
@@ -250,7 +245,7 @@ namespace HSL.Windows
 
             mi_DeleteServer.Click += (s, e) =>
             {
-                if(MessageBox.Show("Are you sure you want to delete" + currentInstance.Name + "? Files will NOT be deleted!", "Delete Server?", MessageBoxButton.YesNo) == MessageBoxResult.No)
+                if (MessageBox.Show("Are you sure you want to delete" + currentInstance.Name + "? Files will NOT be deleted!", "Delete Server?", MessageBoxButton.YesNo) == MessageBoxResult.No)
                 {
                     return;
                 }
@@ -315,7 +310,7 @@ namespace HSL.Windows
                 string tmpFolder = directory.CombineAsPath("temp");
                 string zip = directory.CombineAsPath(filename);
 
-                if(!Directory.Exists(tmpFolder))
+                if (!Directory.Exists(tmpFolder))
                 {
                     Directory.CreateDirectory(tmpFolder);
                 }
@@ -336,7 +331,7 @@ namespace HSL.Windows
 
 
                             root = archive.Entries[0].FullName;
-                            for(int i = 1; i < archive.Entries.Count; i++)
+                            for (int i = 1; i < archive.Entries.Count; i++)
                             {
                                 string file = archive.Entries[i].FullName.Substring(root.Length);
                                 string filepath = directory.CombineAsPath(file);
@@ -361,7 +356,7 @@ namespace HSL.Windows
                     {
                         Directory.Delete(tmpFolder, true);
                     }
-                    if(File.Exists(zip))
+                    if (File.Exists(zip))
                     {
                         File.Delete(zip);
                     }
@@ -370,6 +365,14 @@ namespace HSL.Windows
                 }
                 manager.Create(Directory.GetFiles(directory, "*.exe").FirstOrDefault(), false);
             };
+        }
+
+        public void Dispose()
+        {
+            if (manager != null)
+            {
+                Dispatcher.Invoke(manager.Dispose);
+            }
         }
     }
 }

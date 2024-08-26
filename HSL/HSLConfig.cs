@@ -1,8 +1,8 @@
 ﻿using System;
-using System.IO;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace HSL
@@ -24,15 +24,9 @@ namespace HSL
 
         public Dictionary<Guid, ServerConfig> servers { get; set; } = new Dictionary<Guid, ServerConfig>();
 
-        private HSLConfig()
-        {
+        private HSLConfig() { }
 
-        }
-
-        private HSLConfig(string file)
-        {
-            _fileName = file;
-        }
+        private HSLConfig(string file) => _fileName = file;
 
         internal static async Task<HSLConfig> Load(string file)
         {
@@ -69,7 +63,7 @@ namespace HSL
         internal async Task<bool> Save()
         {
 
-            if(save_cts != null && !save_cts.IsCancellationRequested)
+            if (save_cts != null && !save_cts.IsCancellationRequested)
             {
                 return false;
             }
