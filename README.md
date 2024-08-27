@@ -2,10 +2,7 @@
 
 Happiness Server Launcher. A Launcher & Manager for [HappinessMP](https://happinessmp.net/)
 
-<br>
-<p align="center">
-	<img width="50%" src="hsl.png"/>
-</p>
+<img src="hsl.png"/>
 
 ## Features
 - Create Server(s).
