@@ -195,63 +195,41 @@ namespace HSL.Windows
 
             btn_StartResource.Click += (s, e) =>
             {
-                if (lv_ResourceList.SelectedIndex >= 0)
+                if (currentInstance != null && lv_ResourceList.SelectedItem is ServerInstance.ResourceMeta meta && !string.IsNullOrEmpty(meta.Name))
                 {
-                    if (currentInstance != null && lv_ResourceList.SelectedItem is string resource && !string.IsNullOrEmpty(resource))
-                    {
-                        currentInstance.SendInput("start " + resource);
-                    }
+                    currentInstance?.StartResource(meta.Name);
                 }
             };
 
             btn_StopResource.Click += (s, e) =>
             {
-                if (currentInstance != null && lv_ResourceList.SelectedItem is string resource && !string.IsNullOrEmpty(resource))
+                if (currentInstance != null && lv_ResourceList.SelectedItem is ServerInstance.ResourceMeta meta && !string.IsNullOrEmpty(meta.Name))
                 {
-                    currentInstance.SendInput("stop " + resource);
+                    currentInstance?.StopResource(meta.Name);
                 }
             };
 
             btn_ReloadResource.Click += (s, e) =>
             {
-                if (currentInstance != null && lv_ResourceList.SelectedItem is string resource && !string.IsNullOrEmpty(resource))
+                if (currentInstance != null && lv_ResourceList.SelectedItem is ServerInstance.ResourceMeta meta && !string.IsNullOrEmpty(meta.Name))
                 {
-                    currentInstance.SendInput("stop " + resource);
-                    currentInstance.SendInput("start " + resource);
+                    currentInstance?.ReloadResource(meta.Name);
                 }
             };
 
-            btn_StopAllResources.Click += (s, e) =>
-            {
-                if (currentInstance != null && currentInstance.Resources.Count > 0)
-                {
-                    foreach (string resource in currentInstance.Resources)
-                    {
-                        currentInstance.SendInput("stop " + resource);
-                    }
-                }
-            };
+            btn_StopAllResources.Click += (s, e) => currentInstance?.StopAllResources();
 
-            btn_ReloadAllResources.Click += (s, e) =>
-            {
-                if (currentInstance != null && currentInstance.Resources.Count > 0)
-                {
-                    foreach (string resource in currentInstance.Resources)
-                    {
-                        currentInstance.SendInput("stop " + resource);
-                        currentInstance.SendInput("start " + resource);
-                    }
-                }
-            };
+            btn_StartAllResources.Click += (s, e) => currentInstance?.StartAllResources();
 
+            btn_ReloadAllResources.Click += (s, e) => currentInstance?.ReloadAllResources();
 
             (lv_ResourceList.ContextMenu = new System.Windows.Controls.ContextMenu()).Items.Add(new System.Windows.Controls.MenuItem() { Header = "Open Folder" });
             (lv_ServerList.ContextMenu = new System.Windows.Controls.ContextMenu()).Items.Add(new System.Windows.Controls.MenuItem() { Header = "Open Folder" });
             (lv_ResourceList.ContextMenu.Items[0] as System.Windows.Controls.MenuItem).Click += (s, e) =>
             {
-                if(lv_ResourceList.SelectedIndex >= 0)
+                if(lv_ResourceList.SelectedIndex >= 0 && lv_ResourceList.SelectedItems is ServerInstance.ResourceMeta meta)
                 {
-                    Process.Start("explorer.exe", currentInstance.ResourceDirectory.CombineAsPath((string)lv_ResourceList.SelectedItem));
+                    Process.Start("explorer.exe", currentInstance.ResourceDirectory.CombineAsPath(meta.Name));
                 }
             };
             (lv_ServerList.ContextMenu.Items[0] as System.Windows.Controls.MenuItem).Click += (s, e) => { 

@@ -33,6 +33,7 @@
             <Setter Property="Cursor" Value="Hand"></Setter>
             <Setter Property="ForceCursor" Value="True"></Setter>
             <Setter Property="Opacity" Value=".8"></Setter>
+            <Setter Property="Focusable" Value="False"></Setter>
 
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">

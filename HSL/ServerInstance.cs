@@ -22,13 +22,20 @@ namespace HSL
 
     public class ServerInstance : INotifyPropertyChanged, IDisposable
     {
-        public event PropertyChangedEventHandler PropertyChanged;
 
+        public class ResourceMeta
+        {
+            public string Name { get; set; }
+            public bool IsEnabled { get; set; } = false;
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
         public Guid Guid { get; private set; }
         public List<string> ServerLog { get; private set; }
-        public string Name { get; private set; } = string.Empty;
+        public string Name { get; private set; }
         public ServerState State { get; private set; } = ServerState.Stopped;
-        public List<string> Resources { get; private set; } = new List<string>();
+        public List<ResourceMeta> Resources { get; private set; }
+        public Dictionary<string, ResourceMeta> ResourceMap { get; private set; }
         public bool StartAutomatically { get; set; } = false;
         public bool AutoReloadResources { get; set; } = false;
 
@@ -38,6 +45,7 @@ namespace HSL
         internal string ResourceDirectory { get; private set; }
         internal string ExePath { get; private set; }
         internal string LogFile { get; private set; }
+        internal string ServerConfiguration { get; private set; }
 
         internal event EventHandler<string> StdOutput;
         internal event EventHandler ProcessStarted, ProcessStopped;
@@ -60,8 +68,10 @@ namespace HSL
             ServerDirectory = Path.GetDirectoryName(serverExe);
             LogFile = ServerDirectory.CombineAsPath("server.log");
             ResourceDirectory = ServerDirectory.CombineAsPath("resources");
+            ServerConfiguration = ServerDirectory.CombineAsPath("settings.xml");
             State = ServerState.Stopped;
-            Resources = new List<string>();
+            Resources = new List<ResourceMeta>();
+            ResourceMap = new Dictionary<string, ResourceMeta>();
             ServerLog = new List<string>();
 
             _resourceWatcher = new FileSystemWatcher(ResourceDirectory)
@@ -76,14 +86,7 @@ namespace HSL
             _resourceWatcher.Deleted += _watcherHandler;
             _resourceWatcher.Renamed += _watcherHandler;
 
-            string xml = ServerDirectory.CombineAsPath("settings.xml");
-            if (File.Exists(xml))
-            {
-                XmlDocument document = new XmlDocument();
-                document.Load(xml);
-                Name = document.DocumentElement.SelectSingleNode("hostname").InnerText;
-            }
-
+            SyncServerSettings();
             RefreshServerInformation();
 
             if (autoStart)
@@ -92,19 +95,58 @@ namespace HSL
             }
         }
 
+        private bool SyncServerSettings()
+        {
+
+            if (!File.Exists(ServerConfiguration))
+                return false;
+
+            XmlDocument document = new XmlDocument();
+            document.Load(ServerConfiguration);
+
+            Name = document.DocumentElement.SelectSingleNode("hostname").InnerText;
+            foreach(XmlNode resource in document.DocumentElement.SelectNodes("resource"))
+            {
+
+                Trace.WriteLine("Found XML Resource: " + resource.InnerText);
+
+                if(!ResourceMap.ContainsKey(resource.InnerText))
+                {
+                    ResourceMap.Add(resource.InnerText, new ResourceMeta { Name = resource.InnerText, IsEnabled = true });
+                    Resources.Add(ResourceMap[resource.InnerText]);
+                }
+            }
+
+            OnPropertyChanged(nameof(Resources));
+            OnPropertyChanged(nameof(ResourceMap));
+
+            return true;
+        }
+
         private void OnPropertyChanged(string prop) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
 
         private void RefreshServerInformation()
         {
             lock (_resourceListLock)
             {
-                Resources.Clear();
+                // grab resource directory names, that has a valid meta.xml file (later validations)
                 var _resources = Directory.GetFileSystemEntries(ResourceDirectory).Where(path => File.Exists(path.CombineAsPath("meta.xml"))).Select(Path.GetFileName);
-                foreach (var resource in _resources)
+
+                // remove resources that no longer exist
+                Resources.RemoveAll(x => _resources.Contains(x.Name) ? false : ResourceMap.Remove(x.Name));
+                
+                // add new resources
+                foreach(var resource in _resources)
                 {
-                    Resources.Add(resource);
+                    if(!ResourceMap.ContainsKey(resource))
+                    {
+                        ResourceMap.Add(resource, new ResourceMeta { Name = resource, IsEnabled = false });
+                        Resources.Add(ResourceMap[resource]);
+                    }
                 }
+
                 OnPropertyChanged(nameof(Resources));
+                OnPropertyChanged(nameof(ResourceMap));
             }
         }
 
@@ -128,6 +170,7 @@ namespace HSL
             {
                 return;
             }
+
             _resourceCts = new CancellationTokenSource();
 
             try
@@ -177,6 +220,62 @@ namespace HSL
             {
                 await Task.Delay(1000);
                 Start();
+            }
+        }
+
+        internal void ReloadAllResources()
+        {
+            lock(_resourceListLock)
+            {
+                foreach(string resource in ResourceMap.Keys)
+                {
+                    ReloadResource(resource);
+                }
+            }
+        }
+
+        internal void StartAllResources()
+        {
+            lock (_resourceListLock)
+            {
+                foreach(string resource in ResourceMap.Keys)
+                {
+                    StartResource(resource);
+                }
+            }
+        }
+
+        internal void StopAllResources()
+        {
+            lock(_resourceListLock)
+            {
+                foreach(string resource in ResourceMap.Keys)
+                {
+                    StopResource(resource);
+                }
+            }
+        }
+
+        internal void ReloadResource(string name)
+        {
+            StopResource(name);
+            StartResource(name);
+        }
+
+        internal void StartResource(string name) {
+            if(SendInput("start " + name) && ResourceMap.ContainsKey(name))
+            {
+                ResourceMap[name].IsEnabled = true;
+                OnPropertyChanged(nameof(Resources));
+                OnPropertyChanged(nameof(ResourceMap));
+            }
+        }
+        internal void StopResource(string name) {
+            if(SendInput("stop " + name) && ResourceMap.ContainsKey(name))
+            {
+                ResourceMap[name].IsEnabled = false;
+                OnPropertyChanged(nameof(Resources));
+                OnPropertyChanged(nameof(ResourceMap));
             }
         }
 
@@ -312,7 +411,6 @@ namespace HSL
 
         public void Dispose()
         {
-            _resourceWatcher?.Dispose();
             _cts?.Cancel();
             if (process != null && !process.HasExited)
             {
