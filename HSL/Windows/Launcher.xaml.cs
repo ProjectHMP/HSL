@@ -19,8 +19,8 @@ namespace HSL.Windows
         public ServerManager manager { get; private set; }
         public ServerInstance currentInstance { get; private set; } = default(ServerInstance);
 
-        private HSLConfig config;
-        private OpenFileDialog ofd;
+        private HSLConfig _config;
+        private OpenFileDialog _ofd;
         private object _configLock { get; set; } = new object();
 
         public Launcher()
@@ -54,25 +54,25 @@ namespace HSL.Windows
 
         private async Task LoadConfiguration()
         {
-            config = await HSLConfig.Load("hsl.json");
+            _config = await HSLConfig.Load("hsl.json");
 
             bool markdirty = false;
             lock(_configLock)
             {
-                foreach (var kvp in config.servers)
+                foreach (var kvp in _config.servers)
                 {
                     if (!Directory.Exists(Path.GetDirectoryName(kvp.Value.exe_file)) || !File.Exists(kvp.Value.exe_file))
                     {
                         if (MessageBox.Show(String.Format("Failed to load pre-existing server: {0}{1}Would you like to change location?", "Error", MessageBoxButton.YesNo)) == MessageBoxResult.Yes)
                         {
-                            ofd ??= new OpenFileDialog();
-                            ofd.Multiselect = false;
-                            ofd.Filter = "HappinessMP.Server.Exe | *.exe";
-                            if (!(ofd?.ShowDialog() ?? false) || string.IsNullOrEmpty(ofd.FileName) || config.servers.Any(x => x.Value.exe_file == ofd.FileName))
+                            _ofd ??= new OpenFileDialog();
+                            _ofd.Multiselect = false;
+                            _ofd.Filter = "HappinessMP.Server.Exe | *.exe";
+                            if (!(_ofd?.ShowDialog() ?? false) || string.IsNullOrEmpty(_ofd.FileName) || _config.servers.Any(x => x.Value.exe_file == _ofd.FileName))
                             {
                                 continue;
                             }
-                            config.servers[kvp.Key].exe_file = ofd.FileName;
+                            _config.servers[kvp.Key].exe_file = _ofd.FileName;
                             markdirty = true;
                         }
                     }
@@ -82,36 +82,36 @@ namespace HSL.Windows
 
             if (markdirty)
             {
-                await config.Save();
+                await _config.Save();
             }
 
         }
 
         private async void Manager_OnDeleted(object sender, ServerInstance e)
         {
-            if (config.servers.ContainsKey(e.Guid))
+            if (_config.servers.ContainsKey(e.Guid))
             {
-                config.servers.Remove(e.Guid);
-                await config.Save();
+                _config.servers.Remove(e.Guid);
+                await _config.Save();
             }
         }
 
         private async void Manager_OnCreated(object sender, ServerInstance e)
         {
-            if (!config.servers.ContainsKey(e.Guid))
+            if (!_config.servers.ContainsKey(e.Guid))
             {
-                config.servers.Add(e.Guid, new HSLConfig.ServerConfig()
+                _config.servers.Add(e.Guid, new HSLConfig.ServerConfig()
                 {
-                    exe_file = e.exeFile,
+                    exe_file = e.ExePath,
                     guid = e.Guid,
                 });
+                await _config.Save();
             }
-            await config.Save();
         }
 
         private async void Manager_OnProcessStopped(object sender, ServerInstance e)
         {
-            if (config.servers.ContainsKey(e.Guid) && config.servers[e.Guid].auto_start)
+            if (_config.servers.ContainsKey(e.Guid) && _config.servers[e.Guid].auto_start)
             {
                 await Task.Delay(1000);
                 e.Start();
@@ -156,22 +156,22 @@ namespace HSL.Windows
 
             mi_OpenServerPath.Click += (s, e) =>
             {
-                ofd ??= new OpenFileDialog();
-                ofd.Filter = "HappinessMP.Server.Exe | *.exe";
-                if (ofd.ShowDialog() ?? false)
+                _ofd ??= new OpenFileDialog();
+                _ofd.Filter = "HappinessMP.Server.Exe | *.exe";
+                if (_ofd.ShowDialog() ?? false)
                 {
-                    if (!File.Exists(Path.GetDirectoryName(ofd.FileName).CombineAsPath("settings.xml")))
+                    if (!File.Exists(Path.GetDirectoryName(_ofd.FileName).CombineAsPath("settings.xml")))
                     {
                         MessageBox.Show("This path does not contain a valid HappinessMP server.", "Error", MessageBoxButton.OK);
                         return;
                     }
                     
-                    if(config.servers.Any(x => x.Value.exe_file == ofd.FileName))
+                    if(_config.servers.Any(x => x.Value.exe_file == _ofd.FileName))
                     {
                         MessageBox.Show("This server has already been added.");
                         return;
                     }
-                    ShowServerContext(manager.Create(ofd.FileName, false));
+                    ShowServerContext(manager.Create(_ofd.FileName, false));
                 }
             };
 
@@ -207,9 +207,9 @@ namespace HSL.Windows
 
             btn_StopAllResources.Click += (s, e) =>
             {
-                if (currentInstance != null && currentInstance.resources.Count > 0)
+                if (currentInstance != null && currentInstance.Resources.Count > 0)
                 {
-                    foreach (string resource in currentInstance.resources)
+                    foreach (string resource in currentInstance.Resources)
                     {
                         currentInstance.SendInput("stop " + resource);
                     }
@@ -218,9 +218,9 @@ namespace HSL.Windows
 
             btn_ReloadAllResources.Click += (s, e) =>
             {
-                if (currentInstance != null && currentInstance.resources.Count > 0)
+                if (currentInstance != null && currentInstance.Resources.Count > 0)
                 {
-                    foreach (string resource in currentInstance.resources)
+                    foreach (string resource in currentInstance.Resources)
                     {
                         currentInstance.SendInput("stop " + resource);
                         currentInstance.SendInput("start " + resource);
@@ -235,13 +235,13 @@ namespace HSL.Windows
             {
                 if(lv_ResourceList.SelectedIndex >= 0)
                 {
-                    Process.Start("explorer.exe", currentInstance.resDir.CombineAsPath((string)lv_ResourceList.SelectedItem));
+                    Process.Start("explorer.exe", currentInstance.ResourceDirectory.CombineAsPath((string)lv_ResourceList.SelectedItem));
                 }
             };
             (lv_ServerList.ContextMenu.Items[0] as System.Windows.Controls.MenuItem).Click += (s, e) => { 
                 if(lv_ServerList.SelectedIndex >= 0 && lv_ServerList.SelectedItem is ServerInstance instance)
                 {
-                    Process.Start("explorer.exe", instance.servDir);
+                    Process.Start("explorer.exe", instance.ServerDirectory);
                 }
             };
 
@@ -260,7 +260,7 @@ namespace HSL.Windows
                 manager.Delete(currentInstance);
             };
 
-            mi_OpenServerDirectory.Click += (s, e) => Process.Start("explorer.exe", currentInstance.servDir);
+            mi_OpenServerDirectory.Click += (s, e) => Process.Start("explorer.exe", currentInstance.ServerDirectory);
 
             mi_CreateServer.Click += async (s, e) =>
             {
