@@ -49,6 +49,11 @@ namespace HSL.Windows
 
             LoadConfiguration().ConfigureAwait(false).GetAwaiter(); // intentional thread lock
 
+            if(manager.servers.Count > 0)
+            {
+                ShowServerContext(manager.servers.FirstOrDefault());
+            }
+
             RegisterListeners();
         }
 
@@ -89,6 +94,11 @@ namespace HSL.Windows
 
         private async void Manager_OnDeleted(object sender, ServerInstance e)
         {
+            if(e == currentInstance)
+            {
+                ShowServerContext(null);
+            }
+
             if (_config.servers.ContainsKey(e.Guid))
             {
                 _config.servers.Remove(e.Guid);
@@ -130,8 +140,14 @@ namespace HSL.Windows
             }
             currentInstance = instance;
             OnPropertyChanged(nameof(currentInstance));
-            rtb_ServerLog.ScrollToVerticalOffset(rtb_ServerLog.ActualHeight);
-            currentInstance.StdOutput += (s, e) => Dispatcher.Invoke(() => rtb_ServerLog.ScrollToVerticalOffset(rtb_ServerLog.ActualHeight));
+
+            if(currentInstance != null)
+            {
+                rtb_ServerLog.ScrollToVerticalOffset(rtb_ServerLog.ActualHeight);
+                currentInstance.StdOutput += (s, e) => Dispatcher.Invoke(() => rtb_ServerLog.ScrollToVerticalOffset(rtb_ServerLog.ActualHeight));
+            }
+
+            Title = currentInstance != null ? String.Format("HSL - {0}", currentInstance.Name) : "Happiness Server Launcher";
         }
 
         private void RegisterListeners()

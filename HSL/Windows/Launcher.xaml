@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:hsl="clr-namespace:HSL"
         mc:Ignorable="d"
-        Title="HMP Server Launcher" Height="444" Width="834"
+        Title="Happiness Server Launcher" Height="444" Width="834"
         Background="Black"
         WindowStyle="SingleBorderWindow" WindowStartupLocation="CenterScreen"
         >
@@ -104,7 +104,7 @@
             </DockPanel>
 
             <!-- Server List -->
-            <ListView x:Name="lv_ServerList" Grid.Column="0" Grid.Row="1" Grid.RowSpan="2" ItemsSource="{Binding manager.servers, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, Mode=OneWay, IsAsync=True, Delay=500}" Background="Transparent" SelectionMode="Single" Foreground="{StaticResource txtColor}" BorderThickness="0 .2 0 .2" DisplayMemberPath="Name"></ListView>
+            <ListView x:Name="lv_ServerList" Grid.Column="0" Grid.Row="1" Grid.RowSpan="2" ItemsSource="{Binding manager.servers, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, Mode=OneWay, IsAsync=True, Delay=500}" Background="Transparent" SelectionMode="Single" Foreground="{StaticResource txtColor}" BorderThickness="0 .2 0 .2" DisplayMemberPath="Name" SelectedItem="{Binding currentInstance, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}"></ListView>
             
             <!-- Console -->
             <RichTextBox x:Name="rtb_ServerLog"  DataContext="{Binding currentInstance, UpdateSourceTrigger=PropertyChanged, Mode=OneWay, IsAsync=True, Delay=500}" Grid.Column="1" Grid.Row="1" Grid.RowSpan="2" Background="{StaticResource cmdBgColor}" IsReadOnly="True" IsReadOnlyCaretVisible="True" BorderThickness=".2 .2 .2 0" Foreground="{StaticResource txtColor}">
