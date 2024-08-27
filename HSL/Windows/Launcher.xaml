@@ -43,7 +43,7 @@
                             <MenuItem.Style>
                                 <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Path=currentInstance.state, UpdateSourceTrigger=PropertyChanged, Mode=OneWay, NotifyOnSourceUpdated=True, IsAsync=True, Delay=100}" Value="{x:Static hsl:ServerState.Started}">
+                                        <DataTrigger Binding="{Binding currentInstance.state, UpdateSourceTrigger=PropertyChanged, Mode=OneWay, NotifyOnSourceUpdated=True, IsAsync=True, Delay=100}" Value="{x:Static hsl:ServerState.Started}">
                                             <Setter Property="IsEnabled" Value="False"></Setter>
                                         </DataTrigger>
                                     </Style.Triggers>
@@ -54,14 +54,28 @@
                             <MenuItem.Style>
                                 <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding  Path=currentInstance.state, UpdateSourceTrigger=PropertyChanged, Mode=OneWay, NotifyOnSourceUpdated=True, IsAsync=True, Delay=100}" Value="{x:Static hsl:ServerState.Stopped}">
+                                        <DataTrigger Binding="{Binding currentInstance.state, UpdateSourceTrigger=PropertyChanged, Mode=OneWay, NotifyOnSourceUpdated=True, IsAsync=True, Delay=100}" Value="{x:Static hsl:ServerState.Stopped}">
                                             <Setter Property="IsEnabled" Value="False"></Setter>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
                             </MenuItem.Style>
                         </MenuItem>
-                        <MenuItem x:Name="mi_RestartServer" Header="Restart"></MenuItem>
+                        <MenuItem x:Name="mi_RestartServer" Header="Restart">
+                            <MenuItem.Style>
+                                <Style TargetType="{x:Type MenuItem}">
+                                    <Setter Property="IsEnabled" Value="False"></Setter>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=currentInstance.state, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static hsl:ServerState.Started}">
+                                            <Setter Property="IsEnabled" Value="True"></Setter>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </MenuItem.Style>
+                        </MenuItem>
+                        <MenuItem x:Name="mi_OpenServerDirectory" Header="Open Directory">
+                            
+                        </MenuItem>
                         <MenuItem x:Name="mi_DeleteServer" Header="Delete"></MenuItem>
                         <MenuItem.Style>
                             <Style TargetType="{x:Type MenuItem}">

@@ -155,16 +155,25 @@ namespace HSL
         }
 
         internal bool IsProcessRunning() => process != null && !process.HasExited && cts != null && !cts.IsCanceled();
+
         internal bool Stop()
         {
             if (IsProcessRunning())
             {
                 Dispose();
             }
-            ClearServerLog();
             state = ServerState.Stopped;
             OnPropertyChanged(nameof(state));
             return true;
+        }
+
+        internal async void Restart()
+        {
+            if(Stop())
+            {
+                await Task.Delay(1000);
+                Start();
+            }
         }
 
         internal bool Start()
@@ -312,6 +321,7 @@ namespace HSL
             {
                 process.Kill();
             }
+            ClearServerLog();
         }
 
     }

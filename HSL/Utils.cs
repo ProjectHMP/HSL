@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace HSL
 {
@@ -18,10 +19,10 @@ namespace HSL
 
         static Utils()
         {
-            CurrentDirectory ??= AppDomain.CurrentDomain.BaseDirectory;
-            CurrentDirectory ??= Environment.CurrentDirectory;
-            CurrentDirectory ??= Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
             CurrentDirectory ??= Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+            CurrentDirectory ??= Environment.CurrentDirectory;
+            CurrentDirectory ??= AppDomain.CurrentDomain.BaseDirectory;
+            CurrentDirectory ??= Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
         }
 
         public static bool IsDirectoryEmpty(string directory) => Directory.Exists(directory) && Directory.GetFileSystemEntries(directory).Length == 0;

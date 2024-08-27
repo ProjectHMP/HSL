@@ -14,10 +14,10 @@ namespace HSL.Windows
     public partial class Launcher : Window, IDisposable, INotifyPropertyChanged
     {
 
+        public event PropertyChangedEventHandler PropertyChanged;
+
         public ServerManager manager { get; private set; }
         public ServerInstance currentInstance { get; private set; } = default(ServerInstance);
-
-        public event PropertyChangedEventHandler PropertyChanged;
 
         private HSLConfig config;
         private OpenFileDialog ofd;
@@ -29,7 +29,6 @@ namespace HSL.Windows
 
             AppDomain.CurrentDomain.UnhandledException += async (s, e) =>
             {
-                Trace.WriteLine(e.ToString());
                 string cr = Utils.CurrentDirectory.CombineAsPath("crash-report.txt");
                 if (File.Exists(cr))
                 {
@@ -40,56 +39,52 @@ namespace HSL.Windows
 
             Closing += (s, e) => Dispose();
 
-            Trace.WriteLine("Loading Configuration");
-            LoadConfiguration().ConfigureAwait(false).GetAwaiter(); // intentional thread lock
-            Trace.WriteLine("Configuration Loaded");
-
-            DataContext = this;
-
             manager = new ServerManager();
             manager.OnProcessStarted += Manager_OnProcessStarted;
             manager.OnProcessStopped += Manager_OnProcessStopped;
             manager.OnCreated += Manager_OnCreated;
             manager.OnDeleted += Manager_OnDeleted;
 
-            // load servers
+            DataContext = this;
 
-            bool markdirty = false;
+            LoadConfiguration().ConfigureAwait(false).GetAwaiter(); // intentional thread lock
 
-            foreach (var e in config.servers)
-            {
-                // check if path is still valid.
-                if (!Directory.Exists(Path.GetDirectoryName(e.Value.exe_file)) || !File.Exists(e.Value.exe_file))
-                {
-                    if (MessageBox.Show(String.Format("Failed to load pre-existing server: {0}{1}Would you like to change location?", "Error", MessageBoxButton.YesNo)) == MessageBoxResult.Yes)
-                    {
-                        ofd ??= new OpenFileDialog()
-                        {
-                            Multiselect = false,
-                            Filter = "HappinessMP.Server.Exe | *.exe"
-                        };
-
-                        if (!(ofd?.ShowDialog() ?? false) || string.IsNullOrEmpty(ofd.FileName) || config.servers.Any(x => x.Value.exe_file == ofd.FileName))
-                        {
-                            continue;
-                        }
-                        config.servers[e.Key].exe_file = ofd.FileName;
-                        markdirty = true;
-                    }
-                }
-                manager.Create(e.Value.exe_file, e.Value.guid, e.Value.auto_start);
-            }
-
-            if (markdirty)
-            {
-                config.Save().ConfigureAwait(false).GetAwaiter(); // intentional thread lock
-            }
-            RegisterListenered();
+            RegisterListeners();
         }
 
         private async Task LoadConfiguration()
         {
             config = await HSLConfig.Load("hsl.json");
+
+            bool markdirty = false;
+            lock(_configLock)
+            {
+                foreach (var kvp in config.servers)
+                {
+                    if (!Directory.Exists(Path.GetDirectoryName(kvp.Value.exe_file)) || !File.Exists(kvp.Value.exe_file))
+                    {
+                        if (MessageBox.Show(String.Format("Failed to load pre-existing server: {0}{1}Would you like to change location?", "Error", MessageBoxButton.YesNo)) == MessageBoxResult.Yes)
+                        {
+                            ofd ??= new OpenFileDialog();
+                            ofd.Multiselect = false;
+                            ofd.Filter = "HappinessMP.Server.Exe | *.exe";
+                            if (!(ofd?.ShowDialog() ?? false) || string.IsNullOrEmpty(ofd.FileName) || config.servers.Any(x => x.Value.exe_file == ofd.FileName))
+                            {
+                                continue;
+                            }
+                            config.servers[kvp.Key].exe_file = ofd.FileName;
+                            markdirty = true;
+                        }
+                    }
+                    manager.Create(kvp.Value.exe_file, kvp.Value.guid, kvp.Value.auto_start);
+                }
+            }
+
+            if (markdirty)
+            {
+                await config.Save();
+            }
+
         }
 
         private async void Manager_OnDeleted(object sender, ServerInstance e)
@@ -123,9 +118,7 @@ namespace HSL.Windows
             }
         }
 
-        private void Manager_OnProcessStarted(object sender, ServerInstance e)
-        {
-        }
+        private void Manager_OnProcessStarted(object sender, ServerInstance e) {}
 
         private void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
@@ -141,7 +134,7 @@ namespace HSL.Windows
             currentInstance.StdOutput += (s, e) => Dispatcher.Invoke(() => rtb_ServerLog.ScrollToVerticalOffset(rtb_ServerLog.ActualHeight));
         }
 
-        private void RegisterListenered()
+        private void RegisterListeners()
         {
 
             lv_ServerList.SelectionChanged += (s, e) =>
@@ -170,6 +163,12 @@ namespace HSL.Windows
                     if (!File.Exists(Path.GetDirectoryName(ofd.FileName).CombineAsPath("settings.xml")))
                     {
                         MessageBox.Show("This path does not contain a valid HappinessMP server.", "Error", MessageBoxButton.OK);
+                        return;
+                    }
+                    
+                    if(config.servers.Any(x => x.Value.exe_file == ofd.FileName))
+                    {
+                        MessageBox.Show("This server has already been added.");
                         return;
                     }
                     ShowServerContext(manager.Create(ofd.FileName, false));
@@ -229,19 +228,28 @@ namespace HSL.Windows
                 }
             };
 
+
+            (lv_ResourceList.ContextMenu = new System.Windows.Controls.ContextMenu()).Items.Add(new System.Windows.Controls.MenuItem() { Header = "Open Folder" });
+            (lv_ServerList.ContextMenu = new System.Windows.Controls.ContextMenu()).Items.Add(new System.Windows.Controls.MenuItem() { Header = "Open Folder" });
+            (lv_ResourceList.ContextMenu.Items[0] as System.Windows.Controls.MenuItem).Click += (s, e) =>
+            {
+                if(lv_ResourceList.SelectedIndex >= 0)
+                {
+                    Process.Start("explorer.exe", currentInstance.resDir.CombineAsPath((string)lv_ResourceList.SelectedItem));
+                }
+            };
+            (lv_ServerList.ContextMenu.Items[0] as System.Windows.Controls.MenuItem).Click += (s, e) => { 
+                if(lv_ServerList.SelectedIndex >= 0 && lv_ServerList.SelectedItem is ServerInstance instance)
+                {
+                    Process.Start("explorer.exe", instance.servDir);
+                }
+            };
+
             mi_StartServer.Click += (s, e) => currentInstance?.Start();
 
             mi_StopServer.Click += (s, e) => currentInstance?.Stop();
 
-            mi_RestartServer.Click += async (s, e) =>
-            {
-                if (currentInstance != null)
-                {
-                    currentInstance.Stop();
-                    await Task.Delay(1000);
-                    currentInstance.Start();
-                }
-            };
+            mi_RestartServer.Click += (s, e) => currentInstance?.Restart();
 
             mi_DeleteServer.Click += (s, e) =>
             {
@@ -249,14 +257,14 @@ namespace HSL.Windows
                 {
                     return;
                 }
-
                 manager.Delete(currentInstance);
             };
+
+            mi_OpenServerDirectory.Click += (s, e) => Process.Start("explorer.exe", currentInstance.servDir);
 
             mi_CreateServer.Click += async (s, e) =>
             {
 
-                // open a valid/empty path
                 string directory = string.Empty;
                 using (System.Windows.Forms.FolderBrowserDialog fbd = new System.Windows.Forms.FolderBrowserDialog())
                 {
@@ -270,30 +278,20 @@ namespace HSL.Windows
 
                 if (!Utils.IsDirectoryEmpty(directory))
                 {
-                    MessageBox.Show("Directory given is not empty.");
+                    MessageBox.Show("Directory selected is not empty.");
                     return;
                 }
 
-                // make sure directory exists
-
                 if (!Directory.Exists(directory))
                 {
-                    try
-                    {
-                        Directory.CreateDirectory(directory);
-                    }
-                    catch
-                    {
-                        MessageBox.Show("Failed to create server in given directory.");
-                        return;
-                    }
+                    Directory.CreateDirectory(directory);
                 }
 
                 string url = await Utils.GetLatestServerURL();
 
                 if (string.IsNullOrEmpty(url))
                 {
-                    MessageBox.Show("Failed to download server files");
+                    MessageBox.Show("Failed to download server files.");
                     return;
                 }
 
@@ -308,7 +306,7 @@ namespace HSL.Windows
                 }
 
                 string tmpFolder = directory.CombineAsPath("temp");
-                string zip = directory.CombineAsPath(filename);
+                string zip = tmpFolder.CombineAsPath(filename + ".tmp");
 
                 if (!Directory.Exists(tmpFolder))
                 {
@@ -317,50 +315,37 @@ namespace HSL.Windows
 
                 try
                 {
-                    using (FileStream fs = File.Open(zip, FileMode.OpenOrCreate))
+                    await File.WriteAllBytesAsync(zip, _server_archive);
+                    using(FileStream fs = File.Open(zip, FileMode.Open, FileAccess.Read))
                     {
-                        await fs.WriteAsync(_server_archive, 0, _server_archive.Length);
-                        string root = null;
-                        using (ZipArchive archive = new ZipArchive(fs))
+                        using(ZipArchive archive = new ZipArchive(fs))
                         {
-                            if (!archive.Entries.Any(x => x.Name.IndexOf(".exe") > 0))
+                            if(!archive.Entries.Any(x => x.Name.IndexOf(".exe") > 0))
                             {
-                                MessageBox.Show("Failed to install server files 2.");
-                                return;
+                                throw new Exception("Failed to install server files.");
                             }
 
-
-                            root = archive.Entries[0].FullName;
-                            for (int i = 1; i < archive.Entries.Count; i++)
+                            for(int i = 1; i < archive.Entries.Count; i++)
                             {
-                                string file = archive.Entries[i].FullName.Substring(root.Length);
-                                string filepath = directory.CombineAsPath(file);
+                                string destination = directory.CombineAsPath(archive.Entries[i].FullName.Substring(archive.Entries[0].FullName.Length));
                                 if (archive.Entries[i].Length == 0)
                                 {
-                                    // this may or may not cause issues in future.
-                                    Directory.CreateDirectory(filepath);
+                                    Directory.CreateDirectory(destination);
                                     continue;
                                 }
-                                Trace.WriteLine("Extracting " + file);
-                                archive.Entries[i].ExtractToFile(filepath);
+                                archive.Entries[i].ExtractToFile(destination);
                             }
                         }
+                        Directory.Delete(tmpFolder, true);
                     }
-                    Directory.Delete(tmpFolder);
-                    File.Delete(zip);
                 }
                 catch (Exception ee)
                 {
-                    Trace.WriteLine(ee);
                     if (Directory.Exists(tmpFolder))
                     {
                         Directory.Delete(tmpFolder, true);
                     }
-                    if (File.Exists(zip))
-                    {
-                        File.Delete(zip);
-                    }
-                    MessageBox.Show("Failed to install server files: " + ee.ToString(), "Line 2412");
+                    MessageBox.Show("Failed to install server files: " + ee.ToString(), "Error", MessageBoxButton.OK);
                     return;
                 }
                 manager.Create(Directory.GetFiles(directory, "*.exe").FirstOrDefault(), false);
