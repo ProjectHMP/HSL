@@ -10,27 +10,15 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Xml;
 
-namespace HSL
+using HSL.Enums;
+
+namespace HSL.Core
 {
 
-    public enum ServerState : byte
-    {
-        Stopped = 0x0,
-        Started = 0x2,
-        Restarting = 0x4
-    }
-
-    public enum Episode
-    {
-        IV = 0,
-        TLAD = 1,
-        TBOGT = 2
-    }
 
     public class ServerInstance : INotifyPropertyChanged, IDisposable
     {
 
-        public static Episode[] Episodes = new Episode[] { Episode.IV, Episode.TLAD, Episode.TBOGT }; 
 
         public class ResourceMeta
         {
@@ -41,7 +29,6 @@ namespace HSL
         public event PropertyChangedEventHandler PropertyChanged;
         public Guid Guid { get; private set; }
         public List<string> ServerLog { get; private set; }
-        public string Name { get; private set; }
         public ServerState State { get; private set; } = ServerState.Stopped;
         public List<ResourceMeta> Resources { get; private set; }
         public Dictionary<string, ResourceMeta> ResourceMap { get; private set; }
@@ -50,182 +37,70 @@ namespace HSL
 
         private object _docSaveLock = new object();
 
+        public string Name
+        {
+            get => ServerSettings.Get<string>("hostname", "HappinessMP");
+            set => ServerSettings.Set<string>("hostname", value);
+        }
+
         public string Hostname
         {
-            get
-            {
-                if (Document != null)
-                {
-                    XmlNode node = Document.DocumentElement.SelectSingleNode("hostname");
-                    if(node != null && !string.IsNullOrEmpty(node.InnerText))
-                    {
-                        return node.InnerText;
-                    }
-                }
-                return "HappinessMP";
-            }
+            get => ServerSettings.Get<string>("hostname", "HappinessMP");
             set
             {
-                if (Document != null)
-                {
-                    XmlNode node = Document.DocumentElement.SelectSingleNode("hostname");
-                    if (node == null)
-                    {
-                        node = Document.CreateNode("element", "hostname", "");
-                        Document.DocumentElement.AppendChild(node);
-                    }
-                    node.InnerText = value;
-                    OnPropertyChanged(nameof(Hostname));
-                    lock (_docSaveLock)
-                    {
-                        Document.Save(ServerConfiguration);
-                    }
-                }
+                ServerSettings.Set<string>("hostname", value);
+                OnPropertyChanged(nameof(Hostname));
             }
         }
 
         public bool Listed
         {
-            get
+            get => ServerSettings.Get<bool>("listed", false);
+            set
             {
-                if(Document != null)
-                {
-                    XmlNode node = Document.DocumentElement.SelectSingleNode("listed");
-                    if(node != null && !string.IsNullOrEmpty(node.InnerText) && bool.TryParse(node.InnerText, out bool b))
-                    {
-                        return b;
-                    }
-                }
-                return false;
-            }
-            set {
-                if(Document != null)
-                {
-                    XmlNode node = Document.DocumentElement.SelectSingleNode("listed");
-                    if (node == null)
-                    {
-                        node = Document.CreateNode("element", "listed", "");
-                        Document.DocumentElement.AppendChild(node);
-                    }
-                    node.InnerText = value.ToString().ToLower();
-                    OnPropertyChanged(nameof(Listed));
-                    lock (_docSaveLock)
-                    {
-                        Document.Save(ServerConfiguration);
-                    }
-                }
+                ServerSettings.Set<bool>("listed", value);
+                OnPropertyChanged(nameof(Listed));
             }
         }
 
         public int Port
         {
-            get
-            {
-                if (Document != null)
-                {
-                    XmlNode node = Document.DocumentElement.SelectSingleNode("port");
-                    if (node != null && !string.IsNullOrEmpty(node.InnerText) && int.TryParse(node.InnerText, out int b))
-                    {
-                        return b;
-                    }
-                }
-                return 9999;
-            }
+            get => ServerSettings.Get<int>("port", 9999);
             set
             {
-                if (Document != null)
-                {
-                    XmlNode node = Document.DocumentElement.SelectSingleNode("port");
-                    if (node == null)
-                    {
-                        node = Document.CreateNode("element", "port", "");
-                        Document.DocumentElement.AppendChild(node);
-                    }
-                    node.InnerText = value.ToString().ToLower();
-                    OnPropertyChanged(nameof(Port));
-                    lock (_docSaveLock)
-                    {
-                        Document.Save(ServerConfiguration);
-                    }
-                }
+                ServerSettings.Set<int>("port", Math.Min(65535, value));
+                OnPropertyChanged(nameof(Port));
             }
         }
 
         public int MaxPlayers
         {
-            get
-            {
-                if (Document != null)
-                {
-                    XmlNode node = Document.DocumentElement.SelectSingleNode("maxplayers");
-                    if (node != null && !string.IsNullOrEmpty(node.InnerText) && int.TryParse(node.InnerText, out int b))
-                    {
-                        return b;
-                    }
-                }
-                return 100;
-            }
+            get => ServerSettings.Get<int>("maxplayers", 100);
             set
             {
-                if (Document != null)
-                {
-                    XmlNode node = Document.DocumentElement.SelectSingleNode("maxplayers");
-                    if (node == null)
-                    {
-                        node = Document.CreateNode("element", "maxplayers", "");
-                        Document.DocumentElement.AppendChild(node);
-                    }
-                    node.InnerText = Math.Min(100, value).ToString();
-                    OnPropertyChanged(nameof(MaxPlayers));
-                    lock (_docSaveLock)
-                    {
-                        Document.Save(ServerConfiguration);
-                    }
-                }
+                ServerSettings.Set<int>("maxplayers", Math.Min(100, value));
+                OnPropertyChanged(nameof(MaxPlayers));
             }
         }
 
         public Episode Episode
         {
-            get
-            {
-                if (Document != null)
-                {
-                    XmlNode node = Document.DocumentElement.SelectSingleNode("episode");
-                    if (node != null && !string.IsNullOrEmpty(node.InnerText) && Enum.TryParse<Episode>(node.InnerText, out Episode b))
-                    {
-                        return b;
-                    }
-                }
-                return Episode.IV;
-            }
+            get => Episode.TryParse(ServerSettings.Get<string>("episode", "0"), out Episode episode) ? episode : Episode.IV;
             set
             {
-                if (Document != null)
-                {
-                    XmlNode node = Document.DocumentElement.SelectSingleNode("episode");
-                    if (node == null)
-                    {
-                        node = Document.CreateNode("element", "episode", "");
-                        Document.DocumentElement.AppendChild(node);
-                    }
-                    node.InnerText = ((int)value).ToString();
-                    OnPropertyChanged(nameof(Episode));
-                    lock (_docSaveLock)
-                    {
-                        Document.Save(ServerConfiguration);
-                    }
-                }
+                ServerSettings.Set<int>("episode", (int)value);
+                OnPropertyChanged(nameof(Episode));
             }
         }
 
         public TimeSpan RestartTimer { get; private set; } = TimeSpan.Zero;
-
         internal string ServerDirectory { get; private set; }
         internal string ResourceDirectory { get; private set; }
         internal string ExePath { get; private set; }
         internal string LogFile { get; private set; }
         internal string ServerConfiguration { get; private set; }
+
+        internal ServerSettings ServerSettings { get; private set; }
 
         private XmlDocument Document = new XmlDocument();
 
@@ -248,13 +123,17 @@ namespace HSL
             ExePath = serverExe;
             StartAutomatically = autoStart;
             ServerDirectory = Path.GetDirectoryName(serverExe);
-            LogFile = ServerDirectory.CombineAsPath("server.log");
-            ResourceDirectory = ServerDirectory.CombineAsPath("resources");
-            ServerConfiguration = ServerDirectory.CombineAsPath("settings.xml");
+            LogFile = ServerDirectory.CombinePath("server.log");
+            ResourceDirectory = ServerDirectory.CombinePath("resources");
+            ServerConfiguration = ServerDirectory.CombinePath("settings.xml");
             State = ServerState.Stopped;
+
+            ServerSettings = new ServerSettings(ServerConfiguration);
+
             Resources = new List<ResourceMeta>();
             ResourceMap = new Dictionary<string, ResourceMeta>();
             ServerLog = new List<string>();
+
             _resourceWatcher = new FileSystemWatcher(ResourceDirectory)
             {
                 EnableRaisingEvents = true,
@@ -282,16 +161,12 @@ namespace HSL
             if (!File.Exists(ServerConfiguration))
                 return false;
 
-            Document = new XmlDocument();
-            Document.Load(ServerConfiguration);
+            ServerSettings = new ServerSettings(ServerConfiguration);
 
-            Name = Document.DocumentElement.SelectSingleNode("hostname").InnerText;
-            foreach(XmlNode resource in Document.DocumentElement.SelectNodes("resource"))
+            foreach (XmlNode resource in ServerSettings.GetNodes("resource"))
             {
-
                 Trace.WriteLine("Found XML Resource: " + resource.InnerText);
-
-                if(!ResourceMap.ContainsKey(resource.InnerText))
+                if (!ResourceMap.ContainsKey(resource.InnerText))
                 {
                     ResourceMap.Add(resource.InnerText, new ResourceMeta { Name = resource.InnerText, IsEnabled = true });
                     Resources.Add(ResourceMap[resource.InnerText]);
@@ -311,15 +186,15 @@ namespace HSL
             lock (_resourceListLock)
             {
                 // grab resource directory names, that has a valid meta.xml file (later validations)
-                var _resources = Directory.GetFileSystemEntries(ResourceDirectory).Where(path => File.Exists(path.CombineAsPath("meta.xml"))).Select(Path.GetFileName);
+                var _resources = Directory.GetFileSystemEntries(ResourceDirectory).Where(path => File.Exists(path.CombinePath("meta.xml"))).Select(Path.GetFileName);
 
                 // remove resources that no longer exist
                 Resources.RemoveAll(x => _resources.Contains(x.Name) ? false : ResourceMap.Remove(x.Name));
-                
+
                 // add new resources
-                foreach(var resource in _resources)
+                foreach (var resource in _resources)
                 {
-                    if(!ResourceMap.ContainsKey(resource))
+                    if (!ResourceMap.ContainsKey(resource))
                     {
                         ResourceMap.Add(resource, new ResourceMeta { Name = resource, IsEnabled = false });
                         Resources.Add(ResourceMap[resource]);
@@ -364,13 +239,11 @@ namespace HSL
 
                     // reload resource if was enabled
                     // make sure this is a valid resource (will add more checks later)
-                    if(AutoReloadResources && IsProcessRunning() && File.Exists(ResourceDirectory.CombineAsPath(match.Groups[1].Value, "meta.xml")))
+                    if (AutoReloadResources && IsProcessRunning() && File.Exists(ResourceDirectory.CombinePath(match.Groups[1].Value, "meta.xml")))
                     {
                         SendInput("stop " + match.Groups[1].Value);
                         SendInput("start " + match.Groups[1].Value);
                     }
-
-                    Trace.WriteLine("Resource Updating: " + match.Groups[1].Value);
                 }
             }
             catch { }
@@ -397,7 +270,7 @@ namespace HSL
 
         internal async void Restart()
         {
-            if(Stop())
+            if (Stop())
             {
                 await Task.Delay(1000);
                 Start();
@@ -406,9 +279,9 @@ namespace HSL
 
         internal void ReloadAllResources()
         {
-            lock(_resourceListLock)
+            lock (_resourceListLock)
             {
-                foreach(string resource in ResourceMap.Keys)
+                foreach (string resource in ResourceMap.Keys)
                 {
                     ReloadResource(resource);
                 }
@@ -419,7 +292,7 @@ namespace HSL
         {
             lock (_resourceListLock)
             {
-                foreach(string resource in ResourceMap.Keys)
+                foreach (string resource in ResourceMap.Keys)
                 {
                     StartResource(resource);
                 }
@@ -428,9 +301,9 @@ namespace HSL
 
         internal void StopAllResources()
         {
-            lock(_resourceListLock)
+            lock (_resourceListLock)
             {
-                foreach(string resource in ResourceMap.Keys)
+                foreach (string resource in ResourceMap.Keys)
                 {
                     StopResource(resource);
                 }
@@ -443,16 +316,18 @@ namespace HSL
             StartResource(name);
         }
 
-        internal void StartResource(string name) {
-            if(SendInput("start " + name) && ResourceMap.ContainsKey(name))
+        internal void StartResource(string name)
+        {
+            if (SendInput("start " + name) && ResourceMap.ContainsKey(name))
             {
                 ResourceMap[name].IsEnabled = true;
                 OnPropertyChanged(nameof(Resources));
                 OnPropertyChanged(nameof(ResourceMap));
             }
         }
-        internal void StopResource(string name) {
-            if(SendInput("stop " + name) && ResourceMap.ContainsKey(name))
+        internal void StopResource(string name)
+        {
+            if (SendInput("stop " + name) && ResourceMap.ContainsKey(name))
             {
                 ResourceMap[name].IsEnabled = false;
                 OnPropertyChanged(nameof(Resources));

@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32;
+﻿using HSL.Core;
+using Microsoft.Win32;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -29,7 +30,7 @@ namespace HSL.Windows
 
             AppDomain.CurrentDomain.UnhandledException += async (s, e) =>
             {
-                string cr = Utils.CurrentDirectory.CombineAsPath("crash-report.txt");
+                string cr = Utils.CurrentDirectory.CombinePath("crash-report.txt");
                 if (File.Exists(cr))
                 {
                     File.Delete(cr);
@@ -176,7 +177,7 @@ namespace HSL.Windows
                 _ofd.Filter = "HappinessMP.Server.Exe | *.exe";
                 if (_ofd.ShowDialog() ?? false)
                 {
-                    if (!File.Exists(Path.GetDirectoryName(_ofd.FileName).CombineAsPath("settings.xml")))
+                    if (!File.Exists(Path.GetDirectoryName(_ofd.FileName).CombinePath("settings.xml")))
                     {
                         MessageBox.Show("This path does not contain a valid HappinessMP server.", "Error", MessageBoxButton.OK);
                         return;
@@ -230,7 +231,7 @@ namespace HSL.Windows
             {
                 if(lv_ResourceList.SelectedIndex >= 0 && lv_ResourceList.SelectedItems is ServerInstance.ResourceMeta meta)
                 {
-                    Process.Start("explorer.exe", currentInstance.ResourceDirectory.CombineAsPath(meta.Name));
+                    Process.Start("explorer.exe", currentInstance.ResourceDirectory.CombinePath(meta.Name));
                 }
             };
             (lv_ServerList.ContextMenu.Items[0] as System.Windows.Controls.MenuItem).Click += (s, e) => { 
@@ -256,6 +257,99 @@ namespace HSL.Windows
             };
 
             mi_OpenServerDirectory.Click += (s, e) => Process.Start("explorer.exe", currentInstance.ServerDirectory);
+
+            mi_UpdateServer.Click += async (s, e) =>
+            {
+                
+                if(currentInstance == null)
+                {
+                    return;
+                }
+
+                if(currentInstance.State != Enums.ServerState.Stopped)
+                {
+                    MessageBox.Show("Please stop the server first before updating!");
+                    return;
+                }
+
+                string url = await Utils.GetLatestServerURL();
+
+                if (string.IsNullOrEmpty(url))
+                {
+                    MessageBox.Show("Failed to download server files.");
+                    return;
+                }
+
+                string filename = url.Split("/")[^1];
+
+                byte[] _server_archive = await Utils.HTTP.GetBinaryAsync(url);
+
+                if (_server_archive == null || _server_archive.Length < 1024)
+                {
+                    MessageBox.Show("Failed to download server files.");
+                    return;
+                }
+
+                string tmpFolder = currentInstance.ServerDirectory.CombinePath(".hsl");
+                string zip = tmpFolder.CombinePath(filename + ".tmp");
+
+                if (!Directory.Exists(tmpFolder))
+                {
+                    Directory.CreateDirectory(tmpFolder);
+                }
+
+                try
+                {
+                    await File.WriteAllBytesAsync(zip, _server_archive);
+
+                    string version = string.Empty;
+
+                    using(FileStream fs = File.Open(zip, FileMode.Open, FileAccess.Read))
+                    {
+                        using (ZipArchive archive = new ZipArchive(fs))
+                        {
+                            if(!archive.Entries.Any(x => x.Name.IndexOf(".exe") > 0))
+                            {
+                                throw new Exception("Failed to install server files.");
+                            }
+
+                            version = archive.Entries[0].Name;
+
+                            for(int i = 1; i < archive.Entries.Count; i++)
+                            {
+                                if (archive.Entries[i].FullName.IndexOf("resources") >= 0 || archive.Entries[i].Name == "settings.xml")
+                                {
+                                    continue;
+                                }
+
+                                string file = currentInstance.ServerDirectory.CombinePath(archive.Entries[i].FullName.Substring(archive.Entries[0].FullName.Length));
+
+                                if (File.Exists(file))
+                                {
+                                    File.Delete(file);
+                                }
+                                archive.Entries[i].ExtractToFile(file);
+                            }
+                        }
+                    }
+
+                    if (Directory.Exists(tmpFolder))
+                    {
+                        Directory.Delete(tmpFolder, true);
+                    }
+
+                    MessageBox.Show("Updated Server: " + version);
+
+                }
+                catch(Exception ee) {
+                    if(Directory.Exists(tmpFolder))
+                    {
+                        Directory.Delete(tmpFolder, true);
+                    }
+                    MessageBox.Show("Failed to install server files: " + ee.ToString(), "Error", MessageBoxButton.OK);
+                }
+
+            };
 
             mi_CreateServer.Click += async (s, e) =>
             {
@@ -300,8 +394,8 @@ namespace HSL.Windows
                     return;
                 }
 
-                string tmpFolder = directory.CombineAsPath("temp");
-                string zip = tmpFolder.CombineAsPath(filename + ".tmp");
+                string tmpFolder = directory.CombinePath(".hsl");
+                string zip = tmpFolder.CombinePath(filename + ".tmp");
 
                 if (!Directory.Exists(tmpFolder))
                 {
@@ -322,7 +416,7 @@ namespace HSL.Windows
 
                             for(int i = 1; i < archive.Entries.Count; i++)
                             {
-                                string destination = directory.CombineAsPath(archive.Entries[i].FullName.Substring(archive.Entries[0].FullName.Length));
+                                string destination = directory.CombinePath(archive.Entries[i].FullName.Substring(archive.Entries[0].FullName.Length));
                                 if (archive.Entries[i].Length == 0)
                                 {
                                     Directory.CreateDirectory(destination);

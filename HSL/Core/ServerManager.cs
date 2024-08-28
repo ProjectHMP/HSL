@@ -1,28 +1,27 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Collections.Generic;
 using System.Linq;
 
-namespace HSL
+namespace HSL.Core
 {
-    public class ServerManager : IDisposable //: INotifyPropertyChanged
+    public class ServerManager : IDisposable,INotifyPropertyChanged
     {
 
         public event PropertyChangedEventHandler PropertyChanged;
+        public List<ServerInstance> servers { get; private set; }
 
-        internal event EventHandler<ServerInstance> OnCreated;
-        internal event EventHandler<ServerInstance> OnDeleted;
-
-        internal event EventHandler<ServerInstance> OnProcessStarted;
-        internal event EventHandler<ServerInstance> OnProcessStopped;
-
-        public ObservableCollection<ServerInstance> servers { get; private set; }
-
-        internal ServerManager() => servers = new ObservableCollection<ServerInstance>();
+        internal event EventHandler<ServerInstance> OnCreated, OnDeleted, OnProcessStarted, OnProcessStopped;
 
         private object _serverLock = new object();
 
-        // private void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        internal ServerManager()
+        {
+            servers = new List<ServerInstance>();
+        }
+
+        private void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
         internal ServerInstance Create(string exePath, bool autoStart = false) => Create(exePath, Guid.NewGuid(), autoStart);
         internal ServerInstance Create(string exePath, Guid guid, bool autoStart = false)
@@ -31,13 +30,12 @@ namespace HSL
             instance.ProcessStarted += (s, e) => HandleEvent(OnProcessStarted, instance);
             instance.ProcessStopped += (s, e) => HandleEvent(OnProcessStopped, instance);
             servers.Add(instance);
-            // OnPropertyChanged(nameof(servers));
             OnCreated?.Invoke(null, instance);
+            OnPropertyChanged(nameof(servers));
             return instance;
         }
 
-        private void HandleEvent(EventHandler<ServerInstance> handler, ServerInstance instance)
-            => handler?.Invoke(this, instance);
+        private void HandleEvent(EventHandler<ServerInstance> handler, ServerInstance instance) => handler?.Invoke(this, instance);
 
         internal bool Delete(Guid guid) => Delete(servers.Where(x => x.Guid == guid).FirstOrDefault());
 
@@ -65,7 +63,7 @@ namespace HSL
             {
                 foreach (ServerInstance instance in servers)
                 {
-                    //instance.Dispose();
+                    instance.Dispose();
                 }
                 servers.Clear();
             }

@@ -3,7 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:hsl="clr-namespace:HSL"
+        xmlns:local="clr-namespace:HSL"
+        xmlns:enums="clr-namespace:HSL.Enums"
+        xmlns:core="clr-namespace:HSL.Core"
         mc:Ignorable="d"
         Title="Happiness Server Launcher" Height="444" Width="834"
         Background="Black"
@@ -17,49 +19,6 @@
                     <Setter Property="IsHitTestVisible" Value="False"></Setter>
                 </Trigger>
             </Style.Triggers>
-        </Style>
-
-        <Style TargetType="{x:Type CheckBox}">
-            <Setter Property="Background" Value="White" />
-            <Setter Property="BorderBrush" Value="#FF262E34"/>
-            <!--                           your color here -->
-            <Setter Property="Foreground" Value="HotPink"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type CheckBox}">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch" >
-                            <Border BorderBrush="{TemplateBinding BorderBrush}" Background="{TemplateBinding Background}" BorderThickness="{TemplateBinding BorderThickness}" Width="15" Height="15">
-                                <Grid>
-                                    <Grid Background="{TemplateBinding Foreground}" Margin="1" Visibility="Collapsed" Name="nullBlock"/>
-                                    <Path Stretch="Uniform" Width="15" Height="10" Fill="{TemplateBinding Foreground}" Name="eliCheck" Data="F1 M 9.97498,1.22334L 4.6983,9.09834L 4.52164,9.09834L 0,5.19331L 1.27664,3.52165L 4.255,6.08833L 8.33331,1.52588e-005L 9.97498,1.22334 Z " Visibility="Collapsed"/>
-                                </Grid>
-                            </Border>
-                            <TextBlock Margin="5,0,0,0"  VerticalAlignment="Center" Foreground="White" Text="{TemplateBinding Content}"></TextBlock>
-                        </StackPanel>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="LightGray" />
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" Value="#FF9C9E9F" />
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Background" Value="LightGray" />
-                                <Setter Property="Foreground" Value="Gray" />
-                                <Setter Property="BorderBrush" Value="Gray"/>
-                                <Setter TargetName="eliCheck" Property="Opacity" Value="0.5" />
-                            </Trigger>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="eliCheck" Property="Visibility" Value="Visible"></Setter>
-                            </Trigger>
-                            <Trigger Property="IsChecked" Value="{x:Null}">
-                                <Setter TargetName="nullBlock" Property="Visibility" Value="Visible"></Setter>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
         </Style>
     </Window.Resources>
     <Grid Background="{StaticResource bgColor}">
@@ -113,7 +72,7 @@
                                     <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
                                         <Setter Property="IsEnabled" Value="False"></Setter>
                                         <Style.Triggers>
-                                            <DataTrigger Binding="{Binding currentInstance.State, UpdateSourceTrigger=PropertyChanged, Mode=OneWay, NotifyOnSourceUpdated=True, IsAsync=True, Delay=100}" Value="{x:Static hsl:ServerState.Stopped}">
+                                            <DataTrigger Binding="{Binding currentInstance.State, UpdateSourceTrigger=PropertyChanged, Mode=OneWay, NotifyOnSourceUpdated=True, IsAsync=True, Delay=100}" Value="{x:Static enums:ServerState.Stopped}">
                                                 <Setter Property="IsEnabled" Value="True"></Setter>
                                             </DataTrigger>
                                         </Style.Triggers>
@@ -125,7 +84,7 @@
                                     <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
                                         <Setter Property="IsEnabled" Value="False"></Setter>
                                         <Style.Triggers>
-                                            <DataTrigger Binding="{Binding currentInstance.State, UpdateSourceTrigger=PropertyChanged, Mode=OneWay, NotifyOnSourceUpdated=True, IsAsync=True, Delay=100}" Value="{x:Static hsl:ServerState.Started}">
+                                            <DataTrigger Binding="{Binding currentInstance.State, UpdateSourceTrigger=PropertyChanged, Mode=OneWay, NotifyOnSourceUpdated=True, IsAsync=True, Delay=100}" Value="{x:Static enums:ServerState.Started}">
                                                 <Setter Property="IsEnabled" Value="True"></Setter>
                                             </DataTrigger>
                                         </Style.Triggers>
@@ -137,7 +96,7 @@
                                     <Style TargetType="{x:Type MenuItem}">
                                         <Setter Property="IsEnabled" Value="False"></Setter>
                                         <Style.Triggers>
-                                            <DataTrigger Binding="{Binding Path=currentInstance.State, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static hsl:ServerState.Started}">
+                                            <DataTrigger Binding="{Binding Path=currentInstance.State, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static enums:ServerState.Started}">
                                                 <Setter Property="IsEnabled" Value="True"></Setter>
                                             </DataTrigger>
                                         </Style.Triggers>
@@ -149,7 +108,7 @@
                                     <Style TargetType="{x:Type MenuItem}">
                                         <Setter Property="IsEnabled" Value="False"></Setter>
                                         <Style.Triggers>
-                                            <DataTrigger Binding="{Binding currentInstance.State, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static hsl:ServerState.Stopped}">
+                                            <DataTrigger Binding="{Binding currentInstance.State, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static enums:ServerState.Stopped}">
                                                 <Setter Property="IsEnabled" Value="True"></Setter>
                                             </DataTrigger>
                                         </Style.Triggers>
@@ -157,7 +116,6 @@
                                 </MenuItem.Style>
                             </MenuItem>
                             <MenuItem x:Name="mi_OpenServerDirectory" Header="Open Directory">
-
                             </MenuItem>
                             <MenuItem x:Name="mi_DeleteServer" Header="Delete"></MenuItem>
                             <MenuItem.Style>
@@ -166,10 +124,10 @@
                                         <DataTrigger Binding="{Binding Path=currentInstance, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, Delay=500}" Value="{x:Null}">
                                             <Setter Property="IsEnabled" Value="False"></Setter>
                                         </DataTrigger>
-                                        <DataTrigger Binding="{Binding Path=currentInstance.State, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" Value="{x:Static hsl:ServerState.Started}">
+                                        <DataTrigger Binding="{Binding Path=currentInstance.State, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" Value="{x:Static enums:ServerState.Started}">
                                             <Setter Property="Foreground" Value="Green"></Setter>
                                         </DataTrigger>
-                                        <DataTrigger Binding="{Binding Path=currentInstance.State, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" Value="{x:Static hsl:ServerState.Stopped}">
+                                        <DataTrigger Binding="{Binding Path=currentInstance.State, Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" Value="{x:Static enums:ServerState.Stopped}">
                                             <Setter Property="Foreground" Value="Red"></Setter>
                                         </DataTrigger>
                                     </Style.Triggers>
@@ -202,7 +160,7 @@
                         <Style TargetType="{x:Type TextBox}">
                             <Setter Property="IsEnabled" Value="False"></Setter>
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding currentInstance.State, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static hsl:ServerState.Started}">
+                                <DataTrigger Binding="{Binding currentInstance.State, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static enums:ServerState.Started}">
                                     <Setter Property="IsEnabled" Value="True"></Setter>
                                 </DataTrigger>
                             </Style.Triggers>
@@ -266,7 +224,7 @@
                             <Style TargetType="{x:Type ListView}">
                                 <Setter Property="IsHitTestVisible" Value="False"></Setter>
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding currentInstance.State, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static hsl:ServerState.Started}">
+                                    <DataTrigger Binding="{Binding currentInstance.State, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static enums:ServerState.Started}">
                                         <Setter Property="IsHitTestVisible" Value="True"></Setter>
                                     </DataTrigger>
                                 </Style.Triggers>
@@ -293,7 +251,18 @@
                                     </Style>
                                 </Button.Style>
                             </Button>
-                            <Button x:Name="btn_StartAllResources" Grid.Column="1" Content="All"></Button>
+                            <Button x:Name="btn_StartAllResources" Grid.Column="1" Content="All">
+                                <Button.Style>
+                                    <Style TargetType="{x:Type Button}" BasedOn="{StaticResource btnStyle}">
+                                        <Setter Property="IsEnabled" Value="False"></Setter>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding currentInstance.State, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static enums:ServerState.Started}">
+                                                <Setter Property="IsEnabled" Value="True"></Setter>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                         </Grid>
                         <!-- Stop Button -->
                         <Grid>
@@ -312,7 +281,18 @@
                                     </Style>
                                 </Button.Style>
                             </Button>
-                            <Button x:Name="btn_StopAllResources" Grid.Column="1" Content="All"></Button>
+                            <Button x:Name="btn_StopAllResources" Grid.Column="1" Content="All">
+                                <Button.Style>
+                                    <Style TargetType="{x:Type Button}" BasedOn="{StaticResource btnStyle}">
+                                        <Setter Property="IsEnabled" Value="False"></Setter>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding currentInstance.State, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static enums:ServerState.Started}">
+                                                <Setter Property="IsEnabled" Value="True"></Setter>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                         </Grid>
                         <!-- Reload Button -->
                         <Grid>
@@ -331,7 +311,18 @@
                                     </Style>
                                 </Button.Style>
                             </Button>
-                            <Button x:Name="btn_ReloadAllResources" Grid.Column="1" Content="All"></Button>
+                            <Button x:Name="btn_ReloadAllResources" Grid.Column="1" Content="All">
+                                <Button.Style>
+                                    <Style TargetType="{x:Type Button}" BasedOn="{StaticResource btnStyle}">
+                                        <Setter Property="IsEnabled" Value="False"></Setter>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding currentInstance.State, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static enums:ServerState.Started}">
+                                                <Setter Property="IsEnabled" Value="True"></Setter>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                         </Grid>
 
                         <Label Content="Automatic Settings" Foreground="{StaticResource txtColor}" FontSize="10" HorizontalContentAlignment="Center" Padding="5" FontWeight="Bold"></Label>
@@ -370,7 +361,7 @@
                         <CheckBox Grid.Row="3" Grid.Column="1" IsChecked="{Binding currentInstance.Listed, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Background="Transparent" Foreground="White"></CheckBox>
 
                         <Label Grid.Row="4" Grid.Column="0" Content="Episode" Foreground="{StaticResource txtColor}" FontSize="10" Padding="5 0 0 0" Margin="0"></Label>
-                        <ComboBox Grid.Row="4" Grid.Column="2" ItemsSource="{x:Static hsl:ServerInstance.Episodes}" Margin="0" Padding="5 0 0 0" FontSize="13" SelectedItem="{Binding currentInstance.Episode}" Background="{StaticResource cmdBgColor}">
+                        <ComboBox Grid.Row="4" Grid.Column="2" ItemsSource="{x:Static local:Constants.Episodes}" Margin="0" Padding="5 0 0 0" FontSize="13" SelectedItem="{Binding currentInstance.Episode}" Background="{StaticResource cmdBgColor}">
                  
                         </ComboBox>
                     </Grid>
@@ -380,7 +371,7 @@
                         <RowDefinition Height="20"></RowDefinition>
                         <RowDefinition Height="*"></RowDefinition>
                     </Grid.RowDefinitions>
-                    <Label Foreground="{StaticResource txtColor}" FontSize="10" VerticalContentAlignment="Center" Padding="5 0 0 0" FontWeight="Bold">Auto Restart Scheduler</Label>
+                    
                     <Border Grid.Row="1" Background="Transparent"  BorderBrush="#4682B4" BorderThickness="0 .2 0 .2">
                         <Grid>
                             <Grid.RowDefinitions>
@@ -389,6 +380,7 @@
                                 <RowDefinition Height="20"></RowDefinition>
                                 <RowDefinition Height="*"></RowDefinition>
                             </Grid.RowDefinitions>
+                            <Label Grid.Row="0" Grid.ColumnSpan="5" Foreground="{StaticResource txtColor}" FontSize="10" VerticalContentAlignment="Center" Padding="5 0 0 0" FontWeight="Bold">Auto Restart Scheduler</Label>
                             <Grid Grid.Row="1">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"></ColumnDefinition>
@@ -397,6 +389,7 @@
                                     <ColumnDefinition Width="10"></ColumnDefinition>
                                     <ColumnDefinition Width="*"></ColumnDefinition>
                                 </Grid.ColumnDefinitions>
+
                                 <TextBox Grid.Column="0" Background="Transparent" Margin="0" Padding="0 0 0 0" HorizontalContentAlignment="Center" Foreground="{StaticResource txtColor}"></TextBox>
                                 <Label Grid.Column="1" Margin="0" Padding="0" HorizontalContentAlignment="Center" Content=":" Foreground="{StaticResource txtColor}" FontWeight="Bold"></Label>
                                 <TextBox Grid.Column="2" Background="Transparent" Margin="0" Padding="0 0 0 0" HorizontalContentAlignment="Center" Foreground="{StaticResource txtColor}"></TextBox>

@@ -21,9 +21,9 @@ namespace HSL
             return false;
         }
 
-        internal static string CombineAsPath(this string s, string s1) => Path.Combine(s, s1);
-        internal static string CombineAsPath(this string s, string s1, string s2) => Path.Combine(s, s1, s2);
-        internal static string CombineAsPath(this string s, string s1, string s2, string s3) => Path.Combine(s, s1, s2, s3);
+        internal static string CombinePath(this string s, string s1) => Path.Combine(s, s1);
+        internal static string CombinePath(this string s, string s1, string s2) => Path.Combine(s, s1, s2);
+        internal static string CombinePath(this string s, string s1, string s2, string s3) => Path.Combine(s, s1, s2, s3);
 
     }
 }

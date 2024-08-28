@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace HSL
+namespace HSL.Core
 {
     internal class HSLConfig
     {
@@ -30,7 +30,7 @@ namespace HSL
 
         internal static async Task<HSLConfig> Load(string file)
         {
-            file = Utils.CurrentDirectory.CombineAsPath(file);
+            file = Utils.CurrentDirectory.CombinePath(file);
             bool exists = File.Exists(file);
             HSLConfig config = null;
             if (exists)
