@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace HSL.Enums
+﻿namespace HSL.Enums
 {
     public enum ServerState : byte
     {

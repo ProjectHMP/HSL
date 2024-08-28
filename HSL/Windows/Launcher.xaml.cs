@@ -7,9 +7,9 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Timers;
 using System.Windows;
 using System.Windows.Input;
-using System.Timers;
 
 namespace HSL.Windows
 {
@@ -38,7 +38,12 @@ namespace HSL.Windows
                 {
                     File.Delete(cr);
                 }
-                await File.WriteAllTextAsync(cr, e.ToString());
+                await File.WriteAllTextAsync(cr, ((Exception)e.ExceptionObject).ToString());
+
+                if(e.IsTerminating)
+                {
+                    Dispose();
+                }
             };
 
             Closing += (s, e) => Dispose();
@@ -48,11 +53,11 @@ namespace HSL.Windows
             manager.OnDeleted += Manager_OnDeleted;
 
             DataContext = this;
-            _timer = new Timer() { Enabled = true, Interval = 5000 };
+            _timer = new Timer() { Enabled = true, Interval = 2500 };
 
             LoadConfiguration().ConfigureAwait(false).GetAwaiter(); // intentional thread lock
 
-            if(manager.servers.Count > 0)
+            if (manager.servers.Count > 0)
             {
                 ShowServerContext(manager.servers.FirstOrDefault());
             }
@@ -66,13 +71,13 @@ namespace HSL.Windows
             Config = await HSLConfig.Load("hsl.json");
 
             bool markdirty = false;
-            lock(_configLock)
+            lock (_configLock)
             {
                 foreach (var key in Config.servers.Keys)
                 {
                     if (!Directory.Exists(Path.GetDirectoryName(Config.servers[key].exe_file)) || !File.Exists(Config.servers[key].exe_file))
                     {
-                        if (MessageBox.Show(String.Format("Failed to load pre-existing server: {0}{1}Would you like to change location?", "Error", MessageBoxButton.YesNo)) == MessageBoxResult.Yes)
+                        if (MessageBox.Show(String.Format("Failed to load pre-existing server: {0}{1}Would you like to change location?", Environment.NewLine, Config.servers[key].exe_file), "Error", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                         {
                             _ofd ??= new OpenFileDialog();
                             _ofd.Multiselect = false;
@@ -98,7 +103,7 @@ namespace HSL.Windows
 
         private async void Manager_OnDeleted(object sender, ServerInstance e)
         {
-            if(e == currentInstance)
+            if (e == currentInstance)
             {
                 ShowServerContext(null);
             }
@@ -130,7 +135,7 @@ namespace HSL.Windows
             currentInstance = instance;
             OnPropertyChanged(nameof(currentInstance));
 
-            if(currentInstance != null)
+            if (currentInstance != null)
             {
                 rtb_ServerLog.ScrollToVerticalOffset(rtb_ServerLog.ActualHeight);
                 currentInstance.StdOutput += (s, e) => Dispatcher.Invoke(() => rtb_ServerLog.ScrollToVerticalOffset(rtb_ServerLog.ActualHeight));
@@ -142,9 +147,9 @@ namespace HSL.Windows
         private void RegisterListeners()
         {
 
-            _timer.Elapsed += async (s, e) => {
-                Trace.WriteLine("Timer Elapsed!");
-                if(manager.IsDirty(true))
+            _timer.Elapsed += async (s, e) =>
+            {
+                if (manager.IsDirty(true))
                 {
                     await Config.Save();
                 }
@@ -178,8 +183,8 @@ namespace HSL.Windows
                         MessageBox.Show("This path does not contain a valid HappinessMP server.", "Error", MessageBoxButton.OK);
                         return;
                     }
-                    
-                    if(Config.servers.Any(x => x.Value.exe_file == _ofd.FileName))
+
+                    if (Config.servers.Any(x => x.Value.exe_file == _ofd.FileName))
                     {
                         MessageBox.Show("This server has already been added.");
                         return;
@@ -188,7 +193,7 @@ namespace HSL.Windows
                 }
             };
 
-  
+
             btn_ClearServerLog.Click += (s, e) => currentInstance?.ClearServerLog();
 
             btn_StartResource.Click += (s, e) =>
@@ -225,13 +230,14 @@ namespace HSL.Windows
             (lv_ServerList.ContextMenu = new System.Windows.Controls.ContextMenu()).Items.Add(new System.Windows.Controls.MenuItem() { Header = "Open Folder" });
             (lv_ResourceList.ContextMenu.Items[0] as System.Windows.Controls.MenuItem).Click += (s, e) =>
             {
-                if(lv_ResourceList.SelectedIndex >= 0 && lv_ResourceList.SelectedItems is ServerInstance.ResourceMeta meta)
+                if (lv_ResourceList.SelectedIndex >= 0 && lv_ResourceList.SelectedItems is ServerInstance.ResourceMeta meta)
                 {
                     Process.Start("explorer.exe", currentInstance.ResourceDirectory.CombinePath(meta.Name));
                 }
             };
-            (lv_ServerList.ContextMenu.Items[0] as System.Windows.Controls.MenuItem).Click += (s, e) => { 
-                if(lv_ServerList.SelectedIndex >= 0 && lv_ServerList.SelectedItem is ServerInstance instance)
+            (lv_ServerList.ContextMenu.Items[0] as System.Windows.Controls.MenuItem).Click += (s, e) =>
+            {
+                if (lv_ServerList.SelectedIndex >= 0 && lv_ServerList.SelectedItem is ServerInstance instance)
                 {
                     Process.Start("explorer.exe", instance.ServerDirectory);
                 }
@@ -256,13 +262,13 @@ namespace HSL.Windows
 
             mi_UpdateServer.Click += async (s, e) =>
             {
-                
-                if(currentInstance == null)
+
+                if (currentInstance == null)
                 {
                     return;
                 }
 
-                if(currentInstance.State != Enums.ServerState.Stopped)
+                if (currentInstance.State != Enums.ServerState.Stopped)
                 {
                     MessageBox.Show("Please stop the server first before updating!");
                     return;
@@ -300,18 +306,18 @@ namespace HSL.Windows
 
                     string version = string.Empty;
 
-                    using(FileStream fs = File.Open(zip, FileMode.Open, FileAccess.Read))
+                    using (FileStream fs = File.Open(zip, FileMode.Open, FileAccess.Read))
                     {
                         using (ZipArchive archive = new ZipArchive(fs))
                         {
-                            if(!archive.Entries.Any(x => x.Name.IndexOf(".exe") > 0))
+                            if (!archive.Entries.Any(x => x.Name.IndexOf(".exe") > 0))
                             {
                                 throw new Exception("Failed to install server files.");
                             }
 
                             version = archive.Entries[0].Name;
 
-                            for(int i = 1; i < archive.Entries.Count; i++)
+                            for (int i = 1; i < archive.Entries.Count; i++)
                             {
                                 if (archive.Entries[i].FullName.IndexOf("resources") >= 0 || archive.Entries[i].Name == "settings.xml")
                                 {
@@ -337,8 +343,9 @@ namespace HSL.Windows
                     MessageBox.Show("Updated Server: " + version);
 
                 }
-                catch(Exception ee) {
-                    if(Directory.Exists(tmpFolder))
+                catch (Exception ee)
+                {
+                    if (Directory.Exists(tmpFolder))
                     {
                         Directory.Delete(tmpFolder, true);
                     }
@@ -401,16 +408,16 @@ namespace HSL.Windows
                 try
                 {
                     await File.WriteAllBytesAsync(zip, _server_archive);
-                    using(FileStream fs = File.Open(zip, FileMode.Open, FileAccess.Read))
+                    using (FileStream fs = File.Open(zip, FileMode.Open, FileAccess.Read))
                     {
-                        using(ZipArchive archive = new ZipArchive(fs))
+                        using (ZipArchive archive = new ZipArchive(fs))
                         {
-                            if(!archive.Entries.Any(x => x.Name.IndexOf(".exe") > 0))
+                            if (!archive.Entries.Any(x => x.Name.IndexOf(".exe") > 0))
                             {
                                 throw new Exception("Failed to install server files.");
                             }
 
-                            for(int i = 1; i < archive.Entries.Count; i++)
+                            for (int i = 1; i < archive.Entries.Count; i++)
                             {
                                 string destination = directory.CombinePath(archive.Entries[i].FullName.Substring(archive.Entries[0].FullName.Length));
                                 if (archive.Entries[i].Length == 0)

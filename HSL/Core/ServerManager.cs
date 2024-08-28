@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Timers;
-using System.ComponentModel;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 
 namespace HSL.Core
 {
-    public class ServerManager : IDisposable,INotifyPropertyChanged
+    public class ServerManager : IDisposable, INotifyPropertyChanged
     {
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -43,7 +42,11 @@ namespace HSL.Core
             ServerInstance instance = new ServerInstance(this, data);
             instance.ProcessStarted += (s, e) => HandleEvent(OnProcessStarted, instance);
             instance.ProcessStopped += (s, e) => HandleEvent(OnProcessStopped, instance);
-            servers.Add(instance);
+            instance.ServerUpdated += (s, e) => OnPropertyChanged(nameof(servers));
+            lock (_serverLock)
+            {
+                servers.Add(instance);
+            }
             OnCreated?.Invoke(null, instance);
             OnPropertyChanged(nameof(servers));
             return instance;
@@ -65,6 +68,7 @@ namespace HSL.Core
                 if (servers.Remove(instance))
                 {
                     OnDeleted?.Invoke(null, instance);
+                    OnPropertyChanged(nameof(servers));
                     return true;
                 }
                 return false;

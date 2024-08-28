@@ -9,22 +9,20 @@ namespace HSL
 
         internal static bool IsCanceled(this CancellationTokenSource cts)
         {
-
-            if(cts == null)
+            if (cts != null)
             {
-                return true;
-            }
-
-            try
-            {
-                if (cts.Token.IsCancellationRequested)
+                try
                 {
-                    cts.Token.ThrowIfCancellationRequested();
-                    throw new Exception(); // fallback
+                    if (cts?.Token.IsCancellationRequested ?? false)
+                    {
+                        cts.Token.ThrowIfCancellationRequested();
+                        throw new Exception(); // fallback
+                    }
                 }
+                catch { return true; }
+                return false;
             }
-            catch { return true; }
-            return false;
+            return true;
         }
 
         internal static string CombinePath(this string s, string s1) => Path.Combine(s, s1);

@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Xml;
 using System.IO;
+using System.Xml;
 
 namespace HSL.Core
 {
@@ -12,7 +12,8 @@ namespace HSL.Core
         private string _file;
         private object _saveLock = new object();
 
-        public ServerSettings(string settingsFile) {
+        public ServerSettings(string settingsFile)
+        {
             _file = settingsFile;
             Document = new XmlDocument();
             RefreshDocument();
@@ -22,7 +23,8 @@ namespace HSL.Core
         {
             if (File.Exists(_file))
             {
-                Document.Load(_file);
+                Document = new XmlDocument();
+                Document.LoadXml(File.ReadAllText(_file));
             }
         }
 
@@ -30,17 +32,17 @@ namespace HSL.Core
 
         public T Get<T>(string name) => Get<T>(name, default(T));
 
-        public T Get<T>(string name, T defaultValue) 
+        public T Get<T>(string name, T defaultValue)
         {
 
-            if(Document == null)
+            if (Document == null)
             {
                 return defaultValue;
             }
 
             XmlNode node = Document.DocumentElement.SelectSingleNode(name);
 
-            if(node == null || string.IsNullOrEmpty(node.InnerText))
+            if (node == null || string.IsNullOrEmpty(node.InnerText))
             {
                 return defaultValue;
             }
@@ -48,61 +50,61 @@ namespace HSL.Core
             switch (Type.GetTypeCode(typeof(T)))
             {
                 case TypeCode.UInt16:
-                    if(UInt16.TryParse(node.InnerText, out UInt16 uint16))
+                    if (UInt16.TryParse(node.InnerText, out UInt16 uint16))
                     {
                         return (T)((object)uint16);
                     }
                     break;
                 case TypeCode.UInt32:
-                    if(UInt32.TryParse(node.InnerText, out UInt32 uint32))
+                    if (UInt32.TryParse(node.InnerText, out UInt32 uint32))
                     {
                         return (T)((object)uint32);
                     }
                     break;
                 case TypeCode.UInt64:
-                    if(UInt64.TryParse(node.InnerText, out UInt64 uint64))
+                    if (UInt64.TryParse(node.InnerText, out UInt64 uint64))
                     {
                         return (T)((object)uint64);
                     }
                     break;
                 case TypeCode.Int16:
-                    if(Int16.TryParse(node.InnerText, out Int16 int16))
+                    if (Int16.TryParse(node.InnerText, out Int16 int16))
                     {
                         return (T)((object)int16);
                     }
                     break;
                 case TypeCode.Int32:
-                    if(Int32.TryParse(node.InnerText, out Int32 int32))
+                    if (Int32.TryParse(node.InnerText, out Int32 int32))
                     {
                         return (T)((object)int32);
                     }
                     break;
                 case TypeCode.Int64:
-                    if(Int64.TryParse(node.InnerText, out Int64 int64))
+                    if (Int64.TryParse(node.InnerText, out Int64 int64))
                     {
                         return (T)((object)int64);
                     }
                     break;
                 case TypeCode.Single:
-                    if(Single.TryParse(node.InnerText, out Single single))
+                    if (Single.TryParse(node.InnerText, out Single single))
                     {
                         return (T)((object)single);
                     }
                     break;
                 case TypeCode.Double:
-                    if(Double.TryParse(node.InnerText, out Double doub))
+                    if (Double.TryParse(node.InnerText, out Double doub))
                     {
                         return (T)((object)doub);
                     }
                     break;
                 case TypeCode.Boolean:
-                    if(bool.TryParse(node.InnerText, out bool b))
+                    if (bool.TryParse(node.InnerText, out bool b))
                     {
                         return (T)((object)b);
                     }
                     break;
                 case TypeCode.String:
-                    return (T) ((object)node.InnerText);
+                    return (T)((object)node.InnerText);
             }
             return default(T);
         }
@@ -110,19 +112,19 @@ namespace HSL.Core
         public void Set<T>(string name, T value)
         {
 
-            if(Document == null)
+            if (Document == null)
             {
                 return;
             }
 
             XmlNode node = Document.DocumentElement.SelectSingleNode(name);
-            if(node == null)
+            if (node == null)
             {
                 node = Document.CreateNode("element", name, "");
                 Document.DocumentElement.AppendChild(node);
             }
 
-            switch(Type.GetTypeCode(typeof(T)))
+            switch (Type.GetTypeCode(typeof(T)))
             {
                 case TypeCode.UInt16:
                 case TypeCode.UInt32:
@@ -142,9 +144,13 @@ namespace HSL.Core
                     break;
             }
 
-            lock(_saveLock)
+            lock (_saveLock)
             {
-                Document.Save(_file);
+                try
+                {
+                    Document.Save(_file);
+                }
+                catch { }
             }
         }
     }

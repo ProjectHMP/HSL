@@ -7,7 +7,7 @@
         xmlns:enums="clr-namespace:HSL.Enums"
         xmlns:core="clr-namespace:HSL.Core"
         mc:Ignorable="d"
-        Title="Happiness Server Launcher" Height="444" Width="834"
+        Title="Happiness Server Launcher" Height="492" Width="758"
         Background="Black"
         WindowStyle="SingleBorderWindow" WindowStartupLocation="CenterScreen"
         >
@@ -29,9 +29,9 @@
         <!-- Grid Definitions -->
 
         <Grid x:Name="view_settings" Panel.ZIndex="1" Visibility="Hidden">
-            
+
         </Grid>
-        
+
         <!-- Launcher View -->
         <Grid x:Name="view_launcher">
             <!-- Grid Definitions -->
@@ -44,7 +44,7 @@
                 <RowDefinition Height="*"></RowDefinition>
                 <RowDefinition Height="*"></RowDefinition>
             </Grid.RowDefinitions>
-            
+
             <!-- Left Panel -->
             <Grid Grid.RowSpan="2" Grid.Column="0">
 
@@ -55,7 +55,7 @@
                     <RowDefinition Height="25"></RowDefinition>
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width=".25*"></ColumnDefinition>
+                    <ColumnDefinition Width=".3*"></ColumnDefinition>
                     <ColumnDefinition Width="*"></ColumnDefinition>
                 </Grid.ColumnDefinitions>
 
@@ -145,8 +145,8 @@
                 <!-- Console -->
                 <RichTextBox x:Name="rtb_ServerLog"  DataContext="{Binding currentInstance, UpdateSourceTrigger=PropertyChanged, Mode=OneWay, IsAsync=True, Delay=500}" Grid.Column="1" Grid.Row="1" Grid.RowSpan="2" Background="{StaticResource cmdBgColor}" IsReadOnly="True" IsReadOnlyCaretVisible="True" BorderThickness=".2 .2 .2 0" Foreground="{StaticResource txtColor}">
                     <FlowDocument>
-                        <Paragraph FontSize="13" Padding="5">
-                            <ItemsControl ItemsSource="{Binding ServerLog, UpdateSourceTrigger=PropertyChanged, Mode=OneWay, IsAsync=True, NotifyOnSourceUpdated=True, Delay=500}"></ItemsControl>
+                        <Paragraph FontSize="10" Padding="2">
+                            <ItemsControl ItemsSource="{Binding ServerLog, UpdateSourceTrigger=PropertyChanged, Mode=OneWay, IsAsync=True, NotifyOnSourceUpdated=True, Delay=500}" FontSize="10"></ItemsControl>
                         </Paragraph>
                     </FlowDocument>
                 </RichTextBox>
@@ -231,14 +231,14 @@
                             </Style>
                         </ListView.Style>
                     </ListView>
-                    
+
                     <!-- Resource Controls -->
                     <StackPanel Grid.Column="1" Orientation="Vertical">
                         <!-- Start Button -->
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"></ColumnDefinition>
-                                <ColumnDefinition Width=".2*"></ColumnDefinition>
+                                <ColumnDefinition Width=".3*"></ColumnDefinition>
                             </Grid.ColumnDefinitions>
                             <Button x:Name="btn_StartResource" Grid.Column="0" Content="Start">
                                 <Button.Style>
@@ -268,7 +268,7 @@
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"></ColumnDefinition>
-                                <ColumnDefinition Width=".2*"></ColumnDefinition>
+                                <ColumnDefinition Width=".3*"></ColumnDefinition>
                             </Grid.ColumnDefinitions>
                             <Button x:Name="btn_StopResource" Content="Stop">
                                 <Button.Style>
@@ -298,7 +298,7 @@
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"></ColumnDefinition>
-                                <ColumnDefinition Width=".2*"></ColumnDefinition>
+                                <ColumnDefinition Width=".3*"></ColumnDefinition>
                             </Grid.ColumnDefinitions>
                             <Button x:Name="btn_ReloadResource" Content="Reload">
                                 <Button.Style>
@@ -350,38 +350,48 @@
                             <ColumnDefinition Width="*"></ColumnDefinition>
                         </Grid.ColumnDefinitions>
                         <Label Grid.Row="0" Grid.ColumnSpan="2" Content="Server Settings" Foreground="{StaticResource txtColor}" FontSize="10" HorizontalContentAlignment="Center" Padding="0" Margin="0" FontWeight="Bold"></Label>
-                        
+
                         <Label Grid.Row="1" Grid.Column="0" Content="Hostname" Foreground="{StaticResource txtColor}" FontSize="10" Padding="5 0 0 0" Margin="0"></Label>
-                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding currentInstance.Hostname, IsAsync=True}" Background="{StaticResource cmdBgColor}" Foreground="{StaticResource txtColor}"></TextBox>
+                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding currentInstance.Hostname, IsAsync=True}" Background="{StaticResource cmdBgColor}" Foreground="{StaticResource txtColor}" VerticalContentAlignment="Center" FontSize="13"></TextBox>
 
                         <Label Grid.Row="2" Grid.Column="0" Content="Port" Foreground="{StaticResource txtColor}" FontSize="10" Padding="5 0 0 0" Margin="0"></Label>
-                        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding currentInstance.Port}"  Margin="0" Padding="2 0 0 0" Foreground="{StaticResource txtColor}" Background="{StaticResource cmdBgColor}"></TextBox>
-                        
-                        <Label Grid.Row="3" Grid.Column="0" Content="Listed" Foreground="{StaticResource txtColor}" FontSize="10" Padding="5 0 0 0" Margin="0"></Label>
-                        <CheckBox Grid.Row="3" Grid.Column="1" IsChecked="{Binding currentInstance.Listed, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Background="Transparent" Foreground="White"></CheckBox>
+                        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding currentInstance.Port}"  Margin="0" Padding="2 0 0 0" Foreground="{StaticResource txtColor}" Background="{StaticResource cmdBgColor}" VerticalContentAlignment="Center" FontSize="13"></TextBox>
+
+                        <Label Grid.Row="3" Grid.Column="0" Content="Listed" FontSize="10" Padding="5 0 0 0" Margin="0">
+                            <Label.Style>
+                                <Style TargetType="{x:Type Label}">
+                                    <Setter Property="Foreground" Value="Red"></Setter>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding currentInstance.Listed, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}" Value="{StaticResource True}">
+                                            <Setter Property="Foreground" Value="Green"></Setter>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Label.Style>
+                        </Label>
+                        <CheckBox Grid.Row="3" Grid.Column="1" IsChecked="{Binding currentInstance.Listed, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Background="Transparent" Foreground="White" VerticalContentAlignment="Center" FontSize="13" Padding="50"></CheckBox>
 
                         <Label Grid.Row="4" Grid.Column="0" Content="Episode" Foreground="{StaticResource txtColor}" FontSize="10" Padding="5 0 0 0" Margin="0"></Label>
-                        <ComboBox Grid.Row="4" Grid.Column="2" ItemsSource="{x:Static local:Constants.Episodes}" Margin="0" Padding="5 0 0 0" FontSize="13" SelectedItem="{Binding currentInstance.Episode}" Background="{StaticResource cmdBgColor}">
-                 
+                        <ComboBox Grid.Row="4" Grid.Column="2" ItemsSource="{x:Static local:Constants.Episodes}" Margin="0" Padding="0 0 0 0" FontSize="13" SelectedItem="{Binding currentInstance.Episode}" Background="{StaticResource cmdBgColor}" VerticalContentAlignment="Center" >
+
                         </ComboBox>
                     </Grid>
                 </Grid>
-                <Grid Grid.Row="2" IsEnabled="False">
+                <Grid Grid.Row="2" >
                     <Grid.RowDefinitions>
                         <RowDefinition Height="20"></RowDefinition>
                         <RowDefinition Height="*"></RowDefinition>
                     </Grid.RowDefinitions>
-                    
+
                     <Border Grid.Row="1" Background="Transparent"  BorderBrush="#4682B4" BorderThickness="0 .2 0 .2">
                         <Grid>
                             <Grid.RowDefinitions>
+                                <RowDefinition Height="30"></RowDefinition>
                                 <RowDefinition Height="20"></RowDefinition>
-                                <RowDefinition Height="20"></RowDefinition>
-
                                 <RowDefinition Height="*"></RowDefinition>
                             </Grid.RowDefinitions>
-                            <Label Grid.Row="0" Grid.ColumnSpan="5" Foreground="{StaticResource txtColor}" FontSize="10" VerticalContentAlignment="Center" Padding="5 0 0 0" FontWeight="Bold">Auto Restart Scheduler</Label>
-                            <Grid Grid.Row="1">
+                            <Label Grid.Row="0" Grid.ColumnSpan="5" Foreground="{StaticResource txtColor}" FontSize="10" VerticalContentAlignment="Center" Padding="5 0 0 0" FontWeight="Bold">Auto Restart Scheduler (H:M:S) </Label>
+                            <Grid Grid.Row="1" >
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"></ColumnDefinition>
                                     <ColumnDefinition Width="10"></ColumnDefinition>
@@ -390,17 +400,18 @@
                                     <ColumnDefinition Width="*"></ColumnDefinition>
                                 </Grid.ColumnDefinitions>
 
-                                <TextBox Grid.Column="0" Background="Transparent" Margin="0" Padding="0 0 0 0" HorizontalContentAlignment="Center" Foreground="{StaticResource txtColor}"></TextBox>
+                                <TextBox Grid.Column="0" Background="Transparent" Margin="5 0 5 0" Padding="0 0 0 0" HorizontalContentAlignment="Center" Foreground="{StaticResource txtColor}" Text="{Binding currentInstance.RestartTimer_Hours, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"></TextBox>
                                 <Label Grid.Column="1" Margin="0" Padding="0" HorizontalContentAlignment="Center" Content=":" Foreground="{StaticResource txtColor}" FontWeight="Bold"></Label>
-                                <TextBox Grid.Column="2" Background="Transparent" Margin="0" Padding="0 0 0 0" HorizontalContentAlignment="Center" Foreground="{StaticResource txtColor}"></TextBox>
+                                <TextBox Grid.Column="2" Background="Transparent" Margin="5 0 5 0" Padding="0 0 0 0" HorizontalContentAlignment="Center" Foreground="{StaticResource txtColor}" Text="{Binding currentInstance.RestartTimer_Minutes, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"></TextBox>
                                 <Label Grid.Column="3" Margin="0" Padding="0" HorizontalContentAlignment="Center" Content=":" Foreground="{StaticResource txtColor}" FontWeight="Bold"></Label>
-                                <TextBox Grid.Column="4" Background="Transparent" Margin="0" Padding="0 0 0 0" HorizontalContentAlignment="Center" Foreground="{StaticResource txtColor}"></TextBox>
+                                <TextBox Grid.Column="4" Background="Transparent" Margin="5 0 5 0" Padding="0 0 0 0" HorizontalContentAlignment="Center" Foreground="{StaticResource txtColor}" Text="{Binding currentInstance.RestartTimer_Seconds, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"></TextBox>
+                            
                             </Grid>
                             <Grid Grid.Row="3">
-                                <RichTextBox Foreground="White" FontSize="8" Background="Transparent" Padding="5" VerticalAlignment="Center" BorderBrush="Yellow" IsReadOnly="True" IsReadOnlyCaretVisible="False" IsHitTestVisible="False">
+                                <RichTextBox Foreground="White" FontSize="8" Background="Transparent" Padding="5" VerticalAlignment="Bottom"  BorderBrush="Yellow" IsReadOnly="True" IsReadOnlyCaretVisible="False" IsHitTestVisible="False">
                                     <FlowDocument>
                                         <Paragraph Foreground="Wheat">
-                                            <Run Text="Auto Restart is only active when server is running. Changing values above will also re-start the scheduler"></Run>
+                                            <Run Text="Restarts is only active while running. 24 Hours by default."></Run>
                                         </Paragraph>
                                     </FlowDocument>
                                 </RichTextBox>
@@ -420,6 +431,6 @@
                 </Grid.Style>
             </Grid>
         </Grid>
-        
+
     </Grid>
 </Window>

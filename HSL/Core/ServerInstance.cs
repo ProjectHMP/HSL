@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HSL.Enums;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -9,8 +10,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Xml;
-
-using HSL.Enums;
 
 namespace HSL.Core
 {
@@ -64,6 +63,43 @@ namespace HSL.Core
                 ServerData.auto_reload_resources = value;
                 OnPropertyChanged(nameof(AutoReloadResources));
                 ServerManager.MarkConfigDirty();
+            }
+        }
+
+        public TimeSpan RestartTimer
+        {
+            get => ServerData.restart_timer;
+            set
+            {
+                ServerData.restart_timer = value;
+                OnPropertyChanged(nameof(RestartTimer));
+                ServerManager.MarkConfigDirty();
+            }
+        }
+
+        public uint RestartTimer_Hours
+        {
+            get => (uint)(RestartTimer.Days * 24 + RestartTimer.Hours);
+            set
+            {
+                RestartTimer = TimeSpan.FromHours(value).Add(TimeSpan.FromMinutes(RestartTimer.Minutes).Add(TimeSpan.FromSeconds(RestartTimer.Seconds)));
+            }
+        }
+
+        public uint RestartTimer_Minutes
+        {
+            get => (uint)RestartTimer.Minutes;
+            set
+            {
+                RestartTimer = TimeSpan.FromMinutes(value).Add(TimeSpan.FromHours(RestartTimer.Days * 24 + RestartTimer.Hours).Add(TimeSpan.FromSeconds(RestartTimer.Seconds)));
+            }
+        }
+        public uint RestartTimer_Seconds
+        {
+            get => (uint)RestartTimer.Seconds;
+            set
+            {
+                RestartTimer = TimeSpan.FromSeconds(value).Add(TimeSpan.FromHours(RestartTimer.Days * 24 + RestartTimer.Hours).Add(TimeSpan.FromMinutes(RestartTimer.Minutes)));
             }
         }
 
@@ -167,7 +203,6 @@ namespace HSL.Core
             }
         }
 
-        public TimeSpan RestartTimer { get; private set; } = TimeSpan.Zero;
         internal string ServerDirectory { get; private set; }
         internal string ResourceDirectory { get; private set; }
         internal string ExePath
@@ -189,7 +224,7 @@ namespace HSL.Core
         internal ServerSettings ServerSettings { get; private set; }
 
         internal event EventHandler<string> StdOutput;
-        internal event EventHandler ProcessStarted, ProcessStopped;
+        internal event EventHandler ProcessStarted, ProcessStopped, ServerUpdated;
 
         internal Process process { get; set; }
         private Task _task { get; set; }
@@ -198,6 +233,7 @@ namespace HSL.Core
         private DateTime _StartTime = DateTime.Now;
 
         private bool _wasForcedClosed = false;
+        private bool _documentSave = false;
         private object _stdOutLock = new object();
         private object _resourceListLock = new object();
         private object _serverLogLock = new object();
@@ -218,7 +254,7 @@ namespace HSL.Core
             ResourceMap = new Dictionary<string, ResourceMeta>();
             ServerLog = new List<string>();
 
-            _resourceWatcher = new FileSystemWatcher(ResourceDirectory)
+            _resourceWatcher = new FileSystemWatcher(ServerDirectory)
             {
                 EnableRaisingEvents = true,
                 NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.CreationTime | NotifyFilters.DirectoryName,
@@ -241,25 +277,20 @@ namespace HSL.Core
 
         private bool SyncServerSettings()
         {
-
-            if (!File.Exists(ServerSettingsFile))
-                return false;
-
-            ServerSettings = new ServerSettings(ServerSettingsFile);
-
-            foreach (XmlNode resource in ServerSettings.GetNodes("resource"))
+            lock (_resourceListLock)
             {
-                Trace.WriteLine("Found XML Resource: " + resource.InnerText);
-                if (!ResourceMap.ContainsKey(resource.InnerText))
+                foreach (XmlNode resource in ServerSettings.GetNodes("resource"))
                 {
-                    ResourceMap.Add(resource.InnerText, new ResourceMeta { Name = resource.InnerText, IsEnabled = true });
-                    Resources.Add(ResourceMap[resource.InnerText]);
+                    Trace.WriteLine("Found XML Resource: " + resource.InnerText);
+
+                    if (!ResourceMap.ContainsKey(resource.InnerText))
+                    {
+                        ResourceMap.Add(resource.InnerText, new ResourceMeta { Name = resource.InnerText, IsEnabled = true });
+                        Resources.Add(ResourceMap[resource.InnerText]);
+                    }
                 }
             }
-
             OnPropertyChanged(nameof(Resources));
-            // OnPropertyChanged(nameof(ResourceMap));
-
             return true;
         }
 
@@ -299,29 +330,49 @@ namespace HSL.Core
             }
         }
 
-        private void _watcherHandler(object sender, FileSystemEventArgs e)
+        private async void _watcherHandler(object sender, FileSystemEventArgs e)
         {
 
-            if (!AutoReloadResources || (_resourceCts != null && !_resourceCts.Token.CanBeCanceled))
+            if (_resourceCts != null && !_resourceCts.Token.CanBeCanceled)
             {
                 return;
             }
 
             _resourceCts = new CancellationTokenSource();
 
-            try
+            await Task.Delay(500);
+
+            if (e.FullPath != ServerSettingsFile)
             {
-                Match match = Regex.Match(e.FullPath, @"[\\\/]{1}Resources[\\\/]{1}(.*)[\\\/]{1}?");
-                if (match.Success && match.Groups.Count > 0)
+                try
                 {
-                    RefreshServerInformation();
-                    if (AutoReloadResources && IsProcessRunning() && File.Exists(ResourceDirectory.CombinePath(match.Groups[1].Value, "meta.xml")))
+                    if (e.FullPath.IndexOf(ResourceDirectory) > 0)
                     {
-                        ReloadResource(match.Groups[1].Value);
+                        Match match = Regex.Match(e.FullPath, @"[\\\/]{1}Resources[\\\/]{1}(.*)[\\\/]{1}?");
+                        if (match.Success && match.Groups.Count > 0)
+                        {
+                            RefreshServerInformation();
+                            if (AutoReloadResources && IsProcessRunning() && File.Exists(ResourceDirectory.CombinePath(match.Groups[1].Value, "meta.xml")))
+                            {
+                                ReloadResource(match.Groups[1].Value);
+                            }
+                            ServerUpdated?.Invoke(null, null);
+                        }
                     }
                 }
+                catch { }
             }
-            catch { }
+            else
+            {
+
+                if (!_documentSave)
+                {
+                    _documentSave = true;
+                    ServerSettings.RefreshDocument();
+                    ServerUpdated?.Invoke(null, null);
+                }
+                else _documentSave = false;
+            }
             _resourceCts.CancelAfter(500);
         }
 
@@ -438,7 +489,6 @@ namespace HSL.Core
                 }
             }
 
-            // delete old server log
             string tmpLog = LogFile + ".tmp";
             if (File.Exists(LogFile))
             {
@@ -468,7 +518,7 @@ namespace HSL.Core
                 Dispose();
                 ProcessStopped?.Invoke(null, null);
 
-                if(AutoRestart && !_wasForcedClosed)
+                if (AutoRestart && !_wasForcedClosed)
                 {
                     _wasForcedClosed = false;
                     await Task.Delay(1500);
@@ -481,8 +531,7 @@ namespace HSL.Core
 
             if (process.Start())
             {
-
-                _wasForcedClosed = false;
+                _StartTime = DateTime.Now;
                 State = ServerState.Started;
                 OnPropertyChanged(nameof(State));
                 ProcessStarted?.Invoke(null, null);
@@ -498,31 +547,31 @@ namespace HSL.Core
 
         internal bool SendInput(string data)
         {
-            lock (_stdOutLock)
+            if (IsProcessRunning())
             {
-                if (IsProcessRunning())
+                lock (_stdOutLock)
                 {
                     //process.StandardInput.Flush();
                     process.StandardInput.WriteLine(data);
                     return true;
                 }
-                return false;
             }
+            return false;
         }
 
         private async Task<Task> ServerUpdateThread()
         {
             using (FileStream fs = File.Open(LogFile, FileMode.OpenOrCreate, FileAccess.Read, FileShare.ReadWrite))
             {
-                fs.Position = fs.Length;
+                long pos = fs.Length;
+                fs.Position = pos;
+                string buffer = "";
                 using (StreamReader sr = new StreamReader(fs))
                 {
-                    long pos = fs.Length;
-                    string buffer = "";
                     while (_cts != null && !_cts.IsCanceled() && IsProcessRunning())
                     {
                         await fs.FlushAsync();
-                        if (pos != fs.Length)
+                        if (sr.Peek() >= 0 && pos != fs.Length)
                         {
                             buffer = await sr.ReadLineAsync();
                             if (!string.IsNullOrEmpty(buffer))
@@ -537,17 +586,29 @@ namespace HSL.Core
                                 continue;
                             }
                         }
+
+                        if (AutoRestart)
+                        {
+                            if (DateTime.Now >= _StartTime.Add(RestartTimer))
+                            {
+                                break;
+                            }
+                        }
+
                         await Task.Delay(500);
                     }
                 }
             }
-            Stop();
+            Dispose();
             return Task.CompletedTask;
         }
 
         public void Dispose()
         {
-            _cts?.Cancel();
+            if (_cts?.Token.CanBeCanceled ?? false)
+            {
+                _cts.Cancel();
+            }
             State = ServerState.Stopped;
             OnPropertyChanged(nameof(State));
             if (process != null && !process.HasExited)
