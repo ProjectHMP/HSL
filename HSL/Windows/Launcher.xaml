@@ -20,11 +20,46 @@
         </Style>
 
         <Style TargetType="{x:Type CheckBox}">
-            <Style.Triggers>
-                <Trigger Property="IsEnabled" Value="False">
-                    <Setter Property="Opacity" Value="0.3"></Setter>
-                </Trigger>
-            </Style.Triggers>
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#FF262E34"/>
+            <!--                           your color here -->
+            <Setter Property="Foreground" Value="HotPink"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type CheckBox}">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch" >
+                            <Border BorderBrush="{TemplateBinding BorderBrush}" Background="{TemplateBinding Background}" BorderThickness="{TemplateBinding BorderThickness}" Width="15" Height="15">
+                                <Grid>
+                                    <Grid Background="{TemplateBinding Foreground}" Margin="1" Visibility="Collapsed" Name="nullBlock"/>
+                                    <Path Stretch="Uniform" Width="15" Height="10" Fill="{TemplateBinding Foreground}" Name="eliCheck" Data="F1 M 9.97498,1.22334L 4.6983,9.09834L 4.52164,9.09834L 0,5.19331L 1.27664,3.52165L 4.255,6.08833L 8.33331,1.52588e-005L 9.97498,1.22334 Z " Visibility="Collapsed"/>
+                                </Grid>
+                            </Border>
+                            <TextBlock Margin="5,0,0,0"  VerticalAlignment="Center" Foreground="White" Text="{TemplateBinding Content}"></TextBlock>
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="LightGray" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#FF9C9E9F" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Background" Value="LightGray" />
+                                <Setter Property="Foreground" Value="Gray" />
+                                <Setter Property="BorderBrush" Value="Gray"/>
+                                <Setter TargetName="eliCheck" Property="Opacity" Value="0.5" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="eliCheck" Property="Visibility" Value="Visible"></Setter>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="{x:Null}">
+                                <Setter TargetName="nullBlock" Property="Visibility" Value="Visible"></Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </Window.Resources>
     <Grid Background="{StaticResource bgColor}">
@@ -204,6 +239,10 @@
                         <ColumnDefinition Width="*"></ColumnDefinition>
                         <ColumnDefinition Width="*"></ColumnDefinition>
                     </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"></RowDefinition>
+                        <RowDefinition Height=".5*"></RowDefinition>
+                    </Grid.RowDefinitions>
 
                     <!-- Resource List -->
                     <ListView x:Name="lv_ResourceList" ItemsSource="{Binding currentInstance.Resources, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, Mode=OneWay, IsAsync=True, Delay=500}" Background="Transparent" BorderThickness="0 .2 .2 .2" Foreground="{StaticResource txtColor}">
@@ -223,7 +262,18 @@
                                 </Label>
                             </DataTemplate>
                         </ListView.ItemTemplate>
+                        <ListView.Style>
+                            <Style TargetType="{x:Type ListView}">
+                                <Setter Property="IsHitTestVisible" Value="False"></Setter>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding currentInstance.State, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static hsl:ServerState.Started}">
+                                        <Setter Property="IsHitTestVisible" Value="True"></Setter>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ListView.Style>
                     </ListView>
+                    
                     <!-- Resource Controls -->
                     <StackPanel Grid.Column="1" Orientation="Vertical">
                         <!-- Start Button -->
@@ -284,7 +334,7 @@
                             <Button x:Name="btn_ReloadAllResources" Grid.Column="1" Content="All"></Button>
                         </Grid>
 
-                        <Label Content="Automatic Settings" Foreground="{StaticResource txtColor}" FontSize="10" HorizontalContentAlignment="Center"></Label>
+                        <Label Content="Automatic Settings" Foreground="{StaticResource txtColor}" FontSize="10" HorizontalContentAlignment="Center" Padding="5" FontWeight="Bold"></Label>
                         <CheckBox Padding="0" VerticalAlignment="Bottom" VerticalContentAlignment="Bottom" Margin="5 0 0 0" Cursor="Hand" IsChecked="{Binding currentInstance.AutoReloadResources, UpdateSourceTrigger=PropertyChanged, FallbackValue={StaticResource False}}">
                             <Label Foreground="White" Margin="5 0 0 0" FontSize="12" Padding="0" VerticalContentAlignment="Center" Content="Reload Resources" ToolTip="Enabling will automatically reload resource(s) when they're modified."></Label>
                         </CheckBox>
@@ -294,24 +344,43 @@
                         <CheckBox Padding="0" VerticalAlignment="Bottom" VerticalContentAlignment="Bottom" Margin="5 0 0 0" Cursor="Hand">
                             <Label Foreground="White" Margin="5 0 0 0" FontSize="12" Padding="0" VerticalContentAlignment="Center" Content="Restart" ToolTip="Enabling allows the server to restart if crashes (unintentionally)."></Label>
                         </CheckBox>
-                        <StackPanel.Style>
-                            <Style TargetType="{x:Type StackPanel}">
-                                <Setter Property="IsEnabled" Value="False"></Setter>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding currentInstance.State, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static hsl:ServerState.Started}">
-                                        <Setter Property="IsEnabled" Value="True"></Setter>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </StackPanel.Style>
+
                     </StackPanel>
+                    <Grid Grid.Row="1" Grid.ColumnSpan="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"></RowDefinition>
+                            <RowDefinition Height="*"></RowDefinition>
+                            <RowDefinition Height="*"></RowDefinition>
+                            <RowDefinition Height="*"></RowDefinition>
+                            <RowDefinition Height="*"></RowDefinition>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"></ColumnDefinition>
+                            <ColumnDefinition Width="*"></ColumnDefinition>
+                        </Grid.ColumnDefinitions>
+                        <Label Grid.Row="0" Grid.ColumnSpan="2" Content="Server Settings" Foreground="{StaticResource txtColor}" FontSize="10" HorizontalContentAlignment="Center" Padding="0" Margin="0" FontWeight="Bold"></Label>
+                        
+                        <Label Grid.Row="1" Grid.Column="0" Content="Hostname" Foreground="{StaticResource txtColor}" FontSize="10" Padding="5 0 0 0" Margin="0"></Label>
+                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding currentInstance.Hostname, IsAsync=True}" Background="{StaticResource cmdBgColor}" Foreground="{StaticResource txtColor}"></TextBox>
+
+                        <Label Grid.Row="2" Grid.Column="0" Content="Port" Foreground="{StaticResource txtColor}" FontSize="10" Padding="5 0 0 0" Margin="0"></Label>
+                        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding currentInstance.Port}"  Margin="0" Padding="2 0 0 0" Foreground="{StaticResource txtColor}" Background="{StaticResource cmdBgColor}"></TextBox>
+                        
+                        <Label Grid.Row="3" Grid.Column="0" Content="Listed" Foreground="{StaticResource txtColor}" FontSize="10" Padding="5 0 0 0" Margin="0"></Label>
+                        <CheckBox Grid.Row="3" Grid.Column="1" IsChecked="{Binding currentInstance.Listed, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Background="Transparent" Foreground="White"></CheckBox>
+
+                        <Label Grid.Row="4" Grid.Column="0" Content="Episode" Foreground="{StaticResource txtColor}" FontSize="10" Padding="5 0 0 0" Margin="0"></Label>
+                        <ComboBox Grid.Row="4" Grid.Column="2" ItemsSource="{x:Static hsl:ServerInstance.Episodes}" Margin="0" Padding="5 0 0 0" FontSize="13" SelectedItem="{Binding currentInstance.Episode}" Background="{StaticResource cmdBgColor}">
+                 
+                        </ComboBox>
+                    </Grid>
                 </Grid>
                 <Grid Grid.Row="2">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="20"></RowDefinition>
                         <RowDefinition Height="*"></RowDefinition>
                     </Grid.RowDefinitions>
-                    <Label Foreground="{StaticResource txtColor}" FontSize="10" VerticalContentAlignment="Center" Padding="5 0 0 0">Auto Restart Scheduler</Label>
+                    <Label Foreground="{StaticResource txtColor}" FontSize="10" VerticalContentAlignment="Center" Padding="5 0 0 0" FontWeight="Bold">Auto Restart Scheduler</Label>
                     <Border Grid.Row="1" Background="Transparent"  BorderBrush="#4682B4" BorderThickness="0 .2 0 .2">
                         <Grid>
                             <Grid.RowDefinitions>
@@ -320,35 +389,19 @@
                                 <RowDefinition Height="20"></RowDefinition>
                                 <RowDefinition Height="*"></RowDefinition>
                             </Grid.RowDefinitions>
-                            <Grid Grid.Row="0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"></ColumnDefinition>
-                                    <ColumnDefinition Width="*"></ColumnDefinition>
-                                    <ColumnDefinition Width="*"></ColumnDefinition>
-                                </Grid.ColumnDefinitions>
-                                <Label Grid.Column="0" Foreground="White" Padding="0" Margin="0" Width="50">Hours</Label>
-                                <Separator Grid.Column="1" Width="50"></Separator>
-                                <TextBox Grid.Column="2" Background="{StaticResource cmdBgColor}"></TextBox>
-                            </Grid>
                             <Grid Grid.Row="1">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"></ColumnDefinition>
+                                    <ColumnDefinition Width="10"></ColumnDefinition>
                                     <ColumnDefinition Width="*"></ColumnDefinition>
-                                    <ColumnDefinition Width="*"></ColumnDefinition>
-                                </Grid.ColumnDefinitions>
-                                <Label Grid.Column="0" Foreground="White" Padding="0" Margin="0" Width="50">Minutes</Label>
-                                <Separator Grid.Column="1" Width="50"></Separator>
-                                <TextBox Grid.Column="2" Background="{StaticResource cmdBgColor}"></TextBox>
-                            </Grid>
-                            <Grid Grid.Row="2">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"></ColumnDefinition>
-                                    <ColumnDefinition Width="*"></ColumnDefinition>
+                                    <ColumnDefinition Width="10"></ColumnDefinition>
                                     <ColumnDefinition Width="*"></ColumnDefinition>
                                 </Grid.ColumnDefinitions>
-                                <Label Grid.Column="0" Foreground="White" Padding="0" Margin="0" Width="50">Seconds</Label>
-                                <Separator Grid.Column="1" Width="50"></Separator>
-                                <TextBox Grid.Column="2" Background="{StaticResource cmdBgColor}"></TextBox>
+                                <TextBox Grid.Column="0" Background="Transparent" Margin="0" Padding="0 0 0 0" HorizontalContentAlignment="Center" Foreground="{StaticResource txtColor}"></TextBox>
+                                <Label Grid.Column="1" Margin="0" Padding="0" HorizontalContentAlignment="Center" Content=":" Foreground="{StaticResource txtColor}" FontWeight="Bold"></Label>
+                                <TextBox Grid.Column="2" Background="Transparent" Margin="0" Padding="0 0 0 0" HorizontalContentAlignment="Center" Foreground="{StaticResource txtColor}"></TextBox>
+                                <Label Grid.Column="3" Margin="0" Padding="0" HorizontalContentAlignment="Center" Content=":" Foreground="{StaticResource txtColor}" FontWeight="Bold"></Label>
+                                <TextBox Grid.Column="4" Background="Transparent" Margin="0" Padding="0 0 0 0" HorizontalContentAlignment="Center" Foreground="{StaticResource txtColor}"></TextBox>
                             </Grid>
                             <Grid Grid.Row="3">
                                 <RichTextBox Foreground="White" FontSize="8" Background="Transparent" Padding="5" VerticalAlignment="Center" BorderBrush="Yellow" IsReadOnly="True" IsReadOnlyCaretVisible="False" IsHitTestVisible="False">

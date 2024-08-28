@@ -191,6 +191,7 @@ namespace HSL.Windows
                 }
             };
 
+  
             btn_ClearServerLog.Click += (s, e) => currentInstance?.ClearServerLog();
 
             btn_StartResource.Click += (s, e) =>

@@ -20,8 +20,17 @@ namespace HSL
         Restarting = 0x4
     }
 
+    public enum Episode
+    {
+        IV = 0,
+        TLAD = 1,
+        TBOGT = 2
+    }
+
     public class ServerInstance : INotifyPropertyChanged, IDisposable
     {
+
+        public static Episode[] Episodes = new Episode[] { Episode.IV, Episode.TLAD, Episode.TBOGT }; 
 
         public class ResourceMeta
         {
@@ -39,6 +48,177 @@ namespace HSL
         public bool StartAutomatically { get; set; } = false;
         public bool AutoReloadResources { get; set; } = false;
 
+        private object _docSaveLock = new object();
+
+        public string Hostname
+        {
+            get
+            {
+                if (Document != null)
+                {
+                    XmlNode node = Document.DocumentElement.SelectSingleNode("hostname");
+                    if(node != null && !string.IsNullOrEmpty(node.InnerText))
+                    {
+                        return node.InnerText;
+                    }
+                }
+                return "HappinessMP";
+            }
+            set
+            {
+                if (Document != null)
+                {
+                    XmlNode node = Document.DocumentElement.SelectSingleNode("hostname");
+                    if (node == null)
+                    {
+                        node = Document.CreateNode("element", "hostname", "");
+                        Document.DocumentElement.AppendChild(node);
+                    }
+                    node.InnerText = value;
+                    OnPropertyChanged(nameof(Hostname));
+                    lock (_docSaveLock)
+                    {
+                        Document.Save(ServerConfiguration);
+                    }
+                }
+            }
+        }
+
+        public bool Listed
+        {
+            get
+            {
+                if(Document != null)
+                {
+                    XmlNode node = Document.DocumentElement.SelectSingleNode("listed");
+                    if(node != null && !string.IsNullOrEmpty(node.InnerText) && bool.TryParse(node.InnerText, out bool b))
+                    {
+                        return b;
+                    }
+                }
+                return false;
+            }
+            set {
+                if(Document != null)
+                {
+                    XmlNode node = Document.DocumentElement.SelectSingleNode("listed");
+                    if (node == null)
+                    {
+                        node = Document.CreateNode("element", "listed", "");
+                        Document.DocumentElement.AppendChild(node);
+                    }
+                    node.InnerText = value.ToString().ToLower();
+                    OnPropertyChanged(nameof(Listed));
+                    lock (_docSaveLock)
+                    {
+                        Document.Save(ServerConfiguration);
+                    }
+                }
+            }
+        }
+
+        public int Port
+        {
+            get
+            {
+                if (Document != null)
+                {
+                    XmlNode node = Document.DocumentElement.SelectSingleNode("port");
+                    if (node != null && !string.IsNullOrEmpty(node.InnerText) && int.TryParse(node.InnerText, out int b))
+                    {
+                        return b;
+                    }
+                }
+                return 9999;
+            }
+            set
+            {
+                if (Document != null)
+                {
+                    XmlNode node = Document.DocumentElement.SelectSingleNode("port");
+                    if (node == null)
+                    {
+                        node = Document.CreateNode("element", "port", "");
+                        Document.DocumentElement.AppendChild(node);
+                    }
+                    node.InnerText = value.ToString().ToLower();
+                    OnPropertyChanged(nameof(Port));
+                    lock (_docSaveLock)
+                    {
+                        Document.Save(ServerConfiguration);
+                    }
+                }
+            }
+        }
+
+        public int MaxPlayers
+        {
+            get
+            {
+                if (Document != null)
+                {
+                    XmlNode node = Document.DocumentElement.SelectSingleNode("maxplayers");
+                    if (node != null && !string.IsNullOrEmpty(node.InnerText) && int.TryParse(node.InnerText, out int b))
+                    {
+                        return b;
+                    }
+                }
+                return 100;
+            }
+            set
+            {
+                if (Document != null)
+                {
+                    XmlNode node = Document.DocumentElement.SelectSingleNode("maxplayers");
+                    if (node == null)
+                    {
+                        node = Document.CreateNode("element", "maxplayers", "");
+                        Document.DocumentElement.AppendChild(node);
+                    }
+                    node.InnerText = Math.Min(100, value).ToString();
+                    OnPropertyChanged(nameof(MaxPlayers));
+                    lock (_docSaveLock)
+                    {
+                        Document.Save(ServerConfiguration);
+                    }
+                }
+            }
+        }
+
+        public Episode Episode
+        {
+            get
+            {
+                if (Document != null)
+                {
+                    XmlNode node = Document.DocumentElement.SelectSingleNode("episode");
+                    if (node != null && !string.IsNullOrEmpty(node.InnerText) && Enum.TryParse<Episode>(node.InnerText, out Episode b))
+                    {
+                        return b;
+                    }
+                }
+                return Episode.IV;
+            }
+            set
+            {
+                if (Document != null)
+                {
+                    XmlNode node = Document.DocumentElement.SelectSingleNode("episode");
+                    if (node == null)
+                    {
+                        node = Document.CreateNode("element", "episode", "");
+                        Document.DocumentElement.AppendChild(node);
+                    }
+                    node.InnerText = ((int)value).ToString();
+                    OnPropertyChanged(nameof(Episode));
+                    lock (_docSaveLock)
+                    {
+                        Document.Save(ServerConfiguration);
+                    }
+                }
+            }
+        }
+
         public TimeSpan RestartTimer { get; private set; } = TimeSpan.Zero;
 
         internal string ServerDirectory { get; private set; }
@@ -46,6 +226,8 @@ namespace HSL
         internal string ExePath { get; private set; }
         internal string LogFile { get; private set; }
         internal string ServerConfiguration { get; private set; }
+
+        private XmlDocument Document = new XmlDocument();
 
         internal event EventHandler<string> StdOutput;
         internal event EventHandler ProcessStarted, ProcessStopped;
@@ -73,7 +255,6 @@ namespace HSL
             Resources = new List<ResourceMeta>();
             ResourceMap = new Dictionary<string, ResourceMeta>();
             ServerLog = new List<string>();
-
             _resourceWatcher = new FileSystemWatcher(ResourceDirectory)
             {
                 EnableRaisingEvents = true,
@@ -101,11 +282,11 @@ namespace HSL
             if (!File.Exists(ServerConfiguration))
                 return false;
 
-            XmlDocument document = new XmlDocument();
-            document.Load(ServerConfiguration);
+            Document = new XmlDocument();
+            Document.Load(ServerConfiguration);
 
-            Name = document.DocumentElement.SelectSingleNode("hostname").InnerText;
-            foreach(XmlNode resource in document.DocumentElement.SelectNodes("resource"))
+            Name = Document.DocumentElement.SelectSingleNode("hostname").InnerText;
+            foreach(XmlNode resource in Document.DocumentElement.SelectNodes("resource"))
             {
 
                 Trace.WriteLine("Found XML Resource: " + resource.InnerText);
