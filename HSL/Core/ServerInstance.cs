@@ -19,7 +19,6 @@ namespace HSL.Core
     public class ServerInstance : INotifyPropertyChanged, IDisposable
     {
 
-
         public class ResourceMeta
         {
             public string Name { get; set; }
@@ -35,12 +34,15 @@ namespace HSL.Core
         public bool StartAutomatically { get; set; } = false;
         public bool AutoReloadResources { get; set; } = false;
 
-        private object _docSaveLock = new object();
 
         public string Name
         {
             get => ServerSettings.Get<string>("hostname", "HappinessMP");
-            set => ServerSettings.Set<string>("hostname", value);
+            set
+            {
+                ServerSettings.Set<string>("hostname", value);
+                OnPropertyChanged(nameof(Name));
+            }
         }
 
         public string Hostname
@@ -88,8 +90,48 @@ namespace HSL.Core
             get => Episode.TryParse(ServerSettings.Get<string>("episode", "0"), out Episode episode) ? episode : Episode.IV;
             set
             {
-                ServerSettings.Set<int>("episode", (int)value);
+                ServerSettings.Set<string>("episode", ((int)value).ToString());
                 OnPropertyChanged(nameof(Episode));
+            }
+        }
+
+        public bool Chat
+        {
+            get => ServerSettings.Get<bool>("chat", true);
+            set
+            {
+                ServerSettings.Set<bool>("chat", value);
+                OnPropertyChanged(nameof(Chat));
+            }
+        }
+
+        public string Secret
+        {
+            get => ServerSettings.Get<string>("secret", "happy");
+            set
+            {
+                ServerSettings.Set<string>("secret", value);
+                OnPropertyChanged(nameof(Secret));
+            }
+        }
+
+        public string HostAddress
+        {
+            get => ServerSettings.Get<string>("hostaddress", "::");
+            set
+            {
+                ServerSettings.Set<string>("hostaddress", value);
+                OnPropertyChanged(nameof(HostAddress));
+            }
+        }
+
+        public LogLevel LogLevel
+        {
+            get => LogLevel.TryParse(ServerSettings.Get<string>("loglevel", "2"), out LogLevel level) ? level : LogLevel.Info;
+            set
+            {
+                ServerSettings.Set<string>("loglevel", ((int)value).ToString());
+                OnPropertyChanged(nameof(LogLevel));
             }
         }
 
@@ -101,8 +143,6 @@ namespace HSL.Core
         internal string ServerConfiguration { get; private set; }
 
         internal ServerSettings ServerSettings { get; private set; }
-
-        private XmlDocument Document = new XmlDocument();
 
         internal event EventHandler<string> StdOutput;
         internal event EventHandler ProcessStarted, ProcessStopped;

@@ -26,7 +26,7 @@ namespace HSL.Core
             }
         }
 
-        public XmlNodeList GetNodes(string name) => Document.DocumentElement.SelectNodes("resource");
+        public XmlNodeList GetNodes(string name) => Document.DocumentElement.SelectNodes(name);
 
         public T Get<T>(string name) => Get<T>(name, default(T));
 
