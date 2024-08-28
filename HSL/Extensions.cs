@@ -9,6 +9,12 @@ namespace HSL
 
         internal static bool IsCanceled(this CancellationTokenSource cts)
         {
+
+            if(cts == null)
+            {
+                return true;
+            }
+
             try
             {
                 if (cts.Token.IsCancellationRequested)

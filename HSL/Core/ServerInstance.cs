@@ -25,15 +25,47 @@ namespace HSL.Core
             public bool IsEnabled { get; set; } = false;
         }
 
+        private ServerData ServerData;
+
         public event PropertyChangedEventHandler PropertyChanged;
-        public Guid Guid { get; private set; }
-        public List<string> ServerLog { get; private set; }
         public ServerState State { get; private set; } = ServerState.Stopped;
         public List<ResourceMeta> Resources { get; private set; }
         public Dictionary<string, ResourceMeta> ResourceMap { get; private set; }
-        public bool StartAutomatically { get; set; } = false;
-        public bool AutoReloadResources { get; set; } = false;
 
+        public List<string> ServerLog { get; private set; }
+
+        public bool AutoStart
+        {
+            get => ServerData.auto_start;
+            set
+            {
+                ServerData.auto_start = value;
+                OnPropertyChanged(nameof(AutoStart));
+                ServerManager.MarkConfigDirty();
+            }
+        }
+
+        public bool AutoRestart
+        {
+            get => ServerData.auto_restart;
+            set
+            {
+                ServerData.auto_restart = value;
+                OnPropertyChanged(nameof(AutoRestart));
+                ServerManager.MarkConfigDirty();
+            }
+        }
+
+        public bool AutoReloadResources
+        {
+            get => ServerData.auto_reload_resources;
+            set
+            {
+                ServerData.auto_reload_resources = value;
+                OnPropertyChanged(nameof(AutoReloadResources));
+                ServerManager.MarkConfigDirty();
+            }
+        }
 
         public string Name
         {
@@ -138,9 +170,21 @@ namespace HSL.Core
         public TimeSpan RestartTimer { get; private set; } = TimeSpan.Zero;
         internal string ServerDirectory { get; private set; }
         internal string ResourceDirectory { get; private set; }
-        internal string ExePath { get; private set; }
-        internal string LogFile { get; private set; }
-        internal string ServerConfiguration { get; private set; }
+        internal string ExePath
+        {
+            get => ServerData.exe_file;
+            set
+            {
+                ServerData.exe_file = value;
+                ServerManager.MarkConfigDirty();
+            }
+        }
+
+        internal readonly string LogFile;
+        internal readonly string ServerSettingsFile;
+
+        internal ServerManager ServerManager;
+        internal Guid Guid => ServerData.guid;
 
         internal ServerSettings ServerSettings { get; private set; }
 
@@ -153,22 +197,22 @@ namespace HSL.Core
         private FileSystemWatcher _resourceWatcher;
         private DateTime _StartTime = DateTime.Now;
 
+        private bool _wasForcedClosed = false;
         private object _stdOutLock = new object();
         private object _resourceListLock = new object();
         private object _serverLogLock = new object();
 
-        internal ServerInstance(string serverExe, Guid guid, bool autoStart = false)
+        internal ServerInstance(ServerManager manager, ServerData data)
         {
-            Guid = guid;
-            ExePath = serverExe;
-            StartAutomatically = autoStart;
-            ServerDirectory = Path.GetDirectoryName(serverExe);
+            ServerManager = manager;
+            ServerData = data;
+            ServerDirectory = Path.GetDirectoryName(data.exe_file);
             LogFile = ServerDirectory.CombinePath("server.log");
             ResourceDirectory = ServerDirectory.CombinePath("resources");
-            ServerConfiguration = ServerDirectory.CombinePath("settings.xml");
+            ServerSettingsFile = ServerDirectory.CombinePath("settings.xml");
             State = ServerState.Stopped;
 
-            ServerSettings = new ServerSettings(ServerConfiguration);
+            ServerSettings = new ServerSettings(ServerSettingsFile);
 
             Resources = new List<ResourceMeta>();
             ResourceMap = new Dictionary<string, ResourceMeta>();
@@ -189,7 +233,7 @@ namespace HSL.Core
             SyncServerSettings();
             RefreshServerInformation();
 
-            if (autoStart)
+            if (AutoStart)
             {
                 Start();
             }
@@ -198,10 +242,10 @@ namespace HSL.Core
         private bool SyncServerSettings()
         {
 
-            if (!File.Exists(ServerConfiguration))
+            if (!File.Exists(ServerSettingsFile))
                 return false;
 
-            ServerSettings = new ServerSettings(ServerConfiguration);
+            ServerSettings = new ServerSettings(ServerSettingsFile);
 
             foreach (XmlNode resource in ServerSettings.GetNodes("resource"))
             {
@@ -214,7 +258,7 @@ namespace HSL.Core
             }
 
             OnPropertyChanged(nameof(Resources));
-            OnPropertyChanged(nameof(ResourceMap));
+            // OnPropertyChanged(nameof(ResourceMap));
 
             return true;
         }
@@ -242,7 +286,7 @@ namespace HSL.Core
                 }
 
                 OnPropertyChanged(nameof(Resources));
-                OnPropertyChanged(nameof(ResourceMap));
+                // OnPropertyChanged(nameof(ResourceMap));
             }
         }
 
@@ -257,12 +301,8 @@ namespace HSL.Core
 
         private void _watcherHandler(object sender, FileSystemEventArgs e)
         {
-            /*
-             * Due too an old "issue/bug" with FSW, it can send duplicate events at a time.
-             * Using Monitor (lock), we instead want to capture one call per 100 ms, and discard any other (duplicates).
-             */
 
-            if (_resourceCts != null && !_resourceCts.Token.CanBeCanceled)
+            if (!AutoReloadResources || (_resourceCts != null && !_resourceCts.Token.CanBeCanceled))
             {
                 return;
             }
@@ -271,28 +311,18 @@ namespace HSL.Core
 
             try
             {
-                // reload resource if was enabled
                 Match match = Regex.Match(e.FullPath, @"[\\\/]{1}Resources[\\\/]{1}(.*)[\\\/]{1}?");
                 if (match.Success && match.Groups.Count > 0)
                 {
                     RefreshServerInformation();
-
-                    // reload resource if was enabled
-                    // make sure this is a valid resource (will add more checks later)
                     if (AutoReloadResources && IsProcessRunning() && File.Exists(ResourceDirectory.CombinePath(match.Groups[1].Value, "meta.xml")))
                     {
-                        SendInput("stop " + match.Groups[1].Value);
-                        SendInput("start " + match.Groups[1].Value);
+                        ReloadResource(match.Groups[1].Value);
                     }
                 }
             }
             catch { }
-
-            try
-            {
-                _resourceCts.CancelAfter(500);
-            }
-            catch { }
+            _resourceCts.CancelAfter(500);
         }
 
         internal bool IsProcessRunning() => process != null && !process.HasExited && _cts != null && !_cts.IsCanceled();
@@ -301,6 +331,7 @@ namespace HSL.Core
         {
             if (IsProcessRunning())
             {
+                _wasForcedClosed = true;
                 Dispose();
             }
             State = ServerState.Stopped;
@@ -432,17 +463,26 @@ namespace HSL.Core
             };
 
             process.Disposed += (s, e) => _cts?.Dispose();
-            process.Exited += (s, e) =>
+            process.Exited += async (s, e) =>
             {
-                State = ServerState.Stopped;
-                _cts?.Cancel();
+                Dispose();
                 ProcessStopped?.Invoke(null, null);
+
+                if(AutoRestart && !_wasForcedClosed)
+                {
+                    _wasForcedClosed = false;
+                    await Task.Delay(1500);
+                    Start();
+                }
+
             };
 
             processes = null;
 
             if (process.Start())
             {
+
+                _wasForcedClosed = false;
                 State = ServerState.Started;
                 OnPropertyChanged(nameof(State));
                 ProcessStarted?.Invoke(null, null);
@@ -508,6 +548,8 @@ namespace HSL.Core
         public void Dispose()
         {
             _cts?.Cancel();
+            State = ServerState.Stopped;
+            OnPropertyChanged(nameof(State));
             if (process != null && !process.HasExited)
             {
                 process.Kill();

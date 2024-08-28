@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.Timers;
 
 namespace HSL.Windows
 {
@@ -20,9 +21,11 @@ namespace HSL.Windows
         public ServerManager manager { get; private set; }
         public ServerInstance currentInstance { get; private set; } = default(ServerInstance);
 
-        private HSLConfig _config;
+        internal HSLConfig Config { get; private set; }
         private OpenFileDialog _ofd;
         private object _configLock { get; set; } = new object();
+        private Timer _timer;
+
 
         public Launcher()
         {
@@ -40,13 +43,12 @@ namespace HSL.Windows
 
             Closing += (s, e) => Dispose();
 
-            manager = new ServerManager();
-            manager.OnProcessStarted += Manager_OnProcessStarted;
-            manager.OnProcessStopped += Manager_OnProcessStopped;
+            manager = new ServerManager(this);
             manager.OnCreated += Manager_OnCreated;
             manager.OnDeleted += Manager_OnDeleted;
 
             DataContext = this;
+            _timer = new Timer() { Enabled = true, Interval = 5000 };
 
             LoadConfiguration().ConfigureAwait(false).GetAwaiter(); // intentional thread lock
 
@@ -56,39 +58,40 @@ namespace HSL.Windows
             }
 
             RegisterListeners();
+            _timer.Start();
         }
 
         private async Task LoadConfiguration()
         {
-            _config = await HSLConfig.Load("hsl.json");
+            Config = await HSLConfig.Load("hsl.json");
 
             bool markdirty = false;
             lock(_configLock)
             {
-                foreach (var kvp in _config.servers)
+                foreach (var key in Config.servers.Keys)
                 {
-                    if (!Directory.Exists(Path.GetDirectoryName(kvp.Value.exe_file)) || !File.Exists(kvp.Value.exe_file))
+                    if (!Directory.Exists(Path.GetDirectoryName(Config.servers[key].exe_file)) || !File.Exists(Config.servers[key].exe_file))
                     {
                         if (MessageBox.Show(String.Format("Failed to load pre-existing server: {0}{1}Would you like to change location?", "Error", MessageBoxButton.YesNo)) == MessageBoxResult.Yes)
                         {
                             _ofd ??= new OpenFileDialog();
                             _ofd.Multiselect = false;
                             _ofd.Filter = "HappinessMP.Server.Exe | *.exe";
-                            if (!(_ofd?.ShowDialog() ?? false) || string.IsNullOrEmpty(_ofd.FileName) || _config.servers.Any(x => x.Value.exe_file == _ofd.FileName))
+                            if (!(_ofd?.ShowDialog() ?? false) || string.IsNullOrEmpty(_ofd.FileName) || Config.servers.Any(x => x.Value.exe_file == _ofd.FileName))
                             {
                                 continue;
                             }
-                            _config.servers[kvp.Key].exe_file = _ofd.FileName;
+                            Config.servers[key].exe_file = _ofd.FileName;
                             markdirty = true;
                         }
                     }
-                    manager.Create(kvp.Value.exe_file, kvp.Value.guid, kvp.Value.auto_start);
+                    manager.Create(Config.servers[key]);
                 }
             }
 
             if (markdirty)
             {
-                await _config.Save();
+                await Config.Save();
             }
 
         }
@@ -100,36 +103,21 @@ namespace HSL.Windows
                 ShowServerContext(null);
             }
 
-            if (_config.servers.ContainsKey(e.Guid))
+            if (Config.servers.ContainsKey(e.Guid))
             {
-                _config.servers.Remove(e.Guid);
-                await _config.Save();
+                Config.servers.Remove(e.Guid);
+                await Config.Save();
             }
         }
 
         private async void Manager_OnCreated(object sender, ServerInstance e)
         {
-            if (!_config.servers.ContainsKey(e.Guid))
+            if (!Config.servers.ContainsKey(e.Guid))
             {
-                _config.servers.Add(e.Guid, new HSLConfig.ServerConfig()
-                {
-                    exe_file = e.ExePath,
-                    guid = e.Guid,
-                });
-                await _config.Save();
+                Config.servers.Add(e.Guid, new ServerData() { exe_file = e.ExePath, guid = e.Guid });
+                await Config.Save();
             }
         }
-
-        private async void Manager_OnProcessStopped(object sender, ServerInstance e)
-        {
-            if (_config.servers.ContainsKey(e.Guid) && _config.servers[e.Guid].auto_start)
-            {
-                await Task.Delay(1000);
-                e.Start();
-            }
-        }
-
-        private void Manager_OnProcessStarted(object sender, ServerInstance e) {}
 
         private void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
@@ -153,6 +141,14 @@ namespace HSL.Windows
 
         private void RegisterListeners()
         {
+
+            _timer.Elapsed += async (s, e) => {
+                Trace.WriteLine("Timer Elapsed!");
+                if(manager.IsDirty(true))
+                {
+                    await Config.Save();
+                }
+            };
 
             lv_ServerList.SelectionChanged += (s, e) =>
             {
@@ -183,7 +179,7 @@ namespace HSL.Windows
                         return;
                     }
                     
-                    if(_config.servers.Any(x => x.Value.exe_file == _ofd.FileName))
+                    if(Config.servers.Any(x => x.Value.exe_file == _ofd.FileName))
                     {
                         MessageBox.Show("This server has already been added.");
                         return;

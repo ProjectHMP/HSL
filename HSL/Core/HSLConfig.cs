@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,22 +9,37 @@ using System.Windows;
 
 namespace HSL.Core
 {
+
+    public class ServerData
+    {
+        public Guid guid { get; set; } = Guid.NewGuid();
+        public string exe_file { get; set; } = string.Empty;
+        public bool auto_start { get; set; } = false;
+        public bool auto_reload_resources { get; set; } = false;
+        public bool auto_restart { get; set; } = false;
+        public TimeSpan restart_timer { get; set; } = TimeSpan.Zero;
+
+        public ServerData() { }
+
+        public ServerData(Guid guid, string exe, bool auto_start)
+        {
+            this.guid = guid;
+            this.exe_file = exe;
+            this.auto_start = auto_start;
+        }
+
+    }
+
     internal class HSLConfig
     {
 
-        public class ServerConfig
-        {
-            public Guid guid { get; set; } = Guid.NewGuid();
-            public string exe_file { get; set; } = string.Empty;
-            public bool auto_start { get; set; } = false;
-            public bool auto_reload_resources { get; set; } = false;
-            public TimeSpan restar_timer { get; set; } = TimeSpan.Zero;
-        }
-
+        [JsonIgnore]
         private string _fileName = string.Empty;
-        private CancellationTokenSource save_cts;
 
-        public Dictionary<Guid, ServerConfig> servers { get; set; } = new Dictionary<Guid, ServerConfig>();
+        [JsonIgnore]
+        private CancellationTokenSource _cts;
+
+        public Dictionary<Guid, ServerData> servers { get; set; } = new Dictionary<Guid, ServerData>();
 
         private HSLConfig() { }
 
@@ -55,26 +72,26 @@ namespace HSL.Core
             config ??= new HSLConfig(file);
             if (!exists)
             {
-                await File.WriteAllTextAsync(file, Newtonsoft.Json.JsonConvert.SerializeObject(config));
+                await config.Save();
             }
             return config;
         }
 
         internal async Task<bool> Save()
         {
-
-            if (save_cts != null && !save_cts.IsCancellationRequested)
+            if (_cts != null && !_cts.IsCancellationRequested)
             {
                 return false;
             }
-            save_cts = new CancellationTokenSource();
+            _cts = new CancellationTokenSource();
             try
             {
                 await File.WriteAllTextAsync(_fileName, Newtonsoft.Json.JsonConvert.SerializeObject(this));
+                Trace.WriteLine("Config Saved");
             }
             catch { MessageBox.Show("Failed to save HSL configuration."); }
 
-            save_cts.Cancel();
+            _cts.CancelAfter(500);
             return false;
         }
 

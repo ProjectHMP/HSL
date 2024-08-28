@@ -188,7 +188,7 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="25"></RowDefinition>
                     <RowDefinition Height="*"></RowDefinition>
-                    <RowDefinition Height=".5*"></RowDefinition>
+                    <RowDefinition Height=".35*"></RowDefinition>
                 </Grid.RowDefinitions>
 
                 <!-- Resource List / Resource Controls -->
@@ -329,10 +329,10 @@
                         <CheckBox Padding="0" VerticalAlignment="Bottom" VerticalContentAlignment="Bottom" Margin="5 0 0 0" Cursor="Hand" IsChecked="{Binding currentInstance.AutoReloadResources, UpdateSourceTrigger=PropertyChanged, FallbackValue={StaticResource False}}">
                             <Label Foreground="White" Margin="5 0 0 0" FontSize="12" Padding="0" VerticalContentAlignment="Center" Content="Reload Resources" ToolTip="Enabling will automatically reload resource(s) when they're modified."></Label>
                         </CheckBox>
-                        <CheckBox Padding="0" VerticalAlignment="Bottom" VerticalContentAlignment="Bottom" Margin="5 0 0 0" Cursor="Hand">
+                        <CheckBox Padding="0" VerticalAlignment="Bottom" VerticalContentAlignment="Bottom" Margin="5 0 0 0" Cursor="Hand" IsChecked="{Binding currentInstance.AutoStart, UpdateSourceTrigger=PropertyChanged, FallbackValue={StaticResource False}}">
                             <Label Foreground="White" Margin="5 0 0 0" FontSize="12" Padding="0" VerticalContentAlignment="Center" Content="Start" ToolTip="Enabling will automatically start the server when HSL starts."></Label>
                         </CheckBox>
-                        <CheckBox Padding="0" VerticalAlignment="Bottom" VerticalContentAlignment="Bottom" Margin="5 0 0 0" Cursor="Hand">
+                        <CheckBox Padding="0" VerticalAlignment="Bottom" VerticalContentAlignment="Bottom" Margin="5 0 0 0" Cursor="Hand" IsChecked="{Binding currentInstance.AutoRestart, UpdateSourceTrigger=PropertyChanged, FallbackValue={StaticResource False}}">
                             <Label Foreground="White" Margin="5 0 0 0" FontSize="12" Padding="0" VerticalContentAlignment="Center" Content="Restart" ToolTip="Enabling allows the server to restart if crashes (unintentionally)."></Label>
                         </CheckBox>
 
@@ -366,7 +366,7 @@
                         </ComboBox>
                     </Grid>
                 </Grid>
-                <Grid Grid.Row="2">
+                <Grid Grid.Row="2" IsEnabled="False">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="20"></RowDefinition>
                         <RowDefinition Height="*"></RowDefinition>
@@ -377,7 +377,7 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="20"></RowDefinition>
                                 <RowDefinition Height="20"></RowDefinition>
-                                <RowDefinition Height="20"></RowDefinition>
+
                                 <RowDefinition Height="*"></RowDefinition>
                             </Grid.RowDefinitions>
                             <Label Grid.Row="0" Grid.ColumnSpan="5" Foreground="{StaticResource txtColor}" FontSize="10" VerticalContentAlignment="Center" Padding="5 0 0 0" FontWeight="Bold">Auto Restart Scheduler</Label>
