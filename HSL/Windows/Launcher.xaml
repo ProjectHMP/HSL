@@ -21,11 +21,6 @@
         </Style>
     </Window.Resources>
     <Grid Background="{StaticResource bgColor}">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="323*"/>
-            <ColumnDefinition Width="436*"/>
-        </Grid.ColumnDefinitions>
-
 
         <!-- I decided to combine all "views" into one Window -->
 

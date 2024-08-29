@@ -356,7 +356,6 @@ namespace HSL.Core
                             {
                                 ReloadResource(match.Groups[1].Value);
                             }
-                            ServerUpdated?.Invoke(null, null);
                         }
                     }
                 }
