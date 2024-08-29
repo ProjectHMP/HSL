@@ -5,7 +5,6 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:HSL"
         xmlns:enums="clr-namespace:HSL.Enums"
-        xmlns:core="clr-namespace:HSL.Core"
         mc:Ignorable="d"
         Title="Happiness Server Launcher" Height="447" Width="826"
         Background="Black"
@@ -207,7 +206,7 @@
                     </Grid.RowDefinitions>
 
                     <!-- Resource List -->
-                    <ListView x:Name="lv_ResourceList" ItemsSource="{Binding currentInstance.Resources, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, Mode=OneWay, IsAsync=True, Delay=500}" Background="Transparent" BorderThickness="0 .2 .2 .2" Foreground="{StaticResource txtColor}">
+                    <ListView x:Name="lv_ResourceList" ItemsSource="{Binding currentInstance.Resources, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, Mode=OneWay, IsAsync=True, Delay=500}" SelectedItem="{Binding currentResource, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}" Background="Transparent" BorderThickness="0 .2 .2 .2" Foreground="{StaticResource txtColor}">
                         <ListView.ItemTemplate>
                             <DataTemplate>
                                 <Label Content="{Binding Name}"  Margin="0" Padding="0" FontSize="12">

@@ -20,6 +20,7 @@ namespace HSL.Windows
 
         public ServerManager manager { get; private set; }
         public ServerInstance currentInstance { get; private set; } = default(ServerInstance);
+        public ServerInstance.ResourceMeta currentResource { get; private set; } = default(ServerInstance.ResourceMeta);
 
         internal HSLConfig Config { get; private set; }
         private OpenFileDialog _ofd;
@@ -119,7 +120,7 @@ namespace HSL.Windows
         {
             if (!Config.servers.ContainsKey(e.Guid))
             {
-                Config.servers.Add(e.Guid, new ServerData() { exe_file = e.ExePath, guid = e.Guid });
+                Config.servers.Add(e.Guid, e.ServerData);
                 await Config.Save();
             }
         }
@@ -137,10 +138,10 @@ namespace HSL.Windows
 
             if (currentInstance != null)
             {
-                rtb_ServerLog.ScrollToVerticalOffset(rtb_ServerLog.ActualHeight);
                 currentInstance.StdOutput += (s, e) => Dispatcher.Invoke(() => {
                     rtb_ServerLog.UpdateLayout();
                     rtb_ServerLog.ScrollToEnd();
+                    rtb_ServerLog.ScrollToVerticalOffset(double.MaxValue);
                 });
             }
 
@@ -162,7 +163,17 @@ namespace HSL.Windows
             {
                 if (lv_ServerList.SelectedItem != null && lv_ServerList.SelectedItem is ServerInstance instance)
                 {
+                    currentResource = null;
+                    OnPropertyChanged(nameof(currentResource));
                     ShowServerContext(instance);
+                }
+            };
+
+            lv_ResourceList.SelectionChanged += (s,e) => {
+                if(lv_ResourceList.SelectedItem is ServerInstance.ResourceMeta meta)
+                {
+                    currentResource = meta;
+                    OnPropertyChanged(nameof(currentResource));
                 }
             };
 
@@ -295,12 +306,11 @@ namespace HSL.Windows
                     return;
                 }
 
-                string tmpFolder = currentInstance.ServerDirectory.CombinePath(".hsl");
-                string zip = tmpFolder.CombinePath(filename + ".tmp");
+                string zip = currentInstance.ServerDirectory.CombinePath(filename + ".tmp");
 
-                if (!Directory.Exists(tmpFolder))
+                if (File.Exists(zip))
                 {
-                    Directory.CreateDirectory(tmpFolder);
+                    File.Delete(zip);
                 }
 
                 try
@@ -318,7 +328,7 @@ namespace HSL.Windows
                                 throw new Exception("Failed to install server files.");
                             }
 
-                            version = archive.Entries[0].Name;
+                            version = archive.Entries[0].FullName;
 
                             for (int i = 1; i < archive.Entries.Count; i++)
                             {
@@ -338,19 +348,16 @@ namespace HSL.Windows
                         }
                     }
 
-                    if (Directory.Exists(tmpFolder))
-                    {
-                        Directory.Delete(tmpFolder, true);
-                    }
+                    File.Delete(zip);
 
                     MessageBox.Show("Updated Server: " + version);
 
                 }
                 catch (Exception ee)
                 {
-                    if (Directory.Exists(tmpFolder))
+                    if(File.Exists(zip))
                     {
-                        Directory.Delete(tmpFolder, true);
+                        File.Delete(zip);
                     }
                     MessageBox.Show("Failed to install server files: " + ee.ToString(), "Error", MessageBoxButton.OK);
                 }
@@ -400,12 +407,11 @@ namespace HSL.Windows
                     return;
                 }
 
-                string tmpFolder = directory.CombinePath(".hsl");
-                string zip = tmpFolder.CombinePath(filename + ".tmp");
+                string zip = directory.CombinePath(filename + ".tmp");
 
-                if (!Directory.Exists(tmpFolder))
+                if (!File.Exists(zip))
                 {
-                    Directory.CreateDirectory(tmpFolder);
+                    File.Delete(zip);
                 }
 
                 try
@@ -431,14 +437,14 @@ namespace HSL.Windows
                                 archive.Entries[i].ExtractToFile(destination);
                             }
                         }
-                        Directory.Delete(tmpFolder, true);
                     }
+                    File.Delete(zip);
                 }
                 catch (Exception ee)
                 {
-                    if (Directory.Exists(tmpFolder))
+                    if (!File.Exists(zip))
                     {
-                        Directory.Delete(tmpFolder, true);
+                        File.Delete(zip);
                     }
                     MessageBox.Show("Failed to install server files: " + ee.ToString(), "Error", MessageBoxButton.OK);
                     return;

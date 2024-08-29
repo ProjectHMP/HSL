@@ -24,7 +24,7 @@ namespace HSL.Core
             public bool IsEnabled { get; set; } = false;
         }
 
-        private ServerData ServerData;
+        internal ServerData ServerData { get; private set; }
 
         public event PropertyChangedEventHandler PropertyChanged;
         public ServerState State { get; private set; } = ServerState.Stopped;
@@ -346,9 +346,9 @@ namespace HSL.Core
             {
                 try
                 {
-                    if (e.FullPath.IndexOf(ResourceDirectory) > 0)
+                    if (e.FullPath.IndexOf(ResourceDirectory) >= 0)
                     {
-                        Match match = Regex.Match(e.FullPath, @"[\\\/]{1}Resources[\\\/]{1}(.*)[\\\/]{1}?");
+                        Match match = Regex.Match(e.FullPath, @"[\\\/]{1}resources[\\\/]{1}(.*)[\\\/]{1}?");
                         if (match.Success && match.Groups.Count > 0)
                         {
                             RefreshServerInformation();
@@ -487,16 +487,6 @@ namespace HSL.Core
                         p.Kill();
                     }
                 }
-            }
-
-            string tmpLog = LogFile + ".tmp";
-            if (File.Exists(LogFile))
-            {
-                if (File.Exists(tmpLog))
-                {
-                    File.Delete(tmpLog);
-                }
-                File.Copy(LogFile, tmpLog);
             }
 
             process = new Process()
