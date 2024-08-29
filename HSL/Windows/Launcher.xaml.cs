@@ -138,7 +138,10 @@ namespace HSL.Windows
             if (currentInstance != null)
             {
                 rtb_ServerLog.ScrollToVerticalOffset(rtb_ServerLog.ActualHeight);
-                currentInstance.StdOutput += (s, e) => Dispatcher.Invoke(() => rtb_ServerLog.ScrollToVerticalOffset(rtb_ServerLog.ActualHeight));
+                currentInstance.StdOutput += (s, e) => Dispatcher.Invoke(() => {
+                    rtb_ServerLog.UpdateLayout();
+                    rtb_ServerLog.ScrollToEnd();
+                });
             }
 
             Title = currentInstance != null ? String.Format("HSL - {0}", currentInstance.Name) : "Happiness Server Launcher";

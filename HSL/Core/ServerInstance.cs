@@ -571,7 +571,7 @@ namespace HSL.Core
                     while (_cts != null && !_cts.IsCanceled() && IsProcessRunning())
                     {
                         await fs.FlushAsync();
-                        if (sr.Peek() >= 0 && pos != fs.Length)
+                        if ( pos != fs.Length)
                         {
                             buffer = await sr.ReadLineAsync();
                             if (!string.IsNullOrEmpty(buffer))
@@ -587,12 +587,9 @@ namespace HSL.Core
                             }
                         }
 
-                        if (AutoRestart)
+                        if (AutoRestart && DateTime.Now >= _StartTime.Add(RestartTimer))
                         {
-                            if (DateTime.Now >= _StartTime.Add(RestartTimer))
-                            {
-                                break;
-                            }
+                            break;
                         }
 
                         await Task.Delay(500);
