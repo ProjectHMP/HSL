@@ -32,7 +32,7 @@ jobs:
     - name: Publish
       run: dotnet publish -p:PublishProfile=FolderProfile -c Release -f netcoreapp3.1 -r win-x64
     - name: Upload Build Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: Application_Artifact
-        path: /home/runner/work/HSL/HSL/release/
+        path: D:\a\HSL\HSL\HSL\bin\Release\netcoreapp3.1\win-x64\publish\
