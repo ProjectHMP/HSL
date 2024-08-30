@@ -214,7 +214,7 @@ namespace HSL.Windows
                 _ofd.Filter = "HappinessMP.Server.Exe | *.exe";
                 if (_ofd.ShowDialog() ?? false)
                 {
-                    if (!File.Exists(Path.GetDirectoryName(_ofd.FileName).CombinePath("settings.xml")))
+                    if (!ServerInstance.IsValidInstallation(Path.GetDirectoryName(_ofd.FileName)))
                     {
                         MessageBox.Show("This path does not contain a valid HappinessMP server.", "Error", MessageBoxButton.OK);
                         return;
@@ -312,6 +312,7 @@ namespace HSL.Windows
                     return;
                 }
 
+
                 string url = await Utils.GetLatestServerURL();
 
                 if (string.IsNullOrEmpty(url))
@@ -397,12 +398,6 @@ namespace HSL.Windows
                     if (fbd.ShowDialog() != System.Windows.Forms.DialogResult.OK || string.IsNullOrEmpty(fbd.SelectedPath))
                     {
                         MessageBox.Show("No directory given to install server.", "Error", MessageBoxButton.OK);
-                        return;
-                    }
-
-                    if (!ServerInstance.IsValidInstallation(fbd.SelectedPath))
-                    {
-                        MessageBox.Show("This path has no valid HMP server installation. Did you mean Create Server instead?", "Oops", MessageBoxButton.OK);
                         return;
                     }
 
