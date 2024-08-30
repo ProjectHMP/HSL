@@ -1,13 +1,16 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
+using System.Reflection.Metadata;
 using System.Xml;
 
 namespace HSL.Core
 {
-    internal class ServerSettings
+    internal class ServerSettings : IDisposable
     {
 
-        private XmlDocument Document;
+        private XmlDocument _document;
+        internal bool _wasUpdated = false;
 
         private string _file;
         private object _saveLock = new object();
@@ -15,32 +18,42 @@ namespace HSL.Core
         public ServerSettings(string settingsFile)
         {
             _file = settingsFile;
-            Document = new XmlDocument();
             RefreshDocument();
+        }
+
+        public void Dispose()
+        {
+            
         }
 
         public void RefreshDocument()
         {
             if (File.Exists(_file))
             {
-                Document = new XmlDocument();
-                Document.LoadXml(File.ReadAllText(_file));
+                _document = new XmlDocument();
+                lock (_saveLock)
+                {
+                    _wasUpdated = true;
+                    _document.LoadXml(File.ReadAllText(_file));
+                }
+                Trace.WriteLine("Loaded " + _file);
             }
+            else Trace.WriteLine("Couldn't find " + _file);
         }
 
-        public XmlNodeList GetNodes(string name) => Document.DocumentElement.SelectNodes(name);
+        public XmlNodeList GetNodes(string name) => _document.DocumentElement.SelectNodes(name);
 
         public T Get<T>(string name) => Get<T>(name, default(T));
 
         public T Get<T>(string name, T defaultValue)
         {
 
-            if (Document == null)
+            if (_document == null)
             {
                 return defaultValue;
             }
 
-            XmlNode node = Document.DocumentElement.SelectSingleNode(name);
+            XmlNode node = _document.DocumentElement.SelectSingleNode(name);
 
             if (node == null || string.IsNullOrEmpty(node.InnerText))
             {
@@ -112,16 +125,16 @@ namespace HSL.Core
         public void Set<T>(string name, T value)
         {
 
-            if (Document == null)
+            if (_document == null)
             {
                 return;
             }
 
-            XmlNode node = Document.DocumentElement.SelectSingleNode(name);
+            XmlNode node = _document.DocumentElement.SelectSingleNode(name);
             if (node == null)
             {
-                node = Document.CreateNode("element", name, "");
-                Document.DocumentElement.AppendChild(node);
+                node = _document.CreateNode("element", name, "");
+                _document.DocumentElement.AppendChild(node);
             }
 
             switch (Type.GetTypeCode(typeof(T)))
@@ -134,13 +147,11 @@ namespace HSL.Core
                 case TypeCode.Int64:
                 case TypeCode.Single:
                 case TypeCode.Double:
+                case TypeCode.String:
                     node.InnerText = value.ToString();
                     break;
                 case TypeCode.Boolean:
                     node.InnerText = value.ToString().ToLower();
-                    break;
-                case TypeCode.String:
-                    node.InnerText = value.ToString();
                     break;
             }
 
@@ -148,7 +159,9 @@ namespace HSL.Core
             {
                 try
                 {
-                    Document.Save(_file);
+                    Trace.WriteLine("Saved Config");
+                    _wasUpdated = true;
+                    _document.Save(_file);
                 }
                 catch { }
             }

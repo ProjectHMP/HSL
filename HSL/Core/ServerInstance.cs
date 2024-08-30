@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -73,6 +74,7 @@ namespace HSL.Core
             {
                 ServerData.restart_timer = value;
                 OnPropertyChanged(nameof(RestartTimer));
+                OnPropertyChanged(nameof(RestartDateTime));
                 ServerManager.MarkConfigDirty();
             }
         }
@@ -100,6 +102,16 @@ namespace HSL.Core
             set
             {
                 RestartTimer = TimeSpan.FromSeconds(value).Add(TimeSpan.FromHours(RestartTimer.Days * 24 + RestartTimer.Hours).Add(TimeSpan.FromMinutes(RestartTimer.Minutes)));
+            }
+        }
+
+        public bool AutoDeleteLogs
+        {
+            get => ServerData.auto_delete_logs;
+            set
+            {
+                ServerData.auto_delete_logs = value;
+                ServerManager.MarkConfigDirty();
             }
         }
 
@@ -203,6 +215,8 @@ namespace HSL.Core
             }
         }
 
+        public DateTime RestartDateTime => _StartTime.Add(RestartTimer);
+
         internal string ServerDirectory { get; private set; }
         internal string ResourceDirectory { get; private set; }
         internal string ExePath
@@ -231,10 +245,10 @@ namespace HSL.Core
         private CancellationTokenSource _cts, _resourceCts;
         private FileSystemWatcher _resourceWatcher;
         private DateTime _StartTime = DateTime.Now;
-
+        
         private bool _wasForcedClosed = false;
         private bool _documentSave = false;
-        private object _stdOutLock = new object();
+        private object _stdInLock = new object();
         private object _resourceListLock = new object();
         private object _serverLogLock = new object();
 
@@ -275,14 +289,30 @@ namespace HSL.Core
             }
         }
 
+        internal static bool IsValidInstallation(string directory)
+        {
+            if(string.IsNullOrEmpty(directory) || !Directory.Exists(directory))
+            {
+                return false;
+            }
+            // just checking for any exe's in the path, regardless of name.
+            if(string.IsNullOrEmpty(Directory.GetFiles(directory, "*.exe", SearchOption.TopDirectoryOnly).FirstOrDefault()))
+            {
+                return false;
+            }
+            if (!Directory.Exists(directory.CombinePath("resources")) || !File.Exists(directory.CombinePath("settings.xml")))
+            {
+                return false;
+            }
+            return true;
+        }
+
         private bool SyncServerSettings()
         {
             lock (_resourceListLock)
             {
                 foreach (XmlNode resource in ServerSettings.GetNodes("resource"))
                 {
-                    Trace.WriteLine("Found XML Resource: " + resource.InnerText);
-
                     if (!ResourceMap.ContainsKey(resource.InnerText))
                     {
                         ResourceMap.Add(resource.InnerText, new ResourceMeta { Name = resource.InnerText, IsEnabled = true });
@@ -317,7 +347,6 @@ namespace HSL.Core
                 }
 
                 OnPropertyChanged(nameof(Resources));
-                // OnPropertyChanged(nameof(ResourceMap));
             }
         }
 
@@ -330,7 +359,7 @@ namespace HSL.Core
             }
         }
 
-        private async void _watcherHandler(object sender, FileSystemEventArgs e)
+        private void _watcherHandler(object sender, FileSystemEventArgs e)
         {
 
             if (_resourceCts != null && !_resourceCts.Token.CanBeCanceled)
@@ -339,8 +368,6 @@ namespace HSL.Core
             }
 
             _resourceCts = new CancellationTokenSource();
-
-            await Task.Delay(500);
 
             if (e.FullPath != ServerSettingsFile)
             {
@@ -363,7 +390,6 @@ namespace HSL.Core
             }
             else
             {
-
                 if (!_documentSave)
                 {
                     _documentSave = true;
@@ -372,18 +398,19 @@ namespace HSL.Core
                 }
                 else _documentSave = false;
             }
-            _resourceCts.CancelAfter(500);
+            _resourceCts.CancelAfter(2000);
         }
 
         internal bool IsProcessRunning() => process != null && !process.HasExited && _cts != null && !_cts.IsCanceled();
 
-        internal bool Stop()
+        internal bool Stop(bool ignoreRestart = false)
         {
             if (IsProcessRunning())
             {
                 _wasForcedClosed = true;
-                Dispose();
+                DisposeProcess();
             }
+            _wasForcedClosed = ignoreRestart;
             State = ServerState.Stopped;
             OnPropertyChanged(nameof(State));
             return true;
@@ -391,7 +418,7 @@ namespace HSL.Core
 
         internal async void Restart()
         {
-            if (Stop())
+            if (Stop(true))
             {
                 await Task.Delay(1000);
                 Start();
@@ -480,13 +507,12 @@ namespace HSL.Core
 
                 foreach (Process p in processes)
                 {
-                    if (p.MainModule.FileName == ExePath)
-                    {
-                        Trace.WriteLine("Killing active process: " + p.ProcessName + " & " + p.MainModule.FileName);
-                        p.Kill();
-                    }
+                    Trace.WriteLine("Killing active process: " + p.ProcessName + " & " + p.MainModule.FileName);
+                    p.Kill();
                 }
             }
+
+            processes = null;
 
             process = new Process()
             {
@@ -501,22 +527,24 @@ namespace HSL.Core
                 EnableRaisingEvents = true,
             };
 
-            process.Disposed += (s, e) => _cts?.Dispose();
+            process.Disposed += (s, e) => DisposeProcess();
             process.Exited += async (s, e) =>
             {
-                Dispose();
+                DisposeProcess();
                 ProcessStopped?.Invoke(null, null);
-
                 if (AutoRestart && !_wasForcedClosed)
                 {
                     _wasForcedClosed = false;
                     await Task.Delay(1500);
                     Start();
                 }
-
             };
 
-            processes = null;
+            if(File.Exists("server.log"))
+            {
+                File.AppendAllText(LogFile + ".tmp", File.ReadAllText(LogFile));
+                File.Delete("server.log");
+            }
 
             if (process.Start())
             {
@@ -538,7 +566,7 @@ namespace HSL.Core
         {
             if (IsProcessRunning())
             {
-                lock (_stdOutLock)
+                lock (_stdInLock)
                 {
                     //process.StandardInput.Flush();
                     process.StandardInput.WriteLine(data);
@@ -575,32 +603,35 @@ namespace HSL.Core
                                 continue;
                             }
                         }
-
+                        OnPropertyChanged(nameof(RestartDateTime));
                         if (AutoRestart && DateTime.Now >= _StartTime.Add(RestartTimer))
                         {
                             break;
                         }
-
                         await Task.Delay(500);
                     }
                 }
             }
-            Dispose();
+            DisposeProcess();
             return Task.CompletedTask;
         }
 
-        public void Dispose()
+        public void DisposeProcess()
         {
             if (_cts?.Token.CanBeCanceled ?? false)
             {
                 _cts.Cancel();
             }
-            State = ServerState.Stopped;
-            OnPropertyChanged(nameof(State));
-            if (process != null && !process.HasExited)
+            if(process != null && !process.HasExited)
             {
                 process.Kill();
             }
+            _resourceWatcher.Dispose();
+        }
+
+        public void Dispose()
+        {
+            DisposeProcess();
             ClearServerLog();
         }
 

@@ -17,6 +17,7 @@ namespace HSL.Core
         public bool auto_start { get; set; } = false;
         public bool auto_reload_resources { get; set; } = false;
         public bool auto_restart { get; set; } = false;
+        public bool auto_delete_logs { get; set; } = false;
         public TimeSpan restart_timer { get; set; } = TimeSpan.FromHours(24);
 
         public ServerData() { }

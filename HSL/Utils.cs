@@ -24,13 +24,12 @@ namespace HSL
             CurrentDirectory ??= Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
         }
 
-        public static bool IsDirectoryEmpty(string directory) => Directory.Exists(directory) && Directory.GetFileSystemEntries(directory).Length == 0;
+        internal static bool IsDirectoryEmpty(string directory) => Directory.Exists(directory) && Directory.GetFileSystemEntries(directory).Length == 0;
 
-        private static readonly string LatestUrlPattern = @"(https:\/\/happinessmp\.net\/files\/[A-Za-z0-9%_\.]*.zip)";
-        public static async Task<string> GetLatestServerURL()
+        internal static async Task<string> GetLatestServerURL()
         {
             byte[] _html_content_buffer = await HTTP.GetAsync(@"https://happinessmp.net/docs/server/getting-started/");
-            Match match = Regex.Match(Encoding.UTF8.GetString(_html_content_buffer), LatestUrlPattern);
+            Match match = Regex.Match(Encoding.UTF8.GetString(_html_content_buffer), @"(https:\/\/happinessmp\.net\/files\/[A-Za-z0-9%_\.]*.zip)");
             _html_content_buffer = null; // i got the habit of doing this, why, in managed. i should start writing unsafe, and malloc instead heh.
             return match.Success ? Uri.UnescapeDataString(match.Groups[0].Value) : String.Empty;
         }

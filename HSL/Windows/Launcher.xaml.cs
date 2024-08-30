@@ -1,6 +1,7 @@
 ﻿using HSL.Core;
 using Microsoft.Win32;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -34,12 +35,13 @@ namespace HSL.Windows
 
             AppDomain.CurrentDomain.UnhandledException += async (s, e) =>
             {
-                string cr = Utils.CurrentDirectory.CombinePath("crash-report.txt");
+                string cr = Utils.CurrentDirectory.CombinePath("crash-reports.txt");
                 if (File.Exists(cr))
                 {
                     File.Delete(cr);
                 }
-                await File.WriteAllTextAsync(cr, ((Exception)e.ExceptionObject).ToString());
+
+                await File.AppendAllTextAsync(cr, "--------------------------------------" + Environment.NewLine + ((Exception)e.ExceptionObject).ToString());
 
                 if(e.IsTerminating)
                 {
@@ -70,7 +72,7 @@ namespace HSL.Windows
         private async Task LoadConfiguration()
         {
             Config = await HSLConfig.Load("hsl.json");
-
+            List<Guid> deleteCache = new List<Guid>();
             bool markdirty = false;
             lock (_configLock)
             {
@@ -85,6 +87,7 @@ namespace HSL.Windows
                             _ofd.Filter = "HappinessMP.Server.Exe | *.exe";
                             if (!(_ofd?.ShowDialog() ?? false) || string.IsNullOrEmpty(_ofd.FileName) || Config.servers.Any(x => x.Value.exe_file == _ofd.FileName))
                             {
+                                deleteCache.Add(key);
                                 continue;
                             }
                             Config.servers[key].exe_file = _ofd.FileName;
@@ -93,6 +96,11 @@ namespace HSL.Windows
                     }
                     manager.Create(Config.servers[key]);
                 }
+            }
+
+            foreach(Guid guid in deleteCache)
+            {
+                Config.servers.Remove(guid);
             }
 
             if (markdirty)
@@ -259,7 +267,7 @@ namespace HSL.Windows
 
             mi_StartServer.Click += (s, e) => currentInstance?.Start();
 
-            mi_StopServer.Click += (s, e) => currentInstance?.Stop();
+            mi_StopServer.Click += (s, e) => currentInstance?.Stop(true);
 
             mi_RestartServer.Click += (s, e) => currentInstance?.Restart();
 
@@ -375,6 +383,13 @@ namespace HSL.Windows
                         MessageBox.Show("No directory given to install server.", "Error", MessageBoxButton.OK);
                         return;
                     }
+
+                    if (!ServerInstance.IsValidInstallation(fbd.SelectedPath))
+                    {
+                        MessageBox.Show("This path has no valid HMP server installation. Did you mean Create Server instead?", "Oops", MessageBoxButton.OK);
+                        return;
+                    }
+
                     directory = fbd.SelectedPath;
                 }
 
@@ -423,7 +438,7 @@ namespace HSL.Windows
                         {
                             if (!archive.Entries.Any(x => x.Name.IndexOf(".exe") > 0))
                             {
-                                throw new Exception("Failed to install server files.");
+                                throw new Exception("Corrupted server download. Aborted");
                             }
 
                             for (int i = 1; i < archive.Entries.Count; i++)
