@@ -626,7 +626,7 @@ namespace HSL.Core
             }
             catch (Exception e)
             {
-                Trace.WriteLine(e.ToString());
+                Utils.AppendToCrashReport(e.ToString());
             }
 
             DisposeProcess();

@@ -34,16 +34,9 @@ namespace HSL.Windows
         {
             InitializeComponent();
 
-            AppDomain.CurrentDomain.UnhandledException += async (s, e) =>
+            AppDomain.CurrentDomain.UnhandledException += (s, e) =>
             {
-                string cr = Utils.CurrentDirectory.CombinePath("crash-reports.txt");
-                if (File.Exists(cr))
-                {
-                    File.Delete(cr);
-                }
-
-                await File.AppendAllTextAsync(cr, "--------------------------------------" + Environment.NewLine + ((Exception)e.ExceptionObject).ToString());
-
+                Utils.AppendToCrashReport(((Exception)e.ExceptionObject).ToString());
                 if (e.IsTerminating)
                 {
                     Dispose();
@@ -484,6 +477,7 @@ namespace HSL.Windows
                     {
                         File.Delete(zip);
                     }
+                    Utils.AppendToCrashReport(ee.ToString());
                     MessageBox.Show("Failed to install server files: " + ee.ToString(), "Error", MessageBoxButton.OK);
                     return;
                 }

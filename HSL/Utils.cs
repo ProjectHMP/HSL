@@ -15,6 +15,7 @@ namespace HSL
     {
 
         internal static string CurrentDirectory;
+        internal static string CrashReportPath;
 
         static Utils()
         {
@@ -22,9 +23,17 @@ namespace HSL
             CurrentDirectory ??= Environment.CurrentDirectory;
             CurrentDirectory ??= AppDomain.CurrentDomain.BaseDirectory;
             CurrentDirectory ??= Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            CrashReportPath = CurrentDirectory.CombinePath("crash-reports.txt");
         }
 
         internal static bool IsDirectoryEmpty(string directory) => Directory.Exists(directory) && Directory.GetFileSystemEntries(directory).Length == 0;
+
+        internal static void AppendToCrashReport(string data)
+        {
+            data = Environment.NewLine + "["+ DateTime.Now.ToString() + "]" + data;
+            File.AppendAllText(CrashReportPath, data);
+            Trace.WriteLine(data);
+        }
 
         internal static async Task<string> GetLatestServerURL()
         {
