@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
-using System.Reflection.Metadata;
 using System.Xml;
 
 namespace HSL.Core
@@ -18,27 +16,24 @@ namespace HSL.Core
         public ServerSettings(string settingsFile)
         {
             _file = settingsFile;
-            RefreshDocument();
+            LoadDocument();
         }
 
         public void Dispose()
         {
-            
+
         }
 
-        public void RefreshDocument()
+        public void LoadDocument()
         {
             if (File.Exists(_file))
             {
-                _document = new XmlDocument();
+                _document ??= new XmlDocument();
                 lock (_saveLock)
                 {
-                    _wasUpdated = true;
                     _document.LoadXml(File.ReadAllText(_file));
                 }
-                Trace.WriteLine("Loaded " + _file);
             }
-            else Trace.WriteLine("Couldn't find " + _file);
         }
 
         public XmlNodeList GetNodes(string name) => _document.DocumentElement.SelectNodes(name);
@@ -159,7 +154,6 @@ namespace HSL.Core
             {
                 try
                 {
-                    Trace.WriteLine("Saved Config");
                     _wasUpdated = true;
                     _document.Save(_file);
                 }

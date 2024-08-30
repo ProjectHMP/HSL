@@ -5,7 +5,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,7 +26,7 @@ namespace HSL.Core
 
         internal ServerData ServerData { get; private set; }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
         public ServerState State { get; private set; } = ServerState.Stopped;
         public List<ResourceMeta> Resources { get; private set; }
         public Dictionary<string, ResourceMeta> ResourceMap { get; private set; }
@@ -215,10 +214,6 @@ namespace HSL.Core
             }
         }
 
-        public DateTime RestartDateTime => _StartTime.Add(RestartTimer);
-
-        internal string ServerDirectory { get; private set; }
-        internal string ResourceDirectory { get; private set; }
         internal string ExePath
         {
             get => ServerData.exe_file;
@@ -229,6 +224,11 @@ namespace HSL.Core
             }
         }
 
+        public DateTime RestartDateTime => _StartTime.Add(RestartTimer);
+
+        internal string ServerDirectory { get; private set; }
+        internal string ResourceDirectory { get; private set; }
+
         internal readonly string LogFile;
         internal readonly string ServerSettingsFile;
 
@@ -237,17 +237,16 @@ namespace HSL.Core
 
         internal ServerSettings ServerSettings { get; private set; }
 
-        internal event EventHandler<string> StdOutput;
-        internal event EventHandler ProcessStarted, ProcessStopped, ServerUpdated;
+        internal event EventHandler<string?>? StdOutput;
+        internal event EventHandler<object?>? ProcessStarted, ProcessStopped, ServerUpdated;
 
-        internal Process process { get; set; }
-        private Task _task { get; set; }
-        private CancellationTokenSource _cts, _resourceCts;
-        private FileSystemWatcher _resourceWatcher;
+        internal Process? process { get; set; }
+        private Task? _task { get; set; }
+        private CancellationTokenSource? _cts, _fileWatchHandlerCts;
+        private FileSystemWatcher _fileWatchHandler;
         private DateTime _StartTime = DateTime.Now;
-        
+
         private bool _wasForcedClosed = false;
-        private bool _documentSave = false;
         private object _stdInLock = new object();
         private object _resourceListLock = new object();
         private object _serverLogLock = new object();
@@ -256,7 +255,7 @@ namespace HSL.Core
         {
             ServerManager = manager;
             ServerData = data;
-            ServerDirectory = Path.GetDirectoryName(data.exe_file);
+            ServerDirectory = Path.GetDirectoryName(data.exe_file)!;
             LogFile = ServerDirectory.CombinePath("server.log");
             ResourceDirectory = ServerDirectory.CombinePath("resources");
             ServerSettingsFile = ServerDirectory.CombinePath("settings.xml");
@@ -268,17 +267,17 @@ namespace HSL.Core
             ResourceMap = new Dictionary<string, ResourceMeta>();
             ServerLog = new List<string>();
 
-            _resourceWatcher = new FileSystemWatcher(ServerDirectory)
+            _fileWatchHandler = new FileSystemWatcher(ServerDirectory)
             {
                 EnableRaisingEvents = true,
                 NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.CreationTime | NotifyFilters.DirectoryName,
                 IncludeSubdirectories = true
             };
 
-            _resourceWatcher.Changed += _watcherHandler;
-            _resourceWatcher.Created += _watcherHandler;
-            _resourceWatcher.Deleted += _watcherHandler;
-            _resourceWatcher.Renamed += _watcherHandler;
+            _fileWatchHandler.Changed += _watcherHandler;
+            _fileWatchHandler.Created += _watcherHandler;
+            _fileWatchHandler.Deleted += _watcherHandler;
+            _fileWatchHandler.Renamed += _watcherHandler;
 
             SyncServerSettings();
             RefreshServerInformation();
@@ -291,12 +290,12 @@ namespace HSL.Core
 
         internal static bool IsValidInstallation(string directory)
         {
-            if(string.IsNullOrEmpty(directory) || !Directory.Exists(directory))
+            if (string.IsNullOrEmpty(directory) || !Directory.Exists(directory))
             {
                 return false;
             }
             // just checking for any exe's in the path, regardless of name.
-            if(string.IsNullOrEmpty(Directory.GetFiles(directory, "*.exe", SearchOption.TopDirectoryOnly).FirstOrDefault()))
+            if (string.IsNullOrEmpty(Directory.GetFiles(directory, "*.exe", SearchOption.TopDirectoryOnly).FirstOrDefault()))
             {
                 return false;
             }
@@ -311,9 +310,9 @@ namespace HSL.Core
         {
             lock (_resourceListLock)
             {
-                foreach (XmlNode resource in ServerSettings.GetNodes("resource"))
+                foreach (XmlNode? resource in ServerSettings.GetNodes("resource"))
                 {
-                    if (!ResourceMap.ContainsKey(resource.InnerText))
+                    if (resource != null && !ResourceMap.ContainsKey(resource.InnerText))
                     {
                         ResourceMap.Add(resource.InnerText, new ResourceMeta { Name = resource.InnerText, IsEnabled = true });
                         Resources.Add(ResourceMap[resource.InnerText]);
@@ -362,12 +361,12 @@ namespace HSL.Core
         private void _watcherHandler(object sender, FileSystemEventArgs e)
         {
 
-            if (_resourceCts != null && !_resourceCts.Token.CanBeCanceled)
+            if (_fileWatchHandlerCts != null && !_fileWatchHandlerCts.IsCanceled())
             {
                 return;
             }
 
-            _resourceCts = new CancellationTokenSource();
+            _fileWatchHandlerCts = new CancellationTokenSource();
 
             if (e.FullPath != ServerSettingsFile)
             {
@@ -390,15 +389,14 @@ namespace HSL.Core
             }
             else
             {
-                if (!_documentSave)
+                if (!ServerSettings._wasUpdated)
                 {
-                    _documentSave = true;
-                    ServerSettings.RefreshDocument();
+                    ServerSettings.LoadDocument();
                     ServerUpdated?.Invoke(null, null);
                 }
-                else _documentSave = false;
+                else ServerSettings._wasUpdated = false;
             }
-            _resourceCts.CancelAfter(2000);
+            _fileWatchHandlerCts.CancelAfter(500);
         }
 
         internal bool IsProcessRunning() => process != null && !process.HasExited && _cts != null && !_cts.IsCanceled();
@@ -458,9 +456,10 @@ namespace HSL.Core
             }
         }
 
-        internal void ReloadResource(string name)
+        internal async void ReloadResource(string name)
         {
             StopResource(name);
+            await Task.Delay(1000);
             StartResource(name);
         }
 
@@ -488,7 +487,6 @@ namespace HSL.Core
 
             if (IsProcessRunning())
             {
-                Trace.WriteLine("Process already running");
                 return false;
             }
 
@@ -499,15 +497,12 @@ namespace HSL.Core
 
             if (processes != null && processes.Count() > 0)
             {
-
                 if (MessageBox.Show("This server is already running. Do you want to terminate and start new?", "Hmm..", MessageBoxButton.YesNo) == MessageBoxResult.No)
                 {
                     return false;
                 }
-
                 foreach (Process p in processes)
                 {
-                    Trace.WriteLine("Killing active process: " + p.ProcessName + " & " + p.MainModule.FileName);
                     p.Kill();
                 }
             }
@@ -540,7 +535,7 @@ namespace HSL.Core
                 }
             };
 
-            if(File.Exists("server.log"))
+            if (File.Exists("server.log"))
             {
                 File.AppendAllText(LogFile + ".tmp", File.ReadAllText(LogFile));
                 File.Delete("server.log");
@@ -549,11 +544,11 @@ namespace HSL.Core
             if (process.Start())
             {
                 _StartTime = DateTime.Now;
+                _task = new Task(async () => await ServerUpdateThread(), _cts.Token);
+                _task.Start();
                 State = ServerState.Started;
                 OnPropertyChanged(nameof(State));
                 ProcessStarted?.Invoke(null, null);
-                _task = new Task(async () => await ServerUpdateThread(), _cts.Token);
-                _task.Start();
                 return true;
             }
             else Trace.WriteLine("Failed to start process: " + Name);
@@ -578,40 +573,50 @@ namespace HSL.Core
 
         private async Task<Task> ServerUpdateThread()
         {
-            using (FileStream fs = File.Open(LogFile, FileMode.OpenOrCreate, FileAccess.Read, FileShare.ReadWrite))
+            try
             {
-                long pos = fs.Length;
-                fs.Position = pos;
-                string buffer = "";
-                using (StreamReader sr = new StreamReader(fs))
+                using (FileStream fs = File.Open(LogFile, FileMode.OpenOrCreate, FileAccess.Read, FileShare.ReadWrite))
                 {
-                    while (_cts != null && !_cts.IsCanceled() && IsProcessRunning())
+                    long pos = fs.Length;
+                    fs.Seek(pos, SeekOrigin.Begin);
+                    string buffer = "";
+                    using (StreamReader sr = new StreamReader(fs))
                     {
-                        await fs.FlushAsync();
-                        if ( pos != fs.Length)
+                        while (_cts != null && !_cts.IsCanceled() && IsProcessRunning())
                         {
-                            buffer = await sr.ReadLineAsync();
-                            if (!string.IsNullOrEmpty(buffer))
+                            await fs.FlushAsync();
+                            if (pos != fs.Length)
                             {
-                                pos += buffer.Length;
-                                lock (_serverLogLock)
+                                buffer = await sr.ReadLineAsync();
+                                if (!string.IsNullOrEmpty(buffer))
                                 {
-                                    ServerLog.Add(buffer);
+                                    pos += buffer.Length;
+                                    lock (_serverLogLock)
+                                    {
+                                        ServerLog.Add(buffer);
+                                    }
+                                    StdOutput?.Invoke(null, buffer);
+                                    OnPropertyChanged(nameof(ServerLog));
+                                    continue;
                                 }
-                                StdOutput?.Invoke(null, buffer);
-                                OnPropertyChanged(nameof(ServerLog));
-                                continue;
                             }
+                            OnPropertyChanged(nameof(RestartDateTime));
+                            if (AutoRestart && DateTime.Now >= _StartTime.Add(RestartTimer))
+                            {
+                                break;
+                            }
+                            await Task.Delay(500);
                         }
-                        OnPropertyChanged(nameof(RestartDateTime));
-                        if (AutoRestart && DateTime.Now >= _StartTime.Add(RestartTimer))
-                        {
-                            break;
-                        }
-                        await Task.Delay(500);
                     }
                 }
+                DisposeProcess();
+                return Task.CompletedTask;
             }
+            catch (Exception e)
+            {
+                Trace.WriteLine(e.ToString());
+            }
+
             DisposeProcess();
             return Task.CompletedTask;
         }
@@ -622,16 +627,16 @@ namespace HSL.Core
             {
                 _cts.Cancel();
             }
-            if(process != null && !process.HasExited)
+            if (process != null && !process.HasExited)
             {
                 process.Kill();
             }
-            _resourceWatcher.Dispose();
         }
 
         public void Dispose()
         {
             DisposeProcess();
+            _fileWatchHandler.Dispose();
             ClearServerLog();
         }
 

@@ -43,7 +43,7 @@ namespace HSL.Windows
 
                 await File.AppendAllTextAsync(cr, "--------------------------------------" + Environment.NewLine + ((Exception)e.ExceptionObject).ToString());
 
-                if(e.IsTerminating)
+                if (e.IsTerminating)
                 {
                     Dispose();
                 }
@@ -98,7 +98,7 @@ namespace HSL.Windows
                 }
             }
 
-            foreach(Guid guid in deleteCache)
+            foreach (Guid guid in deleteCache)
             {
                 Config.servers.Remove(guid);
             }
@@ -146,7 +146,8 @@ namespace HSL.Windows
 
             if (currentInstance != null)
             {
-                currentInstance.StdOutput += (s, e) => Dispatcher.Invoke(() => {
+                currentInstance.StdOutput += (s, e) => Dispatcher.Invoke(() =>
+                {
                     rtb_ServerLog.UpdateLayout();
                     rtb_ServerLog.ScrollToEnd();
                     rtb_ServerLog.ScrollToVerticalOffset(double.MaxValue);
@@ -177,8 +178,9 @@ namespace HSL.Windows
                 }
             };
 
-            lv_ResourceList.SelectionChanged += (s,e) => {
-                if(lv_ResourceList.SelectedItem is ServerInstance.ResourceMeta meta)
+            lv_ResourceList.SelectionChanged += (s, e) =>
+            {
+                if (lv_ResourceList.SelectedItem is ServerInstance.ResourceMeta meta)
                 {
                     currentResource = meta;
                     OnPropertyChanged(nameof(currentResource));
@@ -363,7 +365,7 @@ namespace HSL.Windows
                 }
                 catch (Exception ee)
                 {
-                    if(File.Exists(zip))
+                    if (File.Exists(zip))
                     {
                         File.Delete(zip);
                     }

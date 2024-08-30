@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 
 namespace HSL.Core
@@ -36,20 +37,28 @@ namespace HSL.Core
             return _dirtyConfig;
         }
 
-        internal ServerInstance Create(string exePath, bool autoStart = false) => Create(new ServerData() { exe_file = exePath, guid = Guid.NewGuid(), auto_start = autoStart });
-        internal ServerInstance Create(ServerData data)
+        internal ServerInstance? Create(string exePath, bool autoStart = false) => Create(new ServerData() { exe_file = exePath, guid = Guid.NewGuid(), auto_start = autoStart });
+        internal ServerInstance? Create(ServerData data)
         {
-            ServerInstance instance = new ServerInstance(this, data);
-            instance.ProcessStarted += (s, e) => HandleEvent(OnProcessStarted, instance);
-            instance.ProcessStopped += (s, e) => HandleEvent(OnProcessStopped, instance);
-            instance.ServerUpdated += (s, e) => OnPropertyChanged(nameof(servers));
-            lock (_serverLock)
+            try
             {
-                servers.Add(instance);
+                ServerInstance instance = new ServerInstance(this, data);
+                instance.ProcessStarted += (s, e) => HandleEvent(OnProcessStarted, instance);
+                instance.ProcessStopped += (s, e) => HandleEvent(OnProcessStopped, instance);
+                instance.ServerUpdated += (s, e) => OnPropertyChanged(nameof(servers));
+                lock (_serverLock)
+                {
+                    servers.Add(instance);
+                }
+                OnCreated?.Invoke(null, instance);
+                OnPropertyChanged(nameof(servers));
+                return instance;
             }
-            OnCreated?.Invoke(null, instance);
-            OnPropertyChanged(nameof(servers));
-            return instance;
+            catch (Exception e)
+            {
+                Trace.WriteLine(e.ToString());
+            }
+            return null;
         }
 
         private void HandleEvent(EventHandler<ServerInstance> handler, ServerInstance instance) => handler?.Invoke(this, instance);
