@@ -11,7 +11,6 @@ using System.Threading.Tasks;
 using System.Timers;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Resources;
 
 namespace HSL.Windows
 {
@@ -94,11 +93,13 @@ namespace HSL.Windows
             bool markdirty = false;
             lock (_configLock)
             {
+                string directory;
                 foreach (var key in Config.servers.Keys)
                 {
-                    if (!Directory.Exists(Path.GetDirectoryName(Config.servers[key].exe_file)) || !File.Exists(Config.servers[key].exe_file))
+                    directory = Path.GetDirectoryName(Config.servers[key].exe_file);
+                    if (!Directory.Exists(directory) || !ServerInstance.IsValidInstallation(directory))
                     {
-                        if (MessageBox.Show(String.Format("Failed to load pre-existing server: {0}{1}Would you like to change location?", Environment.NewLine, Config.servers[key].exe_file), "Error", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                        if (MessageBox.Show(String.Format("Failed to load pre-existing server @ {0}.{1}{2}Would you like to change location?", Config.servers[key].exe_file, Environment.NewLine, Config.servers[key].exe_file), "Error", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                         {
                             _ofd ??= new OpenFileDialog();
                             _ofd.Multiselect = false;

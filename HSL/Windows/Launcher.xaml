@@ -181,6 +181,16 @@
                             <ItemsControl ItemsSource="{Binding ServerLog, UpdateSourceTrigger=PropertyChanged, Mode=OneWay, IsAsync=True, NotifyOnSourceUpdated=True, Delay=500}" FontSize="10"></ItemsControl>
                         </Paragraph>
                     </FlowDocument>
+                    <RichTextBox.Style>
+                        <Style TargetType="{x:Type RichTextBox}">
+                            <Setter Property="IsEnabled" Value="False"></Setter>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding State, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static enums:ServerState.Started}">
+                                    <Setter Property="IsEnabled" Value="True"></Setter>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </RichTextBox.Style>
                 </RichTextBox>
 
                 <!-- Clear Console Button -->
