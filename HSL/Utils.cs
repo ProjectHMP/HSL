@@ -15,6 +15,7 @@ namespace HSL
     {
 
         internal static string CurrentDirectory;
+        internal static string CrashReportPath;
 
         static Utils()
         {
@@ -22,19 +23,34 @@ namespace HSL
             CurrentDirectory ??= Environment.CurrentDirectory;
             CurrentDirectory ??= AppDomain.CurrentDomain.BaseDirectory;
             CurrentDirectory ??= Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            CrashReportPath = CurrentDirectory.CombinePath("crash-reports.txt");
         }
 
-        public static bool IsDirectoryEmpty(string directory) => Directory.Exists(directory) && Directory.GetFileSystemEntries(directory).Length == 0;
+        internal static bool IsDirectoryEmpty(string directory) => Directory.Exists(directory) && Directory.GetFileSystemEntries(directory).Length == 0;
 
-        private static readonly string LatestUrlPattern = @"(https:\/\/happinessmp\.net\/files\/[A-Za-z0-9%_\.]*.zip)";
-        public static async Task<string> GetLatestServerURL()
+        internal static void AppendToCrashReport(string data)
+        {
+            data = Environment.NewLine + "["+ DateTime.Now.ToString() + "]" + data;
+            File.AppendAllText(CrashReportPath, data);
+            Trace.WriteLine(data);
+        }
+
+        internal static async Task<string> GetLatestServerURL()
         {
             byte[] _html_content_buffer = await HTTP.GetAsync(@"https://happinessmp.net/docs/server/getting-started/");
-            Match match = Regex.Match(Encoding.UTF8.GetString(_html_content_buffer), LatestUrlPattern);
+            Match match = Regex.Match(Encoding.UTF8.GetString(_html_content_buffer), @"(https:\/\/happinessmp\.net\/files\/[A-Za-z0-9%_\.]*.zip)");
             _html_content_buffer = null; // i got the habit of doing this, why, in managed. i should start writing unsafe, and malloc instead heh.
             return match.Success ? Uri.UnescapeDataString(match.Groups[0].Value) : String.Empty;
         }
-
+        /*
+        internal static string GetLang(string key)
+        {
+            if (Application.Current.Resources.MergedDictionaries[0].Contains(key))
+            {
+                return Application.Current.Resources.MergedDictionaries[0][key].ToString();
+            }
+            return string.Empty;
+        }*/
         /*
          * My non sophisticated HTTP library. 
          */
@@ -76,27 +92,26 @@ namespace HSL
                     int read = 0;
                     int size = 0;
 
-                    // binary encoding 
-                    if (binary)
-                    {
-                        using (BinaryReader reader = new BinaryReader(await response.Content.ReadAsStreamAsync()))
-                        {
-                            buffer = new byte[reader.BaseStream.Length];
-                            while (true)
-                            {
-                                read = reader.Read(buffer, size, buffer.Length - size);
-                                if (read <= 0)
-                                {
-                                    break;
-                                }
-                                size += read;
-                            }
-                        }
-                        return (T)((object)buffer);
-                    }
-
                     using (Stream s = await response.Content.ReadAsStreamAsync())
                     {
+                        if (binary)
+                        {
+                            using (BinaryReader reader = new BinaryReader(s))
+                            {
+                                buffer = new byte[reader.BaseStream.Length];
+                                while (true)
+                                {
+                                    read = reader.Read(buffer, size, buffer.Length - size);
+                                    if (read <= 0)
+                                    {
+                                        break;
+                                    }
+                                    size += read;
+                                }
+                            }
+                            return (T)((object)buffer);
+                        }
+
                         using (MemoryStream ms = new MemoryStream())
                         {
                             buffer = new byte[STREAM_BUFFER_SIZE];

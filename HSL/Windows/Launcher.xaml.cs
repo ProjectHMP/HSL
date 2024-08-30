@@ -1,6 +1,7 @@
 ﻿using HSL.Core;
 using Microsoft.Win32;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -22,30 +23,41 @@ namespace HSL.Windows
         public ServerInstance currentInstance { get; private set; } = default(ServerInstance);
         public ServerInstance.ResourceMeta currentResource { get; private set; } = default(ServerInstance.ResourceMeta);
 
+        // public List<string> Languages { get; private set; }
+
         internal HSLConfig Config { get; private set; }
         private OpenFileDialog _ofd;
         private object _configLock { get; set; } = new object();
         private Timer _timer;
 
-
         public Launcher()
         {
             InitializeComponent();
 
-            AppDomain.CurrentDomain.UnhandledException += async (s, e) =>
+            AppDomain.CurrentDomain.UnhandledException += (s, e) =>
             {
-                string cr = Utils.CurrentDirectory.CombinePath("crash-report.txt");
-                if (File.Exists(cr))
-                {
-                    File.Delete(cr);
-                }
-                await File.WriteAllTextAsync(cr, ((Exception)e.ExceptionObject).ToString());
-
-                if(e.IsTerminating)
+                Utils.AppendToCrashReport(((Exception)e.ExceptionObject).ToString());
+                if (e.IsTerminating)
                 {
                     Dispose();
                 }
             };
+
+            /*
+            Languages = new List<string>();
+            foreach(var resource in System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceNames())
+            {
+                if(resource.IndexOf("HSL.Lang.") >= 0) {
+                    Languages.Add(resource.Substring(9));
+                }
+            }
+
+            /*
+            ResourceDictionary dictionary = new ResourceDictionary();
+            dictionary.Source = new Uri("pack://application:,,,/HSL;component/Lang/eng.xaml", UriKind.Absolute);
+            Application.Current.Resources.MergedDictionaries.Add(dictionary);
+
+            */
 
             Closing += (s, e) => Dispose();
 
@@ -70,21 +82,24 @@ namespace HSL.Windows
         private async Task LoadConfiguration()
         {
             Config = await HSLConfig.Load("hsl.json");
-
+            List<Guid> deleteCache = new List<Guid>();
             bool markdirty = false;
             lock (_configLock)
             {
+                string directory;
                 foreach (var key in Config.servers.Keys)
                 {
-                    if (!Directory.Exists(Path.GetDirectoryName(Config.servers[key].exe_file)) || !File.Exists(Config.servers[key].exe_file))
+                    directory = Path.GetDirectoryName(Config.servers[key].exe_file);
+                    if (!Directory.Exists(directory) || !ServerInstance.IsValidInstallation(directory))
                     {
-                        if (MessageBox.Show(String.Format("Failed to load pre-existing server: {0}{1}Would you like to change location?", Environment.NewLine, Config.servers[key].exe_file), "Error", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                        if (MessageBox.Show(String.Format("Failed to load pre-existing server @ {0}.{1}{2}Would you like to change location?", Config.servers[key].exe_file, Environment.NewLine, Config.servers[key].exe_file), "Error", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                         {
                             _ofd ??= new OpenFileDialog();
                             _ofd.Multiselect = false;
                             _ofd.Filter = "HappinessMP.Server.Exe | *.exe";
                             if (!(_ofd?.ShowDialog() ?? false) || string.IsNullOrEmpty(_ofd.FileName) || Config.servers.Any(x => x.Value.exe_file == _ofd.FileName))
                             {
+                                deleteCache.Add(key);
                                 continue;
                             }
                             Config.servers[key].exe_file = _ofd.FileName;
@@ -93,6 +108,11 @@ namespace HSL.Windows
                     }
                     manager.Create(Config.servers[key]);
                 }
+            }
+
+            foreach (Guid guid in deleteCache)
+            {
+                Config.servers.Remove(guid);
             }
 
             if (markdirty)
@@ -125,7 +145,7 @@ namespace HSL.Windows
             }
         }
 
-        private void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        internal void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
         private void ShowServerContext(ServerInstance instance)
         {
@@ -138,7 +158,8 @@ namespace HSL.Windows
 
             if (currentInstance != null)
             {
-                currentInstance.StdOutput += (s, e) => Dispatcher.Invoke(() => {
+                currentInstance.StdOutput += (s, e) => Dispatcher.Invoke(() =>
+                {
                     rtb_ServerLog.UpdateLayout();
                     rtb_ServerLog.ScrollToEnd();
                     rtb_ServerLog.ScrollToVerticalOffset(double.MaxValue);
@@ -169,8 +190,9 @@ namespace HSL.Windows
                 }
             };
 
-            lv_ResourceList.SelectionChanged += (s,e) => {
-                if(lv_ResourceList.SelectedItem is ServerInstance.ResourceMeta meta)
+            lv_ResourceList.SelectionChanged += (s, e) =>
+            {
+                if (lv_ResourceList.SelectedItem is ServerInstance.ResourceMeta meta)
                 {
                     currentResource = meta;
                     OnPropertyChanged(nameof(currentResource));
@@ -192,7 +214,7 @@ namespace HSL.Windows
                 _ofd.Filter = "HappinessMP.Server.Exe | *.exe";
                 if (_ofd.ShowDialog() ?? false)
                 {
-                    if (!File.Exists(Path.GetDirectoryName(_ofd.FileName).CombinePath("settings.xml")))
+                    if (!ServerInstance.IsValidInstallation(Path.GetDirectoryName(_ofd.FileName)))
                     {
                         MessageBox.Show("This path does not contain a valid HappinessMP server.", "Error", MessageBoxButton.OK);
                         return;
@@ -259,7 +281,7 @@ namespace HSL.Windows
 
             mi_StartServer.Click += (s, e) => currentInstance?.Start();
 
-            mi_StopServer.Click += (s, e) => currentInstance?.Stop();
+            mi_StopServer.Click += (s, e) => currentInstance?.Stop(true);
 
             mi_RestartServer.Click += (s, e) => currentInstance?.Restart();
 
@@ -271,6 +293,8 @@ namespace HSL.Windows
                 }
                 manager.Delete(currentInstance);
             };
+
+            mi_DeleteServerCache.Click += (s, e) => currentInstance?.DeleteServerCache();
 
             mi_OpenServerDirectory.Click += (s, e) => Process.Start("explorer.exe", currentInstance.ServerDirectory);
 
@@ -287,6 +311,7 @@ namespace HSL.Windows
                     MessageBox.Show("Please stop the server first before updating!");
                     return;
                 }
+
 
                 string url = await Utils.GetLatestServerURL();
 
@@ -355,7 +380,7 @@ namespace HSL.Windows
                 }
                 catch (Exception ee)
                 {
-                    if(File.Exists(zip))
+                    if (File.Exists(zip))
                     {
                         File.Delete(zip);
                     }
@@ -375,6 +400,7 @@ namespace HSL.Windows
                         MessageBox.Show("No directory given to install server.", "Error", MessageBoxButton.OK);
                         return;
                     }
+
                     directory = fbd.SelectedPath;
                 }
 
@@ -423,7 +449,7 @@ namespace HSL.Windows
                         {
                             if (!archive.Entries.Any(x => x.Name.IndexOf(".exe") > 0))
                             {
-                                throw new Exception("Failed to install server files.");
+                                throw new Exception("Corrupted server download. Aborted");
                             }
 
                             for (int i = 1; i < archive.Entries.Count; i++)
@@ -446,6 +472,7 @@ namespace HSL.Windows
                     {
                         File.Delete(zip);
                     }
+                    Utils.AppendToCrashReport(ee.ToString());
                     MessageBox.Show("Failed to install server files: " + ee.ToString(), "Error", MessageBoxButton.OK);
                     return;
                 }
