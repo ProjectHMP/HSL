@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Timers;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Resources;
 
 namespace HSL.Windows
 {
@@ -23,11 +24,12 @@ namespace HSL.Windows
         public ServerInstance currentInstance { get; private set; } = default(ServerInstance);
         public ServerInstance.ResourceMeta currentResource { get; private set; } = default(ServerInstance.ResourceMeta);
 
+        // public List<string> Languages { get; private set; }
+
         internal HSLConfig Config { get; private set; }
         private OpenFileDialog _ofd;
         private object _configLock { get; set; } = new object();
         private Timer _timer;
-
 
         public Launcher()
         {
@@ -48,6 +50,22 @@ namespace HSL.Windows
                     Dispose();
                 }
             };
+
+            /*
+            Languages = new List<string>();
+            foreach(var resource in System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceNames())
+            {
+                if(resource.IndexOf("HSL.Lang.") >= 0) {
+                    Languages.Add(resource.Substring(9));
+                }
+            }
+
+            /*
+            ResourceDictionary dictionary = new ResourceDictionary();
+            dictionary.Source = new Uri("pack://application:,,,/HSL;component/Lang/eng.xaml", UriKind.Absolute);
+            Application.Current.Resources.MergedDictionaries.Add(dictionary);
+
+            */
 
             Closing += (s, e) => Dispose();
 
@@ -133,7 +151,7 @@ namespace HSL.Windows
             }
         }
 
-        private void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        internal void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
         private void ShowServerContext(ServerInstance instance)
         {
@@ -281,6 +299,8 @@ namespace HSL.Windows
                 }
                 manager.Delete(currentInstance);
             };
+
+            mi_DeleteServerCache.Click += (s, e) => currentInstance?.DeleteServerCache();
 
             mi_OpenServerDirectory.Click += (s, e) => Process.Start("explorer.exe", currentInstance.ServerDirectory);
 

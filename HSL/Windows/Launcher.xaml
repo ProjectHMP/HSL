@@ -128,6 +128,17 @@
                                     </Style>
                                 </MenuItem.Style>
                             </MenuItem>
+                            <MenuItem x:Name="mi_DeleteServerCache" Header="Delete Cache">
+                                <MenuItem.Style>
+                                    <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=currentInstance.State, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, Delay=500}" Value="{x:Static enums:ServerState.Started}">
+                                                <Setter Property="IsEnabled" Value="False"></Setter>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </MenuItem.Style>
+                            </MenuItem>
                             <MenuItem.Style>
                                 <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
                                     <Style.Triggers>
@@ -147,7 +158,7 @@
                 <ListView x:Name="lv_ServerList" Grid.Column="0" Grid.Row="1" Grid.RowSpan="2" ItemsSource="{Binding manager.servers, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, Mode=OneWay, IsAsync=True, Delay=500}" Background="Transparent" SelectionMode="Single" Foreground="{StaticResource txtColor}" BorderThickness="0 .2 0 .2" SelectedItem="{Binding currentInstance, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}">
                     <ListView.ItemTemplate>
                         <DataTemplate>
-                            <ListViewItem Content="{Binding Name}" IsHitTestVisible="False">
+                            <ListViewItem Content="{Binding Name}" IsHitTestVisible="False" Padding="2" Margin="0">
                                 <ListViewItem.Style>
                                     <Style TargetType="{x:Type ListViewItem}">
                                         <Setter Property="Foreground" Value="{StaticResource txtColor}"></Setter>

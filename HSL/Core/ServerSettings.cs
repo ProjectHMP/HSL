@@ -7,9 +7,10 @@ namespace HSL.Core
     internal class ServerSettings : IDisposable
     {
 
-        private XmlDocument _document;
         internal bool _wasUpdated = false;
+        internal event EventHandler OnSaved;
 
+        private XmlDocument _document;
         private string _file;
         private object _saveLock = new object();
 
@@ -156,6 +157,7 @@ namespace HSL.Core
                 {
                     _wasUpdated = true;
                     _document.Save(_file);
+                    OnSaved?.Invoke(null, null);
                 }
                 catch { }
             }

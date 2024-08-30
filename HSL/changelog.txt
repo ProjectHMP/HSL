@@ -1,3 +1,0 @@
-﻿- Updated typos and grammar.
-- Added "Delete Cache" button under Server tab.
-- Added "Delete Logs" automated setting that'll delete log file before starting. (This will also back up log too server.log.tmp)

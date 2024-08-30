@@ -231,9 +231,11 @@ namespace HSL.Core
 
         internal readonly string LogFile;
         internal readonly string ServerSettingsFile;
+        internal readonly string ServerCacheDirectory;
 
         internal ServerManager ServerManager;
         internal Guid Guid => ServerData.guid;
+        public string sGuid => Guid.ToString();
 
         internal ServerSettings ServerSettings { get; private set; }
 
@@ -259,9 +261,11 @@ namespace HSL.Core
             LogFile = ServerDirectory.CombinePath("server.log");
             ResourceDirectory = ServerDirectory.CombinePath("resources");
             ServerSettingsFile = ServerDirectory.CombinePath("settings.xml");
+            ServerCacheDirectory = ServerDirectory.CombinePath("cache");
             State = ServerState.Stopped;
 
             ServerSettings = new ServerSettings(ServerSettingsFile);
+            ServerSettings.OnSaved += (s, e) => ServerUpdated?.Invoke(null, null);
 
             Resources = new List<ResourceMeta>();
             ResourceMap = new Dictionary<string, ResourceMeta>();
@@ -479,6 +483,14 @@ namespace HSL.Core
                 ResourceMap[name].IsEnabled = false;
                 OnPropertyChanged(nameof(Resources));
                 OnPropertyChanged(nameof(ResourceMap));
+            }
+        }
+
+        internal void DeleteServerCache()
+        {
+            if (!IsProcessRunning() && Directory.Exists(ServerCacheDirectory))
+            {
+                Directory.Delete(ServerCacheDirectory, true);
             }
         }
 
