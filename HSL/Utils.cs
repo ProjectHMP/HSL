@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace HSL
 {
@@ -42,15 +43,16 @@ namespace HSL
             _html_content_buffer = null; // i got the habit of doing this, why, in managed. i should start writing unsafe, and malloc instead heh.
             return match.Success ? Uri.UnescapeDataString(match.Groups[0].Value) : String.Empty;
         }
-        /*
+
         internal static string GetLang(string key)
         {
             if (Application.Current.Resources.MergedDictionaries[0].Contains(key))
             {
                 return Application.Current.Resources.MergedDictionaries[0][key].ToString();
             }
-            return string.Empty;
-        }*/
+            return key;
+        }
+
         /*
          * My non sophisticated HTTP library. 
          */

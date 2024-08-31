@@ -4,7 +4,7 @@ using System.Xml;
 
 namespace HSL.Core
 {
-    internal class ServerSettings : IDisposable
+    internal class ServerSettings
     {
 
         internal bool _wasUpdated = false;
@@ -20,18 +20,13 @@ namespace HSL.Core
             LoadDocument();
         }
 
-        public void Dispose()
-        {
-
-        }
-
         public void LoadDocument()
         {
             if (File.Exists(_file))
             {
-                _document ??= new XmlDocument();
                 lock (_saveLock)
                 {
+                    _document ??= new XmlDocument();
                     _document.LoadXml(File.ReadAllText(_file));
                 }
             }
@@ -149,6 +144,7 @@ namespace HSL.Core
                 case TypeCode.Boolean:
                     node.InnerText = value.ToString().ToLower();
                     break;
+                default: throw new Exception($"Can't parse {name} ({typeof(T).Name}) from {value.ToString()}");
             }
 
             lock (_saveLock)

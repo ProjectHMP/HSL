@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
@@ -10,7 +11,7 @@ namespace HSL.Core
     {
 
         public event PropertyChangedEventHandler PropertyChanged;
-        public List<ServerInstance> servers { get; private set; }
+        public ObservableCollection<ServerInstance> servers { get; private set; }
 
         internal event EventHandler<ServerInstance> OnCreated, OnDeleted, OnProcessStarted, OnProcessStopped;
 
@@ -21,7 +22,7 @@ namespace HSL.Core
         internal ServerManager(Windows.Launcher launcher)
         {
             _launcher = launcher;
-            servers = new List<ServerInstance>();
+            servers = new ObservableCollection<ServerInstance>();
         }
 
         private void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));

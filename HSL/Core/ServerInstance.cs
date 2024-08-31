@@ -1,6 +1,7 @@
 ﻿using HSL.Enums;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -28,7 +29,7 @@ namespace HSL.Core
 
         public event PropertyChangedEventHandler? PropertyChanged;
         public ServerState State { get; private set; } = ServerState.Stopped;
-        public List<ResourceMeta> Resources { get; private set; }
+        public ObservableCollection<ResourceMeta> Resources { get; private set; }
         public Dictionary<string, ResourceMeta> ResourceMap { get; private set; }
 
         public List<string> ServerLog { get; private set; }
@@ -267,7 +268,7 @@ namespace HSL.Core
             ServerSettings = new ServerSettings(ServerSettingsFile);
             ServerSettings.OnSaved += (s, e) => ServerUpdated?.Invoke(null, null);
 
-            Resources = new List<ResourceMeta>();
+            Resources = new ObservableCollection<ResourceMeta>();
             ResourceMap = new Dictionary<string, ResourceMeta>();
             ServerLog = new List<string>();
 
@@ -396,7 +397,7 @@ namespace HSL.Core
                 if (!ServerSettings._wasUpdated)
                 {
                     ServerSettings.LoadDocument();
-                    ServerUpdated?.Invoke(null, null);
+                    // ServerUpdated?.Invoke(null, null);
                 }
                 else ServerSettings._wasUpdated = false;
             }
@@ -427,15 +428,11 @@ namespace HSL.Core
             }
         }
 
-        internal void ReloadAllResources()
+        internal async void ReloadAllResources()
         {
-            lock (_resourceListLock)
-            {
-                foreach (string resource in ResourceMap.Keys)
-                {
-                    ReloadResource(resource);
-                }
-            }
+            StopAllResources();
+            await Task.Delay(1000);
+            StartAllResources();
         }
 
         internal void StartAllResources()
@@ -482,7 +479,6 @@ namespace HSL.Core
             {
                 ResourceMap[name].IsEnabled = false;
                 OnPropertyChanged(nameof(Resources));
-                OnPropertyChanged(nameof(ResourceMap));
             }
         }
 
@@ -509,7 +505,7 @@ namespace HSL.Core
 
             if (processes != null && processes.Count() > 0)
             {
-                if (MessageBox.Show("This server is already running. Do you want to terminate and start new?", "Hmm..", MessageBoxButton.YesNo) == MessageBoxResult.No)
+                if (MessageBox.Show(Utils.GetLang("text_server_already_running_start_new"), Utils.GetLang("text_caution"), MessageBoxButton.YesNo) == MessageBoxResult.No)
                 {
                     return false;
                 }

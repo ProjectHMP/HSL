@@ -1,0 +1,50 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib">
+    
+    <s:String x:Key="text_server">Server</s:String>
+    <s:String x:Key="text_start">Start</s:String>
+    <s:String x:Key="text_stop">Stop</s:String>
+    <s:String x:Key="text_delete">Delete</s:String>
+    <s:String x:Key="text_restart">Restart</s:String>
+    <s:String x:Key="text_reload">Reload</s:String>
+    <s:String x:Key="text_clear">Clear</s:String>
+    <s:String x:Key="text_all">All</s:String>
+    <s:String x:Key="text_file">File</s:String>
+    <s:String x:Key="text_server_settings">Server Settings</s:String>
+    <s:String x:Key="text_hostname">Hostname</s:String>
+    <s:String x:Key="text_port">Port</s:String>
+    <s:String x:Key="text_listed">Listed</s:String>
+    <s:String x:Key="text_episode">Episode</s:String>
+    <s:String x:Key="text_automatic_settings">Automatic Settings</s:String>
+    <s:String x:Key="text_reload_resources">Reload Resources</s:String>
+    <s:String x:Key="text_delete_cache">Delete Cache</s:String>
+    <s:String x:Key="text_delete_logs">Delete Logs</s:String>
+    <s:String x:Key="text_open_directory">Open Directory</s:String>
+    <s:String x:Key="text_error">Error</s:String>
+    <s:String x:Key="text_enter_command_here">Enter Command Here</s:String>
+    <s:String x:Key="text_caution">Caution!</s:String>
+    <s:String x:Key="text_update_server">Updated Server</s:String>
+    <s:String x:Key="text_open_folder">Open Folder</s:String>
+    <s:String x:Key="text_ask_server_delete">Are you sure you want to delete {0}? Files will NOT be deleted!</s:String>
+    <s:String x:Key="text_delete_server">Delete Server?</s:String>
+    <s:String x:Key="text_corrupted_server_download">Corrupted server download. Aborted</s:String>
+    <s:String x:Key="text_no_server_directory">No directory given to install server.</s:String>
+    <s:String x:Key="text_directory_not_empty">Directory selected it not empty!</s:String>
+    <s:String x:Key="text_stop_server_before_updating">"Please stop the server first before updating!</s:String>
+    <s:String x:Key="text_server_load_failed">Failed to load pre-existing server @ {0}.{1}{2}Would you like to change location?</s:String>
+    <s:String x:Key="text_server_download_failed">Failed to download server files.</s:String>
+    <s:String x:Key="text_server_install_failed">Failed to install server files.</s:String>
+    <s:String x:Key="text_invalid_server_location">This path does not contain a valid HappinessMP installation.</s:String>
+    <s:String x:Key="text_server_already_added">This server has already been added.</s:String>
+    <s:String x:Key="text_open_server_path">Open Server Path</s:String>
+    <s:String x:Key="text_create_new_server">Create new Server</s:String>
+    <s:String x:Key="text_server_already_running_start_new">This server is already running. Do you want to terminate and start new?</s:String>
+    
+    <s:String x:Key="text_autorestart_label_content">Auto Restart Time (H:M:S)</s:String>
+    <s:String x:Key="text_automatic_restart_notice">Restarts is only active while running. 24 Hours by default.</s:String>
+    
+    <s:String x:Key="text_tooltip_1">Automatically reload resource(s) when modified.</s:String>
+    <s:String x:Key="text_tooltip_2">Start the server when HSL starts.</s:String>
+    <s:String x:Key="text_tooltip_3">Restart if crashes (unintentionally).</s:String>
+    <s:String x:Key="text_tooltip_4">Delete server logs before starting. (I'll be backed up to server.logs.tmp)</s:String>
+
+</ResourceDictionary>

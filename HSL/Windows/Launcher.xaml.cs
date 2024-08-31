@@ -7,10 +7,13 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Resources;
+using System.Xml;
 
 namespace HSL.Windows
 {
@@ -43,23 +46,45 @@ namespace HSL.Windows
                 }
             };
 
-            /*
-            Languages = new List<string>();
-            foreach(var resource in System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceNames())
+
+            string external_language_file = Utils.CurrentDirectory.CombinePath("lang.xaml");
+
+
+
+            if (File.Exists(external_language_file))
             {
-                if(resource.IndexOf("HSL.Lang.") >= 0) {
-                    Languages.Add(resource.Substring(9));
+                ResourceDictionary dictionary = new ResourceDictionary();
+                dictionary.Source = new Uri(external_language_file);
+                ResourceDictionary[] dictionaries = Application.Current.Resources.MergedDictionaries.ToArray();
+
+                foreach (ResourceDictionary d in dictionaries)
+                {
+                    if (d.Source.AbsolutePath.IndexOf("lang.xaml") >= 0)
+                    {
+                        Application.Current.Resources.MergedDictionaries.Remove(d);
+                    }
                 }
+                Application.Current.Resources.MergedDictionaries.Add(dictionary);
             }
 
             /*
-            ResourceDictionary dictionary = new ResourceDictionary();
-            dictionary.Source = new Uri("pack://application:,,,/HSL;component/Lang/eng.xaml", UriKind.Absolute);
-            Application.Current.Resources.MergedDictionaries.Add(dictionary);
+            ResourceDictionary[] dictionaries = Application.Current.Resources.MergedDictionaries.ToArray();
 
+            foreach(ResourceDictionary d in dictionaries)
+            {
+                if(d.Source.AbsolutePath.IndexOf("lang.xaml") >= 0)
+                {
+                    Application.Current.Resources.MergedDictionaries.Remove(d);
+                }
+            }
+            
+            ResourceDictionary dictionary = new ResourceDictionary();
+            dictionary.Source = new Uri("pack://application:,,,/HSL;component/lang.xaml", UriKind.Absolute);
+            Application.Current.Resources.MergedDictionaries.Add(dictionary);
             */
 
             Closing += (s, e) => Dispose();
+
 
             manager = new ServerManager(this);
             manager.OnCreated += Manager_OnCreated;
@@ -92,7 +117,7 @@ namespace HSL.Windows
                     directory = Path.GetDirectoryName(Config.servers[key].exe_file);
                     if (!Directory.Exists(directory) || !ServerInstance.IsValidInstallation(directory))
                     {
-                        if (MessageBox.Show(String.Format("Failed to load pre-existing server @ {0}.{1}{2}Would you like to change location?", Config.servers[key].exe_file, Environment.NewLine, Config.servers[key].exe_file), "Error", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                        if (MessageBox.Show(String.Format(Utils.GetLang("text_server_load_failed"), Config.servers[key].exe_file, Environment.NewLine, Config.servers[key].exe_file), "Error", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                         {
                             _ofd ??= new OpenFileDialog();
                             _ofd.Multiselect = false;
@@ -153,6 +178,7 @@ namespace HSL.Windows
             {
                 currentInstance.StdOutput -= null;
             }
+
             currentInstance = instance;
             OnPropertyChanged(nameof(currentInstance));
 
@@ -171,7 +197,6 @@ namespace HSL.Windows
 
         private void RegisterListeners()
         {
-
             _timer.Elapsed += async (s, e) =>
             {
                 if (manager.IsDirty(true))
@@ -182,7 +207,7 @@ namespace HSL.Windows
 
             lv_ServerList.SelectionChanged += (s, e) =>
             {
-                if (lv_ServerList.SelectedItem != null && lv_ServerList.SelectedItem is ServerInstance instance)
+                if (lv_ServerList.SelectedItem is ServerInstance instance)
                 {
                     currentResource = null;
                     OnPropertyChanged(nameof(currentResource));
@@ -212,17 +237,18 @@ namespace HSL.Windows
             {
                 _ofd ??= new OpenFileDialog();
                 _ofd.Filter = "HappinessMP.Server.Exe | *.exe";
+                _ofd.Multiselect = false;
                 if (_ofd.ShowDialog() ?? false)
                 {
                     if (!ServerInstance.IsValidInstallation(Path.GetDirectoryName(_ofd.FileName)))
                     {
-                        MessageBox.Show("This path does not contain a valid HappinessMP server.", "Error", MessageBoxButton.OK);
+                        MessageBox.Show(Utils.GetLang("text_invalid_server_location"), Utils.GetLang("text_error"), MessageBoxButton.OK);
                         return;
                     }
 
                     if (Config.servers.Any(x => x.Value.exe_file == _ofd.FileName))
                     {
-                        MessageBox.Show("This server has already been added.");
+                        MessageBox.Show(Utils.GetLang("text_server_already_added"));
                         return;
                     }
                     ShowServerContext(manager.Create(_ofd.FileName, false));
@@ -262,8 +288,8 @@ namespace HSL.Windows
 
             btn_ReloadAllResources.Click += (s, e) => currentInstance?.ReloadAllResources();
 
-            (lv_ResourceList.ContextMenu = new System.Windows.Controls.ContextMenu()).Items.Add(new System.Windows.Controls.MenuItem() { Header = "Open Folder" });
-            (lv_ServerList.ContextMenu = new System.Windows.Controls.ContextMenu()).Items.Add(new System.Windows.Controls.MenuItem() { Header = "Open Folder" });
+            (lv_ResourceList.ContextMenu = new System.Windows.Controls.ContextMenu()).Items.Add(new System.Windows.Controls.MenuItem() { Header = Utils.GetLang("text_open_folder") });
+            (lv_ServerList.ContextMenu = new System.Windows.Controls.ContextMenu()).Items.Add(new System.Windows.Controls.MenuItem() { Header = Utils.GetLang("text_open_folder") });
             (lv_ResourceList.ContextMenu.Items[0] as System.Windows.Controls.MenuItem).Click += (s, e) =>
             {
                 if (lv_ResourceList.SelectedIndex >= 0 && lv_ResourceList.SelectedItems is ServerInstance.ResourceMeta meta)
@@ -287,7 +313,7 @@ namespace HSL.Windows
 
             mi_DeleteServer.Click += (s, e) =>
             {
-                if (MessageBox.Show("Are you sure you want to delete" + currentInstance.Name + "? Files will NOT be deleted!", "Delete Server?", MessageBoxButton.YesNo) == MessageBoxResult.No)
+                if (MessageBox.Show(String.Format(Utils.GetLang("text_ask_server_delete"), currentInstance.Name), Utils.GetLang("text_delete_server"), MessageBoxButton.YesNo) == MessageBoxResult.No)
                 {
                     return;
                 }
@@ -308,7 +334,7 @@ namespace HSL.Windows
 
                 if (currentInstance.State != Enums.ServerState.Stopped)
                 {
-                    MessageBox.Show("Please stop the server first before updating!");
+                    MessageBox.Show(Utils.GetLang("text_stop_server_before_updating"), Utils.GetLang("text_caution"), MessageBoxButton.OK);
                     return;
                 }
 
@@ -317,7 +343,7 @@ namespace HSL.Windows
 
                 if (string.IsNullOrEmpty(url))
                 {
-                    MessageBox.Show("Failed to download server files.");
+                    MessageBox.Show(Utils.GetLang("text_server_download_failed"), Utils.GetLang("text_error"), MessageBoxButton.OK);
                     return;
                 }
 
@@ -327,7 +353,7 @@ namespace HSL.Windows
 
                 if (_server_archive == null || _server_archive.Length < 1024)
                 {
-                    MessageBox.Show("Failed to download server files.");
+                    MessageBox.Show(Utils.GetLang("text_server_download_failed"), Utils.GetLang("text_error"), MessageBoxButton.OK);
                     return;
                 }
 
@@ -350,7 +376,7 @@ namespace HSL.Windows
                         {
                             if (!archive.Entries.Any(x => x.Name.IndexOf(".exe") > 0))
                             {
-                                throw new Exception("Failed to install server files.");
+                                throw new Exception(Utils.GetLang("text_server_install_failed"));
                             }
 
                             version = archive.Entries[0].FullName;
@@ -375,7 +401,7 @@ namespace HSL.Windows
 
                     File.Delete(zip);
 
-                    MessageBox.Show("Updated Server: " + version);
+                    MessageBox.Show(Utils.GetLang("text_update_server") + ": " + version);
 
                 }
                 catch (Exception ee)
@@ -384,7 +410,7 @@ namespace HSL.Windows
                     {
                         File.Delete(zip);
                     }
-                    MessageBox.Show("Failed to install server files: " + ee.ToString(), "Error", MessageBoxButton.OK);
+                    MessageBox.Show(Utils.GetLang("text_server_install_failed") + " " + ee.ToString(), Utils.GetLang("text_error"), MessageBoxButton.OK);
                 }
 
             };
@@ -397,7 +423,7 @@ namespace HSL.Windows
                 {
                     if (fbd.ShowDialog() != System.Windows.Forms.DialogResult.OK || string.IsNullOrEmpty(fbd.SelectedPath))
                     {
-                        MessageBox.Show("No directory given to install server.", "Error", MessageBoxButton.OK);
+                        MessageBox.Show(Utils.GetLang("text_no_server_directory"), Utils.GetLang("text_error"), MessageBoxButton.OK);
                         return;
                     }
 
@@ -406,7 +432,7 @@ namespace HSL.Windows
 
                 if (!Utils.IsDirectoryEmpty(directory))
                 {
-                    MessageBox.Show("Directory selected is not empty.");
+                    MessageBox.Show(Utils.GetLang("text_directory_not_empty"));
                     return;
                 }
 
@@ -419,7 +445,7 @@ namespace HSL.Windows
 
                 if (string.IsNullOrEmpty(url))
                 {
-                    MessageBox.Show("Failed to download server files.");
+                    MessageBox.Show(Utils.GetLang("text_server_download_failed"), Utils.GetLang("text_error"), MessageBoxButton.OK);
                     return;
                 }
 
@@ -429,7 +455,7 @@ namespace HSL.Windows
 
                 if (_server_archive == null || _server_archive.Length < 1024)
                 {
-                    MessageBox.Show("Failed to download server files.");
+                    MessageBox.Show(Utils.GetLang("text_server_download_failed"), Utils.GetLang("text_error"), MessageBoxButton.OK);
                     return;
                 }
 
@@ -449,7 +475,7 @@ namespace HSL.Windows
                         {
                             if (!archive.Entries.Any(x => x.Name.IndexOf(".exe") > 0))
                             {
-                                throw new Exception("Corrupted server download. Aborted");
+                                throw new Exception(Utils.GetLang("text_corrupted_server_download"));
                             }
 
                             for (int i = 1; i < archive.Entries.Count; i++)
@@ -473,7 +499,7 @@ namespace HSL.Windows
                         File.Delete(zip);
                     }
                     Utils.AppendToCrashReport(ee.ToString());
-                    MessageBox.Show("Failed to install server files: " + ee.ToString(), "Error", MessageBoxButton.OK);
+                    MessageBox.Show(Utils.GetLang("text_server_install_failed") + ": " + ee.ToString(), Utils.GetLang("text_error"), MessageBoxButton.OK);
                     return;
                 }
                 manager.Create(Directory.GetFiles(directory, "*.exe").FirstOrDefault(), false);

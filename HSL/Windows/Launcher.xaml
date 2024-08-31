@@ -60,12 +60,12 @@
                 <!-- Top Tool Bar -->
                 <DockPanel Grid.ColumnSpan="2">
                     <Menu x:Name="menu_hmp" HorizontalContentAlignment="Center" VerticalAlignment="Center" Background="Transparent">
-                        <MenuItem Background="Transparent" Header="File" Foreground="{StaticResource txtColor}">
-                            <MenuItem x:Name="mi_OpenServerPath" Header="Open Server Path" UsesItemContainerTemplate="False"></MenuItem>
-                            <MenuItem x:Name="mi_CreateServer" Header="Create New Server"></MenuItem>
+                        <MenuItem Background="Transparent" Header="{DynamicResource text_file}" Foreground="{StaticResource txtColor}">
+                            <MenuItem x:Name="mi_OpenServerPath" Header="{DynamicResource text_open_server_path}" UsesItemContainerTemplate="False"></MenuItem>
+                            <MenuItem x:Name="mi_CreateServer" Header="{DynamicResource text_create_new_server}"></MenuItem>
                         </MenuItem>
-                        <MenuItem x:Name="mi_Server" Background="Transparent" Header="Server" >
-                            <MenuItem x:Name="mi_StartServer" Header="Start">
+                        <MenuItem x:Name="mi_Server" Background="Transparent" Header="{DynamicResource text_server}" >
+                            <MenuItem x:Name="mi_StartServer" Header="{DynamicResource text_start}">
                                 <MenuItem.Style>
                                     <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
                                         <Setter Property="IsEnabled" Value="False"></Setter>
@@ -77,7 +77,7 @@
                                     </Style>
                                 </MenuItem.Style>
                             </MenuItem>
-                            <MenuItem x:Name="mi_StopServer" Header="Stop" DisplayMemberPath="State">
+                            <MenuItem x:Name="mi_StopServer" Header="{DynamicResource text_stop}" DisplayMemberPath="State">
                                 <MenuItem.Style>
                                     <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
                                         <Setter Property="IsEnabled" Value="False"></Setter>
@@ -89,7 +89,7 @@
                                     </Style>
                                 </MenuItem.Style>
                             </MenuItem>
-                            <MenuItem x:Name="mi_RestartServer" Header="Restart">
+                            <MenuItem x:Name="mi_RestartServer" Header="{DynamicResource text_restart}">
                                 <MenuItem.Style>
                                     <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
                                         <Setter Property="IsEnabled" Value="False"></Setter>
@@ -101,7 +101,7 @@
                                     </Style>
                                 </MenuItem.Style>
                             </MenuItem>
-                            <MenuItem x:Name="mi_UpdateServer" Header="Update Server">
+                            <MenuItem x:Name="mi_UpdateServer" Header="{DynamicResource text_update_server}">
                                 <MenuItem.Style>
                                     <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
                                         <Setter Property="IsEnabled" Value="False"></Setter>
@@ -113,8 +113,8 @@
                                     </Style>
                                 </MenuItem.Style>
                             </MenuItem>
-                            <MenuItem x:Name="mi_OpenServerDirectory" Header="Open Directory"></MenuItem>
-                            <MenuItem x:Name="mi_DeleteServer" Header="Delete">
+                            <MenuItem x:Name="mi_OpenServerDirectory" Header="{DynamicResource text_open_directory}"></MenuItem>
+                            <MenuItem x:Name="mi_DeleteServer" Header="{DynamicResource text_delete}">
                                 <MenuItem.Style>
                                     <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
                                         <Style.Triggers>
@@ -128,7 +128,7 @@
                                     </Style>
                                 </MenuItem.Style>
                             </MenuItem>
-                            <MenuItem x:Name="mi_DeleteServerCache" Header="Delete Cache">
+                            <MenuItem x:Name="mi_DeleteServerCache" Header="{DynamicResource text_delete_cache}">
                                 <MenuItem.Style>
                                     <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
                                         <Style.Triggers>
@@ -194,7 +194,7 @@
                 </RichTextBox>
 
                 <!-- Clear Console Button -->
-                <Button x:Name="btn_ClearServerLog" Grid.Column="1" Grid.Row="1" Grid.RowSpan="2" Background="Transparent" Width="40" Height="20" HorizontalAlignment="Right" VerticalAlignment="Bottom" FontSize="10" Foreground="{StaticResource txtColor}" BorderThickness=".005">CLEAR</Button>
+                <Button x:Name="btn_ClearServerLog" Grid.Column="1" Grid.Row="1" Grid.RowSpan="2" Background="Transparent" Width="40" Height="20" HorizontalAlignment="Right" VerticalAlignment="Bottom" FontSize="10" Foreground="{StaticResource txtColor}" BorderThickness=".005" Content="{DynamicResource text_clear}"></Button>
 
                 <!-- Console Input -->
                 <TextBox x:Name="tb_ServerCmd" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Background="{StaticResource cmdBgColor}" Foreground="{StaticResource txtColor}" VerticalContentAlignment="Center" Padding="3 0 0 0" BorderThickness="0 .2 .2 0" BorderBrush="#4682B4">
@@ -211,7 +211,7 @@
                 </TextBox>
 
                 <!-- Ghost Preview TextBox -->
-                <TextBox Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Background="Transparent" Foreground="White" Margin="0" Padding="5 0 0 0" BorderBrush="#4682B4" VerticalContentAlignment="Center" IsHitTestVisible="False" Opacity="0.2" Text="Enter Command Here">
+                <TextBox Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Background="Transparent" Foreground="White" Margin="0" Padding="5 0 0 0" BorderBrush="#4682B4" VerticalContentAlignment="Center" IsHitTestVisible="False" Opacity="0.2" Text="{DynamicResource text_enter_command_here}">
                     <TextBox.Style>
                         <Style TargetType="{x:Type TextBox}">
                             <Setter Property="Visibility" Value="Hidden"></Setter>
@@ -282,7 +282,7 @@
                                 <ColumnDefinition Width="*"></ColumnDefinition>
                                 <ColumnDefinition Width=".3*"></ColumnDefinition>
                             </Grid.ColumnDefinitions>
-                            <Button x:Name="btn_StartResource" Grid.Column="0" Content="Start" Height="25">
+                            <Button x:Name="btn_StartResource" Grid.Column="0" Content="{DynamicResource text_start}" Height="25">
                                 <Button.Style>
                                     <Style TargetType="{x:Type Button}"  BasedOn="{StaticResource btnStyle}">
                                         <Style.Triggers>
@@ -293,7 +293,7 @@
                                     </Style>
                                 </Button.Style>
                             </Button>
-                            <Button x:Name="btn_StartAllResources" Grid.Column="1" Content="All" Height="25">
+                            <Button x:Name="btn_StartAllResources" Grid.Column="1" Content="{DynamicResource text_all}" Height="25">
                                 <Button.Style>
                                     <Style TargetType="{x:Type Button}" BasedOn="{StaticResource btnStyle}">
                                         <Setter Property="IsEnabled" Value="False"></Setter>
@@ -312,7 +312,7 @@
                                 <ColumnDefinition Width="*"></ColumnDefinition>
                                 <ColumnDefinition Width=".3*"></ColumnDefinition>
                             </Grid.ColumnDefinitions>
-                            <Button x:Name="btn_StopResource" Content="Stop" Height="25">
+                            <Button x:Name="btn_StopResource" Content="{DynamicResource text_stop}" Height="25">
                                 <Button.Style>
                                     <Style TargetType="{x:Type Button}"  BasedOn="{StaticResource btnStyle}">
                                         <Style.Triggers>
@@ -323,7 +323,7 @@
                                     </Style>
                                 </Button.Style>
                             </Button>
-                            <Button x:Name="btn_StopAllResources" Grid.Column="1" Content="All" Height="25">
+                            <Button x:Name="btn_StopAllResources" Grid.Column="1" Content="{DynamicResource text_all}" Height="25">
                                 <Button.Style>
                                     <Style TargetType="{x:Type Button}" BasedOn="{StaticResource btnStyle}">
                                         <Setter Property="IsEnabled" Value="False"></Setter>
@@ -342,7 +342,7 @@
                                 <ColumnDefinition Width="*"></ColumnDefinition>
                                 <ColumnDefinition Width=".3*"></ColumnDefinition>
                             </Grid.ColumnDefinitions>
-                            <Button x:Name="btn_ReloadResource" Content="Reload" Height="25">
+                            <Button x:Name="btn_ReloadResource" Content="{DynamicResource text_reload}" Height="25">
                                 <Button.Style>
                                     <Style TargetType="{x:Type Button}" BasedOn="{StaticResource btnStyle}">
                                         <Style.Triggers>
@@ -353,7 +353,7 @@
                                     </Style>
                                 </Button.Style>
                             </Button>
-                            <Button x:Name="btn_ReloadAllResources" Grid.Column="1" Content="All" Height="25">
+                            <Button x:Name="btn_ReloadAllResources" Grid.Column="1" Content="{DynamicResource text_all}" Height="25">
                                 <Button.Style>
                                     <Style TargetType="{x:Type Button}" BasedOn="{StaticResource btnStyle}">
                                         <Setter Property="IsEnabled" Value="False"></Setter>
@@ -367,18 +367,18 @@
                             </Button>
                         </Grid>
 
-                        <Label Content="Automatic Settings" Foreground="{StaticResource txtColor}" FontSize="12" HorizontalContentAlignment="Center" Padding="5" FontWeight="Bold"></Label>
+                        <Label Content="{DynamicResource text_automatic_settings}" Foreground="{StaticResource txtColor}" FontSize="12" HorizontalContentAlignment="Center" Padding="5" FontWeight="Bold"></Label>
                         <CheckBox Padding="0" VerticalAlignment="Bottom" VerticalContentAlignment="Bottom" Margin="5 0 0 0" Cursor="Hand" IsChecked="{Binding currentInstance.AutoReloadResources, UpdateSourceTrigger=PropertyChanged, FallbackValue={StaticResource False}}">
-                            <Label Foreground="White" Margin="5 0 0 0" FontSize="12" Padding="0" VerticalContentAlignment="Center" Content="Reload Resources" ToolTip="Automatically reload resource(s) when modified."></Label>
+                            <Label Foreground="White" Margin="5 0 0 0" FontSize="12" Padding="0" VerticalContentAlignment="Center" Content="{DynamicResource text_reload_resources}" ToolTip="{DynamicResource text_tooltip_1}"></Label>
                         </CheckBox>
                         <CheckBox Padding="0" VerticalAlignment="Bottom" VerticalContentAlignment="Bottom" Margin="5 0 0 0" Cursor="Hand" IsChecked="{Binding currentInstance.AutoStart, UpdateSourceTrigger=PropertyChanged, FallbackValue={StaticResource False}}">
-                            <Label Foreground="White" Margin="5 0 0 0" FontSize="12" Padding="0" VerticalContentAlignment="Center" Content="Start" ToolTip="Start the server when HSL starts."></Label>
+                            <Label Foreground="White" Margin="5 0 0 0" FontSize="12" Padding="0" VerticalContentAlignment="Center" Content="{DynamicResource text_start}" ToolTip="{DynamicResource text_tooltip_2}"></Label>
                         </CheckBox>
                         <CheckBox Padding="0" VerticalAlignment="Bottom" VerticalContentAlignment="Bottom" Margin="5 0 0 0" Cursor="Hand" IsChecked="{Binding currentInstance.AutoRestart, UpdateSourceTrigger=PropertyChanged, FallbackValue={StaticResource False}}">
-                            <Label Foreground="White" Margin="5 0 0 0" FontSize="12" Padding="0" VerticalContentAlignment="Center" Content="Restart" ToolTip="Restart if crashes (unintentionally)."></Label>
+                            <Label Foreground="White" Margin="5 0 0 0" FontSize="12" Padding="0" VerticalContentAlignment="Center" Content="{DynamicResource text_restart}" ToolTip="{DynamicResource text_tooltip_3}"></Label>
                         </CheckBox>
                         <CheckBox Padding="0" VerticalAlignment="Bottom" VerticalContentAlignment="Bottom" Margin="5 0 0 0" Cursor="Hand" IsChecked="{Binding currentInstance.AutoDeleteLogs, UpdateSourceTrigger=PropertyChanged, FallbackValue={StaticResource False}}">
-                            <Label Foreground="White" Margin="5 0 0 0" FontSize="12" Padding="0" VerticalContentAlignment="Center" Content="Delete Logs" ToolTip="Delete server logs before starting. (I'll be backed up to server.logs.tmp) "></Label>
+                            <Label Foreground="White" Margin="5 0 0 0" FontSize="12" Padding="0" VerticalContentAlignment="Center" Content="{DynamicResource text_delete_logs}" ToolTip="{DynamicResource text_tooltip_4}"></Label>
                         </CheckBox>
                     </StackPanel>
                     <Grid Grid.Row="1" Grid.ColumnSpan="2">
@@ -393,15 +393,15 @@
                             <ColumnDefinition Width="*"></ColumnDefinition>
                             <ColumnDefinition Width="*"></ColumnDefinition>
                         </Grid.ColumnDefinitions>
-                        <Label Grid.Row="0" Grid.ColumnSpan="2" Content="Server Settings" Foreground="{StaticResource txtColor}" FontSize="11" HorizontalContentAlignment="Center" Padding="0" Margin="0" FontWeight="Bold"></Label>
+                        <Label Grid.Row="0" Grid.ColumnSpan="2" Content="{DynamicResource text_server_settings}" Foreground="{StaticResource txtColor}" FontSize="11" HorizontalContentAlignment="Center" Padding="0" Margin="0" FontWeight="Bold"></Label>
 
-                        <Label Grid.Row="1" Grid.Column="0" Content="Hostname" Foreground="{StaticResource txtColor}" FontSize="10" Padding="5 0 0 0" Margin="0" FontWeight="Bold"></Label>
+                        <Label Grid.Row="1" Grid.Column="0" Content="{DynamicResource text_hostname}" Foreground="{StaticResource txtColor}" FontSize="10" Padding="5 0 0 0" Margin="0" FontWeight="Bold"></Label>
                         <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding currentInstance.Hostname, IsAsync=True}" Background="{StaticResource cmdBgColor}"  Foreground="{StaticResource txtColor}" VerticalContentAlignment="Center" FontSize="13"></TextBox>
 
-                        <Label Grid.Row="2" Grid.Column="0" Content="Port" Foreground="{StaticResource txtColor}" FontSize="10" Padding="5 0 0 0" Margin="0" FontWeight="Bold"></Label>
+                        <Label Grid.Row="2" Grid.Column="0" Content="{DynamicResource text_port}" Foreground="{StaticResource txtColor}" FontSize="10" Padding="5 0 0 0" Margin="0" FontWeight="Bold"></Label>
                         <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding currentInstance.Port}"  Margin="0" Padding="2 0 0 0" Foreground="{StaticResource txtColor}" Background="{StaticResource cmdBgColor}" VerticalContentAlignment="Center" FontSize="13"></TextBox>
 
-                        <Label Grid.Row="3" Grid.Column="0" Content="Listed" FontSize="10" Padding="5 0 0 0" Margin="0" FontWeight="Bold">
+                        <Label Grid.Row="3" Grid.Column="0" Content="{DynamicResource text_listed}" FontSize="10" Padding="5 0 0 0" Margin="0" FontWeight="Bold">
                             <Label.Style>
                                 <Style TargetType="{x:Type Label}">
                                     <Setter Property="Foreground" Value="#FFDC0000"></Setter>
@@ -417,7 +417,7 @@
 
                         </CheckBox>
 
-                        <Label Grid.Row="4" Grid.Column="0" Content="Episode" Foreground="{StaticResource txtColor}" FontSize="10" Padding="5 0 0 0" Margin="0" FontWeight="Bold"></Label>
+                        <Label Grid.Row="4" Grid.Column="0" Content="{DynamicResource text_episode}" Foreground="{StaticResource txtColor}" FontSize="10" Padding="5 0 0 0" Margin="0" FontWeight="Bold"></Label>
                         <ComboBox Grid.Row="4" Grid.Column="2" ItemsSource="{x:Static local:Constants.Episodes}" Margin="0" Padding="0 0 0 0" FontSize="13" SelectedItem="{Binding currentInstance.Episode}" Background="{StaticResource cmdBgColor}" VerticalContentAlignment="Center" >
                             <ComboBox.Style>
                                 <Style TargetType="{x:Type ComboBox}">
@@ -439,7 +439,7 @@
                                 <RowDefinition Height="20"></RowDefinition>
                                 <RowDefinition Height="*"></RowDefinition>
                             </Grid.RowDefinitions>
-                            <Label Grid.Row="0" Grid.ColumnSpan="5" Foreground="{StaticResource txtColor}" FontSize="10" VerticalContentAlignment="Center" Padding="5 0 0 0" FontWeight="Bold">Auto Restart Time (H:M:S)</Label>
+                            <Label Grid.Row="0" Grid.ColumnSpan="5" Foreground="{StaticResource txtColor}" FontSize="10" VerticalContentAlignment="Center" Padding="5 0 0 0" FontWeight="Bold" Content="{DynamicResource text_autorestart_label_content}"></Label>
                             <Grid Grid.Row="1" >
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"></ColumnDefinition>
@@ -463,7 +463,7 @@
                                             <Run>
                                                 <Run.Style>
                                                     <Style TargetType="{x:Type Run}">
-                                                        <Setter Property="Text" Value="Restarts is only active while running. 24 Hours by default."></Setter>
+                                                        <Setter Property="Text" Value="{DynamicResource text_automatic_restart_notice}"></Setter>
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding currentInstance.AutoRestart, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}" Value="{StaticResource True}">
                                                                 <Setter Property="Text" Value="{Binding currentInstance.RestartDateTime, Mode=OneWay}"></Setter>

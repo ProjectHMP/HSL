@@ -7,6 +7,10 @@
     <Application.Resources>
         <ResourceDictionary>
 
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary x:Name="lang" Source="pack://application:,,,/HSL;component/lang.xaml"></ResourceDictionary>
+            </ResourceDictionary.MergedDictionaries>
+            
             <mscorlib:Boolean x:Key="True">True</mscorlib:Boolean>
             <mscorlib:Boolean x:Key="False">False</mscorlib:Boolean>
 
