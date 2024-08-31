@@ -26,8 +26,6 @@ namespace HSL.Windows
         public ServerInstance currentInstance { get; private set; } = default(ServerInstance);
         public ServerInstance.ResourceMeta currentResource { get; private set; } = default(ServerInstance.ResourceMeta);
 
-        // public List<string> Languages { get; private set; }
-
         internal HSLConfig Config { get; private set; }
         private OpenFileDialog _ofd;
         private object _configLock { get; set; } = new object();
@@ -49,8 +47,6 @@ namespace HSL.Windows
 
             string external_language_file = Utils.CurrentDirectory.CombinePath("lang.xaml");
 
-
-
             if (File.Exists(external_language_file))
             {
                 ResourceDictionary dictionary = new ResourceDictionary();
@@ -67,24 +63,7 @@ namespace HSL.Windows
                 Application.Current.Resources.MergedDictionaries.Add(dictionary);
             }
 
-            /*
-            ResourceDictionary[] dictionaries = Application.Current.Resources.MergedDictionaries.ToArray();
-
-            foreach(ResourceDictionary d in dictionaries)
-            {
-                if(d.Source.AbsolutePath.IndexOf("lang.xaml") >= 0)
-                {
-                    Application.Current.Resources.MergedDictionaries.Remove(d);
-                }
-            }
-            
-            ResourceDictionary dictionary = new ResourceDictionary();
-            dictionary.Source = new Uri("pack://application:,,,/HSL;component/lang.xaml", UriKind.Absolute);
-            Application.Current.Resources.MergedDictionaries.Add(dictionary);
-            */
-
             Closing += (s, e) => Dispose();
-
 
             manager = new ServerManager(this);
             manager.OnCreated += Manager_OnCreated;
@@ -401,7 +380,7 @@ namespace HSL.Windows
 
                     File.Delete(zip);
 
-                    MessageBox.Show(Utils.GetLang("text_update_server") + ": " + version);
+                    MessageBox.Show(Utils.GetLang("text_updated_server") + ": " + version);
 
                 }
                 catch (Exception ee)

@@ -22,7 +22,8 @@
     <s:String x:Key="text_error">Error</s:String>
     <s:String x:Key="text_enter_command_here">Enter Command Here</s:String>
     <s:String x:Key="text_caution">Caution!</s:String>
-    <s:String x:Key="text_update_server">Updated Server</s:String>
+    <s:String x:Key="text_update_server">Update Server</s:String>
+    <s:String x:Key="text_updated_server">Updated Server</s:String>
     <s:String x:Key="text_open_folder">Open Folder</s:String>
     <s:String x:Key="text_ask_server_delete">Are you sure you want to delete {0}? Files will NOT be deleted!</s:String>
     <s:String x:Key="text_delete_server">Delete Server?</s:String>
