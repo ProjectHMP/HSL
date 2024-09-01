@@ -9,17 +9,18 @@
     <s:String x:Key="text_clear">Clear</s:String>
     <s:String x:Key="text_all">All</s:String>
     <s:String x:Key="text_file">File</s:String>
-    <s:String x:Key="text_server_settings">Server Settings</s:String>
+    <s:String x:Key="text_about">About</s:String>
     <s:String x:Key="text_hostname">Hostname</s:String>
     <s:String x:Key="text_port">Port</s:String>
     <s:String x:Key="text_listed">Listed</s:String>
     <s:String x:Key="text_episode">Episode</s:String>
+    <s:String x:Key="text_error">Error</s:String>
+    <s:String x:Key="text_server_settings">Server Settings</s:String>
     <s:String x:Key="text_automatic_settings">Automatic Settings</s:String>
     <s:String x:Key="text_reload_resources">Reload Resources</s:String>
     <s:String x:Key="text_delete_cache">Delete Cache</s:String>
     <s:String x:Key="text_delete_logs">Delete Logs</s:String>
     <s:String x:Key="text_open_directory">Open Directory</s:String>
-    <s:String x:Key="text_error">Error</s:String>
     <s:String x:Key="text_enter_command_here">Enter Command Here</s:String>
     <s:String x:Key="text_caution">Caution!</s:String>
     <s:String x:Key="text_update_server">Update Server</s:String>
@@ -30,14 +31,14 @@
     <s:String x:Key="text_corrupted_server_download">Corrupted server download. Aborted</s:String>
     <s:String x:Key="text_no_server_directory">No directory given to install server.</s:String>
     <s:String x:Key="text_directory_not_empty">Directory selected it not empty!</s:String>
-    <s:String x:Key="text_stop_server_before_updating">"Please stop the server first before updating!</s:String>
+    <s:String x:Key="text_stop_server_before_updating">Please stop the server first before updating!</s:String>
     <s:String x:Key="text_server_load_failed">Failed to load pre-existing server @ {0}.{1}{2}Would you like to change location?</s:String>
     <s:String x:Key="text_server_download_failed">Failed to download server files.</s:String>
     <s:String x:Key="text_server_install_failed">Failed to install server files.</s:String>
     <s:String x:Key="text_invalid_server_location">This path does not contain a valid HappinessMP installation.</s:String>
     <s:String x:Key="text_server_already_added">This server has already been added.</s:String>
     <s:String x:Key="text_open_server_path">Open Server Path</s:String>
-    <s:String x:Key="text_create_new_server">Create new Server</s:String>
+    <s:String x:Key="text_create_new_server">Create New Server</s:String>
     <s:String x:Key="text_server_already_running_start_new">This server is already running. Do you want to terminate and start new?</s:String>
     
     <s:String x:Key="text_autorestart_label_content">Auto Restart Time (H:M:S)</s:String>

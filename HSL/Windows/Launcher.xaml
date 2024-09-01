@@ -63,6 +63,12 @@
                         <MenuItem Background="Transparent" Header="{DynamicResource text_file}" Foreground="{StaticResource txtColor}">
                             <MenuItem x:Name="mi_OpenServerPath" Header="{DynamicResource text_open_server_path}" UsesItemContainerTemplate="False"></MenuItem>
                             <MenuItem x:Name="mi_CreateServer" Header="{DynamicResource text_create_new_server}"></MenuItem>
+                            <Separator></Separator>
+                            <MenuItem x:Name="mi_OpenGithub" Header="Open Github"/>
+                            <MenuItem Header="{DynamicResource text_about}">
+                                <MenuItem FontWeight="Bold" Header="Developer" IsHitTestVisible="False"/>
+                                <MenuItem IsChecked="True" Header="Eazy" IsHitTestVisible="False"/>
+                            </MenuItem>
                         </MenuItem>
                         <MenuItem x:Name="mi_Server" Background="Transparent" Header="{DynamicResource text_server}" >
                             <MenuItem x:Name="mi_StartServer" Header="{DynamicResource text_start}">
@@ -101,6 +107,7 @@
                                     </Style>
                                 </MenuItem.Style>
                             </MenuItem>
+                            <MenuItem x:Name="mi_OpenServerDirectory" Header="{DynamicResource text_open_directory}"></MenuItem>
                             <MenuItem x:Name="mi_UpdateServer" Header="{DynamicResource text_update_server}">
                                 <MenuItem.Style>
                                     <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
@@ -113,14 +120,11 @@
                                     </Style>
                                 </MenuItem.Style>
                             </MenuItem>
-                            <MenuItem x:Name="mi_OpenServerDirectory" Header="{DynamicResource text_open_directory}"></MenuItem>
-                            <MenuItem x:Name="mi_DeleteServer" Header="{DynamicResource text_delete}">
+                            <Separator></Separator>
+                            <MenuItem x:Name="mi_DeleteServerCache" Header="{DynamicResource text_delete_cache}">
                                 <MenuItem.Style>
                                     <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
                                         <Style.Triggers>
-                                            <DataTrigger Binding="{Binding Path=currentInstance, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, Delay=500}" Value="{x:Null}">
-                                                <Setter Property="IsEnabled" Value="False"></Setter>
-                                            </DataTrigger>
                                             <DataTrigger Binding="{Binding Path=currentInstance.State, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, Delay=500}" Value="{x:Static enums:ServerState.Started}">
                                                 <Setter Property="IsEnabled" Value="False"></Setter>
                                             </DataTrigger>
@@ -128,10 +132,14 @@
                                     </Style>
                                 </MenuItem.Style>
                             </MenuItem>
-                            <MenuItem x:Name="mi_DeleteServerCache" Header="{DynamicResource text_delete_cache}">
+                            <Separator></Separator>
+                            <MenuItem x:Name="mi_DeleteServer" Header="{DynamicResource text_delete}" Foreground="Red">
                                 <MenuItem.Style>
                                     <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
                                         <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=currentInstance, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, Delay=500}" Value="{x:Null}">
+                                                <Setter Property="IsEnabled" Value="False"></Setter>
+                                            </DataTrigger>
                                             <DataTrigger Binding="{Binding Path=currentInstance.State, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, Delay=500}" Value="{x:Static enums:ServerState.Started}">
                                                 <Setter Property="IsEnabled" Value="False"></Setter>
                                             </DataTrigger>
@@ -158,7 +166,7 @@
                 <ListView x:Name="lv_ServerList" Grid.Column="0" Grid.Row="1" Grid.RowSpan="2" ItemsSource="{Binding manager.servers, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, Mode=OneWay, IsAsync=True, Delay=500}" Background="Transparent" SelectionMode="Single" Foreground="{StaticResource txtColor}" BorderThickness="0 .2 0 .2" SelectedItem="{Binding currentInstance, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}">
                     <ListView.ItemTemplate>
                         <DataTemplate>
-                            <ListViewItem Content="{Binding Name}" IsHitTestVisible="False" Padding="2" Margin="0">
+                            <ListViewItem Content="{Binding Name, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}" IsHitTestVisible="False" Padding="2" Margin="0">
                                 <ListViewItem.Style>
                                     <Style TargetType="{x:Type ListViewItem}">
                                         <Setter Property="Foreground" Value="{StaticResource txtColor}"></Setter>

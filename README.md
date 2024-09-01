@@ -5,12 +5,14 @@ Happiness Server Launcher. A Launcher & Manager for [HappinessMP](https://happin
 <img src="hsl.png"/>
 
 ## Features
-- Create Server(s)
-- Update Server(s)
-- Add Existing Server(s)
-- Edit Server Settings
-- Resource Management (Stopping, Starting, Reloading, etc)
-- Automatic Server Start, Resource & Server Restarting (Auto restart server on schedule or crash)
+- Add, Create & Update Server(s).
+- Start, Stop, Restart Server(s).
+- Run Multiple Servers In One Launcher (No extra windows).
+- Quick Edit Server Settings.
+- Start, Stop & Reload Resource(s).
+- Automatic Server Start & Restart. (Scheduled & Crash Restarts)
+- Automatic Delete Logs (_Including Backups_)
+- Delete Cache
 - Console Adaptation
 
 It's a very basic program, what much too expect? 

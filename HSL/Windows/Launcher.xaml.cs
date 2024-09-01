@@ -109,6 +109,7 @@ namespace HSL.Windows
                             Config.servers[key].exe_file = _ofd.FileName;
                             markdirty = true;
                         }
+                        else deleteCache.Add(key);
                     }
                     manager.Create(Config.servers[key]);
                 }
@@ -117,6 +118,7 @@ namespace HSL.Windows
             foreach (Guid guid in deleteCache)
             {
                 Config.servers.Remove(guid);
+                markdirty = true;
             }
 
             if (markdirty)
@@ -183,6 +185,8 @@ namespace HSL.Windows
                     await Config.Save();
                 }
             };
+
+            mi_OpenGithub.Click += (s, e) => Process.Start("explorer.exe", "https://github.com/ProjectHMP/HSL");
 
             lv_ServerList.SelectionChanged += (s, e) =>
             {
