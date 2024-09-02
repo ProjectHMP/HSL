@@ -64,8 +64,9 @@
                             <MenuItem x:Name="mi_OpenServerPath" Header="{DynamicResource text_open_server_path}" UsesItemContainerTemplate="False"></MenuItem>
                             <MenuItem x:Name="mi_CreateServer" Header="{DynamicResource text_create_new_server}"></MenuItem>
                             <Separator></Separator>
-                            <MenuItem x:Name="mi_OpenGithub" Header="Open Github"/>
                             <MenuItem Header="{DynamicResource text_about}">
+                                <MenuItem x:Name="mi_OpenGithub" Header="Open Github"/>
+                                <Separator></Separator>
                                 <MenuItem FontWeight="Bold" Header="Developer" IsHitTestVisible="False"/>
                                 <MenuItem IsChecked="True" Header="Eazy" IsHitTestVisible="False"/>
                             </MenuItem>

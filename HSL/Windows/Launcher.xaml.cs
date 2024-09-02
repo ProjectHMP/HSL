@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
@@ -34,6 +35,7 @@ namespace HSL.Windows
         public Launcher()
         {
             InitializeComponent();
+      
 
             AppDomain.CurrentDomain.UnhandledException += (s, e) =>
             {
@@ -66,32 +68,31 @@ namespace HSL.Windows
             Closing += (s, e) => Dispose();
 
             manager = new ServerManager(this);
-            manager.OnCreated += Manager_OnCreated;
-            manager.OnDeleted += Manager_OnDeleted;
-
-            DataContext = this;
             _timer = new Timer() { Enabled = true, Interval = 2500 };
 
+            RegisterListeners();
             LoadConfiguration().ConfigureAwait(false).GetAwaiter(); // intentional thread lock
+
+            DataContext = this;
 
             if (manager.servers.Count > 0)
             {
                 ShowServerContext(manager.servers.FirstOrDefault());
             }
 
-            RegisterListeners();
             _timer.Start();
+            Show();
         }
 
         private async Task LoadConfiguration()
         {
             Config = await HSLConfig.Load("hsl.json");
-            List<Guid> deleteCache = new List<Guid>();
             bool markdirty = false;
             lock (_configLock)
             {
+                Guid[] keys = Config.servers.Keys.ToArray();
                 string directory;
-                foreach (var key in Config.servers.Keys)
+                foreach (Guid key in keys)
                 {
                     directory = Path.GetDirectoryName(Config.servers[key].exe_file);
                     if (!Directory.Exists(directory) || !ServerInstance.IsValidInstallation(directory))
@@ -103,22 +104,16 @@ namespace HSL.Windows
                             _ofd.Filter = "HappinessMP.Server.Exe | *.exe";
                             if (!(_ofd?.ShowDialog() ?? false) || string.IsNullOrEmpty(_ofd.FileName) || Config.servers.Any(x => x.Value.exe_file == _ofd.FileName))
                             {
-                                deleteCache.Add(key);
+                                Config.servers.Remove(key);
                                 continue;
                             }
                             Config.servers[key].exe_file = _ofd.FileName;
                             markdirty = true;
                         }
-                        else deleteCache.Add(key);
+                        else Config.servers.Remove(key);
                     }
                     manager.Create(Config.servers[key]);
                 }
-            }
-
-            foreach (Guid guid in deleteCache)
-            {
-                Config.servers.Remove(guid);
-                markdirty = true;
             }
 
             if (markdirty)
@@ -178,6 +173,10 @@ namespace HSL.Windows
 
         private void RegisterListeners()
         {
+           
+            manager.OnCreated += Manager_OnCreated;
+            manager.OnDeleted += Manager_OnDeleted;
+
             _timer.Elapsed += async (s, e) =>
             {
                 if (manager.IsDirty(true))

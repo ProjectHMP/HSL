@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Text;
@@ -15,8 +16,8 @@ namespace HSL
     internal static class Utils
     {
 
-        internal static string CurrentDirectory;
-        internal static string CrashReportPath;
+        internal readonly static string CurrentDirectory;
+        internal readonly static string CrashReportPath;
 
         static Utils()
         {
@@ -54,7 +55,7 @@ namespace HSL
         }
 
         /*
-         * My non sophisticated HTTP library. 
+         * My non sophisticated lazy implemented HTTP library. 
          */
 
         internal static class HTTP
@@ -70,12 +71,12 @@ namespace HSL
             };
 
             private static HttpClient _client = new HttpClient(_clientHandler, false);
-            internal static async Task<byte[]> GetAsync(string url, Dictionary<string, string> headers = null) => await SendAsync<byte[]>(url, HttpMethod.Get, headers);
-            internal static async Task<byte[]> PostAsync(string url, Dictionary<string, string> headers = null) => await SendAsync<byte[]>(url, HttpMethod.Post, headers);
-            internal static async Task<T> GetAsync<T>(string url, Dictionary<string, string> headers = null) => await SendAsync<T>(url, HttpMethod.Get, headers);
-            internal static async Task<T> PostAsync<T>(string url, Dictionary<string, string> headers = null) => await SendAsync<T>(url, HttpMethod.Post, headers);
-            internal static async Task<byte[]> GetBinaryAsync(string url, Dictionary<string, string> headers = null) => await SendAsync<byte[]>(url, HttpMethod.Get, headers, null, true);
-            private static async Task<T> SendAsync<T>(string url, HttpMethod method = null, Dictionary<string, string> headers = null, Func<MemoryStream> middleware = null, bool binary = false)
+            internal static async Task<byte[]> GetAsync(string url, Dictionary<string, string> headers = null) => await SendAsync<byte[]>(url, headers, HttpMethod.Get);
+            // internal static async Task<byte[]> PostAsync(string url, string payload = null, Dictionary<string, string> headers = null) => await SendAsync<byte[]>(url, headers, HttpMethod.Post);
+            internal static async Task<T> GetAsync<T>(string url, Dictionary<string, string> headers = null) => await SendAsync<T>(url, headers, HttpMethod.Get);
+            // internal static async Task<T> PostAsync<T>(string url, string payload = null, Dictionary<string, string> headers = null) => await SendAsync<T>(url, headers, HttpMethod.Post);
+            internal static async Task<byte[]> GetBinaryAsync(string url, Dictionary<string, string> headers = null) => await SendAsync<byte[]>(url, headers, HttpMethod.Get, null, true);
+            private static async Task<T> SendAsync<T>(string url, Dictionary<string, string> headers = null, HttpMethod method = null, Func<MemoryStream> middleware = null, bool binary = false)
             {
                 HttpRequestMessage message = new HttpRequestMessage(method ?? HttpMethod.Get, url);
 
@@ -101,7 +102,7 @@ namespace HSL
                             using (BinaryReader reader = new BinaryReader(s))
                             {
                                 buffer = new byte[reader.BaseStream.Length];
-                                while (true)
+                                while (size != buffer.Length)
                                 {
                                     read = reader.Read(buffer, size, buffer.Length - size);
                                     if (read <= 0)

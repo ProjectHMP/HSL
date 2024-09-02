@@ -82,27 +82,18 @@ namespace HSL.Core
         public uint RestartTimer_Hours
         {
             get => (uint)(RestartTimer.Days * 24 + RestartTimer.Hours);
-            set
-            {
-                RestartTimer = TimeSpan.FromHours(value).Add(TimeSpan.FromMinutes(RestartTimer.Minutes).Add(TimeSpan.FromSeconds(RestartTimer.Seconds)));
-            }
+            set => RestartTimer = TimeSpan.FromHours(value).Add(TimeSpan.FromMinutes(RestartTimer.Minutes).Add(TimeSpan.FromSeconds(RestartTimer.Seconds)));
         }
 
         public uint RestartTimer_Minutes
         {
             get => (uint)RestartTimer.Minutes;
-            set
-            {
-                RestartTimer = TimeSpan.FromMinutes(value).Add(TimeSpan.FromHours(RestartTimer.Days * 24 + RestartTimer.Hours).Add(TimeSpan.FromSeconds(RestartTimer.Seconds)));
-            }
+            set => RestartTimer = TimeSpan.FromMinutes(value).Add(TimeSpan.FromHours(RestartTimer.Days * 24 + RestartTimer.Hours).Add(TimeSpan.FromSeconds(RestartTimer.Seconds)));
         }
         public uint RestartTimer_Seconds
         {
             get => (uint)RestartTimer.Seconds;
-            set
-            {
-                RestartTimer = TimeSpan.FromSeconds(value).Add(TimeSpan.FromHours(RestartTimer.Days * 24 + RestartTimer.Hours).Add(TimeSpan.FromMinutes(RestartTimer.Minutes)));
-            }
+            set => RestartTimer = TimeSpan.FromSeconds(value).Add(TimeSpan.FromHours(RestartTimer.Days * 24 + RestartTimer.Hours).Add(TimeSpan.FromMinutes(RestartTimer.Minutes)));
         }
 
         public bool AutoDeleteLogs
@@ -552,14 +543,13 @@ namespace HSL.Core
             if (process.Start())
             {
                 _StartTime = DateTime.Now;
-                _task = new Task(async () => await ServerUpdateThread(), _cts.Token);
-                _task.Start();
+                _task = Task.Run(ServerUpdateThread, _cts.Token);
                 State = ServerState.Started;
                 OnPropertyChanged(nameof(State));
                 ProcessStarted?.Invoke(null, null);
                 return true;
             }
-            else Trace.WriteLine("Failed to start process: " + Name);
+            else MessageBox.Show(Utils.GetLang("text_server_failed_start_process") + ": " + Name, Utils.GetLang("text_error"), MessageBoxButton.OK);
             State = ServerState.Stopped;
             OnPropertyChanged(nameof(State));
             return false;

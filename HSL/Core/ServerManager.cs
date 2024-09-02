@@ -25,19 +25,6 @@ namespace HSL.Core
             servers = new ObservableCollection<ServerInstance>();
         }
 
-        private void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-
-        internal void MarkConfigDirty() => _dirtyConfig = true;
-        internal bool IsDirty(bool clean = false)
-        {
-            if (_dirtyConfig & clean)
-            {
-                _dirtyConfig = !_dirtyConfig;
-                return true;
-            }
-            return _dirtyConfig;
-        }
-
         internal ServerInstance? Create(string exePath, bool autoStart = false) => Create(new ServerData() { exe_file = exePath, guid = Guid.NewGuid(), auto_start = autoStart });
         internal ServerInstance? Create(ServerData data)
         {
@@ -62,10 +49,6 @@ namespace HSL.Core
             return null;
         }
 
-        private void HandleEvent(EventHandler<ServerInstance> handler, ServerInstance instance) => handler?.Invoke(this, instance);
-
-        internal bool Delete(Guid guid) => Delete(servers.Where(x => x.Guid == guid).FirstOrDefault());
-
         internal bool Delete(ServerInstance instance)
         {
             if (instance == null)
@@ -83,6 +66,24 @@ namespace HSL.Core
                 }
                 return false;
             }
+        }
+
+        internal bool Delete(Guid guid) => Delete(servers.Where(x => x.Guid == guid).FirstOrDefault());
+
+        private void HandleEvent(EventHandler<ServerInstance> handler, ServerInstance instance) => handler?.Invoke(this, instance);
+
+        private void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
+        internal void MarkConfigDirty() => _dirtyConfig = true;
+
+        internal bool IsDirty(bool clean = false)
+        {
+            if (_dirtyConfig & clean)
+            {
+                _dirtyConfig = !_dirtyConfig;
+                return true;
+            }
+            return _dirtyConfig;
         }
 
         public void Dispose()
