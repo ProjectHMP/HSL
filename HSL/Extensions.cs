@@ -28,7 +28,7 @@ namespace HSL
 
         internal static void RemoveAll<T>(this ObservableCollection<T> collection, Predicate<T> pre)
         {
-            for(int i = collection.Count - 1; i >= 0; i--)
+            for (int i = collection.Count - 1; i >= 0; i--)
             {
                 if (pre(collection[i]))
                 {

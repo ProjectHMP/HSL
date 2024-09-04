@@ -1,5 +1,4 @@
-﻿using HSL.Enums;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -41,6 +40,8 @@ namespace HSL.Core
         private CancellationTokenSource _cts;
 
         public Dictionary<Guid, ServerData> servers { get; set; } = new Dictionary<Guid, ServerData>();
+
+        public string lang { get; set; } = "en";
 
         private HSLConfig() { }
 

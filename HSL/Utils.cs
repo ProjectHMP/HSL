@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Text;
@@ -24,7 +23,7 @@ namespace HSL
             CurrentDirectory ??= Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
             CurrentDirectory ??= Environment.CurrentDirectory;
             CurrentDirectory ??= AppDomain.CurrentDomain.BaseDirectory;
-            CurrentDirectory ??= Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            // CurrentDirectory ??= Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
             CrashReportPath = CurrentDirectory.CombinePath("crash-reports.txt");
         }
 
@@ -32,7 +31,7 @@ namespace HSL
 
         internal static void AppendToCrashReport(string data)
         {
-            data = Environment.NewLine + "["+ DateTime.Now.ToString() + "]" + data;
+            data = Environment.NewLine + "[" + DateTime.Now.ToString() + "]" + data;
             File.AppendAllText(CrashReportPath, data);
             Trace.WriteLine(data);
         }

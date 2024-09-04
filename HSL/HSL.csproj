@@ -54,7 +54,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Page Update="lang.xaml">
+    <Page Update="Lang\en.xaml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Page>
   </ItemGroup>

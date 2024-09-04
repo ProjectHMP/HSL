@@ -8,7 +8,7 @@
         <ResourceDictionary>
 
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary x:Name="lang" Source="pack://application:,,,/HSL;component/lang.xaml"></ResourceDictionary>
+                <ResourceDictionary x:Name="lang" Source="pack://application:,,,/HSL;component/Lang/en.xaml"></ResourceDictionary>
             </ResourceDictionary.MergedDictionaries>
             
             <mscorlib:Boolean x:Key="True">True</mscorlib:Boolean>

@@ -42,8 +42,8 @@
     <s:String x:Key="text_create_new_server">Create New Server</s:String>
     <s:String x:Key="text_server_already_running_start_new">This server is already running. Do you want to terminate and start new?</s:String>
     
-    <s:String x:Key="text_autorestart_label_content">Auto Restart Time (H:M:S)</s:String>
-    <s:String x:Key="text_automatic_restart_notice">Restarts is only active while running. 24 Hours by default.</s:String>
+    <s:String x:Key="text_autorestart_label_content">Restart Timer (H:M:S)</s:String>
+    <s:String x:Key="text_automatic_restart_notice">Restarts is only active while running. Default: (24 Hours)</s:String>
     
     <s:String x:Key="text_tooltip_1">Automatically reload resource(s) when modified.</s:String>
     <s:String x:Key="text_tooltip_2">Start the server when HSL starts.</s:String>
