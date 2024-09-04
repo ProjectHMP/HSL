@@ -25,7 +25,9 @@ It's a very basic program, what much too expect?
 
 **HSL** .NETCore version was lowered to `3.1` in preventing manually installing the latest & greatest framework.
 
-Everyone _should_ have this, though if program doesn't launch, you probably don't. **[Download .Net Core 3.1](https://dotnet.microsoft.com/en-us/download/dotnet/3.1)**.
+Everyone _should_ have this, though if program doesn't launch, you probably don't.
+
+**[Download .Net Core 3.1](https://dotnet.microsoft.com/en-us/download/dotnet/3.1)**.
 
 ## Language Support
 
@@ -48,7 +50,7 @@ You can place a language file by `HSL.exe` named `lang.xaml`.
 It will not be a registered language, but it will _now_ be the default language.
 
 ## Build
-You can clone this project and open it with **Visual Studio**, supporting .net core 3.1_ 
+You can clone this project and open it with **Visual Studio**, supporting .net core 3.1.
 
 Otherwise, you _could_ build using with `dotnet` without **Visual Studio**. 
 **Visual Studio Code** with extensions may also work, though this would be needed.
@@ -58,18 +60,18 @@ Install **[.Net Core 3.1](https://dotnet.microsoft.com/en-us/download/dotnet/3.1
 ### Build Command Executions
 
 ```batch
-# dev? addon: -b dev
+#REM dev? addon: -b dev
 git clone https://github.com/ProjectHMP/HSL
 
-# change directory (cd)
+#REM change directory (cd)
 cd HSL/HSL
 
-# build (creates a debug exe)
+#REM build (creates a debug exe)
 dotnet build
 
-# build run (builds, then run)
+#REM build run (builds, then run)
 dotnet run
 
-# publish (release build)
+#REM publish (release build)
 dotnet publish
 ```
