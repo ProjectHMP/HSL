@@ -1,0 +1,39 @@
+name: Update Revisions
+
+# Set the workflow to run every 4 hours
+on:
+  schedule:
+    - cron: "0 */4 * * *"
+
+# Workflow jobs
+jobs:
+  update-revisions:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repo
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18' # or whichever version you're using
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: npm install
+
+      # Step 4: Run the Node.js script to update revisions.json
+      - name: Run update script
+        run: node index.js
+
+      # Step 5: Commit the updated revisions.json
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add revisions.json
+          git commit -m "Update revisions.json"
+          git push
