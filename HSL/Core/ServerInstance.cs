@@ -227,7 +227,6 @@ namespace HSL.Core
 
         internal ServerManager ServerManager;
         internal Guid Guid => ServerData.guid;
-        public string sGuid => Guid.ToString();
 
         internal ServerSettings ServerSettings { get; private set; }
 
@@ -398,12 +397,11 @@ namespace HSL.Core
 
         internal bool Stop(bool ignoreRestart = false)
         {
+            _wasForcedClosed = ignoreRestart;
             if (IsProcessRunning())
             {
-                _wasForcedClosed = true;
                 DisposeProcess();
             }
-            _wasForcedClosed = ignoreRestart;
             State = ServerState.Stopped;
             OnPropertyChanged(nameof(State));
             return true;
@@ -460,7 +458,6 @@ namespace HSL.Core
             {
                 ResourceMap[name].IsEnabled = true;
                 OnPropertyChanged(nameof(Resources));
-                OnPropertyChanged(nameof(ResourceMap));
             }
         }
         internal void StopResource(string name)
@@ -527,17 +524,19 @@ namespace HSL.Core
                 ProcessStopped?.Invoke(null, null);
                 if (AutoRestart && !_wasForcedClosed)
                 {
-                    _wasForcedClosed = false;
                     await Task.Delay(1500);
                     Start();
                 }
+                _wasForcedClosed = false;
             };
 
-            if (File.Exists("server.log"))
+            if (AutoDeleteLogs && File.Exists(LogFile))
             {
                 File.AppendAllText(LogFile + ".tmp", File.ReadAllText(LogFile));
-                File.Delete("server.log");
+                File.Delete(LogFile);
             }
+
+            ClearServerLog();
 
             if (process.Start())
             {
@@ -613,7 +612,6 @@ namespace HSL.Core
             {
                 Utils.AppendToCrashReport(e.ToString());
             }
-
             DisposeProcess();
             return Task.CompletedTask;
         }
@@ -636,7 +634,6 @@ namespace HSL.Core
         {
             DisposeProcess();
             _fileWatchHandler.Dispose();
-            ClearServerLog();
         }
 
     }
