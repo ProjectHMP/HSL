@@ -7,7 +7,11 @@ on:
       - hmp-server-revisions
   schedule:
     - cron: "0 */4 * * *"
-
+permissions:
+  actions: write          # Required for running actions
+  contents: write         # Required for pushing changes to the repository
+  issues: read            # Optional, if you need access to issues
+  pull-requests: read     # Optional, if you need access to pull requests
 # Workflow jobs
 jobs:
   update-revisions:
