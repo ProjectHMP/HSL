@@ -628,6 +628,8 @@ namespace HSL.Core
             {
                 process.Kill();
             }
+
+            OnPropertyChanged(nameof(Resources));
         }
 
         public void Dispose()

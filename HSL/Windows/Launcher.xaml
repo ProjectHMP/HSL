@@ -472,7 +472,7 @@
 
                             </Grid>
                             <Grid Grid.Row="3">
-                                <RichTextBox Foreground="White" FontSize="8" Background="Transparent" Padding="5" VerticalAlignment="Bottom"  BorderBrush="Yellow" IsReadOnly="True" IsReadOnlyCaretVisible="False" IsHitTestVisible="False">
+                                <RichTextBox Foreground="White" FontSize="8" Background="Transparent" Padding="5" VerticalAlignment="Bottom" BorderThickness=".2" BorderBrush="Yellow" IsReadOnly="True" IsReadOnlyCaretVisible="False" IsHitTestVisible="False">
                                     <FlowDocument>
                                         <Paragraph Foreground="Wheat">
                                             <Run>

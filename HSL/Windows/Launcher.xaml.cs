@@ -81,11 +81,13 @@ namespace HSL.Windows
             // Load Language
             else if(Config.lang != "en")
             {
+                Trace.WriteLine("Loading Language: " + Config.lang);
                 foreach (Language lang in Languages)
                 {
                     if (Config.lang == lang.Key)
                     {
                         LoadLanguage(lang);
+                        Trace.WriteLine("Language Loaded");
                         break;
                     }
                 }
@@ -196,7 +198,6 @@ namespace HSL.Windows
             {
                 foreach(ResourceDictionary dictionary in dictionaries)
                 {
-                    Trace.WriteLine("Removing " + dictionary.Source);
                     Application.Current.Resources.MergedDictionaries.Remove(dictionary);
                 }
             }
@@ -204,7 +205,7 @@ namespace HSL.Windows
 
         private async void LoadLanguage(Language lang)
         {
-            if (lang == null || string.IsNullOrEmpty(lang.Key) || lang.Key == Config.lang)
+            if (lang == null || string.IsNullOrEmpty(lang.Key))
             {
                 return;
             }
@@ -215,8 +216,11 @@ namespace HSL.Windows
                 {
                     UnloadLanguages();
                     Application.Current.Resources.MergedDictionaries.Add(language);
-                    Config.lang = lang.Key;
-                    await Config.Save();
+                    if(Config.lang != lang.Key)
+                    {
+                        Config.lang = lang.Key;
+                        await Config.Save();
+                    }
                     return;
                 }
             }
