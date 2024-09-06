@@ -33,27 +33,13 @@ async function main(){
 		return;
 	}
 	
-	const server_zip = matches[0];
-	const zip_buffer = await fetch(server_zip);
-	
-	const hash = crypto.createHash('md5').update(await fetch(server_zip)).digest('hex');
-
-	let update = false;
+	const hash = crypto.createHash('md5').update(await fetch(matches[0])).digest('hex');
 
 	if(!revisions.hashes.hasOwnProperty(hash)){
-		revisions.hashes[hash] = server_zip;
-		update = true;
-	}
-	
-	if(revisions.latest != hash) {
 		revisions.latest = hash;
-		update = true;
-	}
-	
-	if(update){
+		revisions.hashes[hash] = server_zip;
 		await fs.writeFileSync([__dirname, "revisions.json"].join(path.sep), JSON.stringify(revisions));
 	}
-	
 }
 
 main();
