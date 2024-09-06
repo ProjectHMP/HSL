@@ -370,7 +370,7 @@ namespace HSL.Core
                 {
                     if (e.FullPath.IndexOf(ResourceDirectory) >= 0)
                     {
-                        Match match = Regex.Match(e.FullPath, @"[\\\/]resources[\\\/](.*)[\\\/]?");
+                        Match match = Regex.Match(e.FullPath, @"\\resources\\([A-Za-z0-9\-\.\s]*)\\");
                         if (match.Success && match.Groups.Count > 0)
                         {
                             RefreshServerInformation();

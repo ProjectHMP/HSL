@@ -61,7 +61,7 @@ namespace HSL
         internal static async Task<string> GetLatestServerURL()
         {
             Revisions revisions = await HTTP.GetAsync<Revisions>("https://raw.githubusercontent.com/ProjectHMP/HSL/hmp-server-revisions/revisions.json");
-            if(revisions != null && revisions.hashes.ContainsKey(revisions.latest))
+            if(revisions != null && !string.IsNullOrEmpty(revisions.latest) && revisions.hashes.ContainsKey(revisions.latest))
             {
                 return Uri.UnescapeDataString(revisions.hashes[revisions.latest]);
             }
@@ -87,14 +87,19 @@ namespace HSL
 
             private const uint STREAM_BUFFER_SIZE = 1024;
 
-            private static HttpClientHandler _clientHandler = new HttpClientHandler()
-            {
-                AllowAutoRedirect = true,
-                MaxAutomaticRedirections = 3,
-                SslProtocols = System.Security.Authentication.SslProtocols.Tls12 | System.Security.Authentication.SslProtocols.Tls11,
-            };
+            private static HttpClientHandler _clientHandler;
+            private static HttpClient _client;
 
-            private static HttpClient _client = new HttpClient(_clientHandler, false);
+            static HTTP() {
+                _client = new HttpClient(_clientHandler = new HttpClientHandler()
+                {
+                    AllowAutoRedirect = true,
+                    MaxAutomaticRedirections = 3,
+                    SslProtocols = System.Security.Authentication.SslProtocols.Tls12 | System.Security.Authentication.SslProtocols.Tls11,
+                }, false);
+                _client.DefaultRequestHeaders.CacheControl = new System.Net.Http.Headers.CacheControlHeaderValue() { NoCache = true };
+            }
+
             internal static async Task<byte[]> GetAsync(string url, Dictionary<string, string> headers = null) => await SendAsync<byte[]>(url, headers, HttpMethod.Get);
             // internal static async Task<byte[]> PostAsync(string url, string payload = null, Dictionary<string, string> headers = null) => await SendAsync<byte[]>(url, headers, HttpMethod.Post);
             internal static async Task<T> GetAsync<T>(string url, Dictionary<string, string> headers = null) => await SendAsync<T>(url, headers, HttpMethod.Get);
@@ -152,9 +157,9 @@ namespace HSL
                                 await ms.WriteAsync(buffer, 0, read);
                                 size += read;
                             }
+                            ms.Position = 0;
                             if (typeof(T) != typeof(byte[]))
                             {
-                                ms.Position = 0;
                                 return await JsonSerializer.DeserializeAsync<T>(ms);
                             }
                             buffer = ms.ToArray();
