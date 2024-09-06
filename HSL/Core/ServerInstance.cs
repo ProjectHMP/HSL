@@ -370,7 +370,7 @@ namespace HSL.Core
                 {
                     if (e.FullPath.IndexOf(ResourceDirectory) >= 0)
                     {
-                        Match match = Regex.Match(e.FullPath, @"[\\\/]{1}resources[\\\/]{1}(.*)[\\\/]{1}?");
+                        Match match = Regex.Match(e.FullPath, @"[\\\/]resources[\\\/](.*)[\\\/]?");
                         if (match.Success && match.Groups.Count > 0)
                         {
                             RefreshServerInformation();
@@ -388,7 +388,6 @@ namespace HSL.Core
                 if (!ServerSettings._wasUpdated)
                 {
                     ServerSettings.LoadDocument();
-                    // ServerUpdated?.Invoke(null, null);
                 }
                 else ServerSettings._wasUpdated = false;
             }

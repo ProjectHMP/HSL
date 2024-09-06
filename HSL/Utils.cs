@@ -44,6 +44,7 @@ namespace HSL
             return match.Success ? Uri.UnescapeDataString(match.Groups[0].Value) : String.Empty;
         }
 
+
         internal static string GetLang(string key)
         {
             if (Application.Current.Resources.MergedDictionaries[0].Contains(key))

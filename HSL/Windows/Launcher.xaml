@@ -7,7 +7,7 @@
         xmlns:enums="clr-namespace:HSL.Enums"
         mc:Ignorable="d"
         Title="Happiness Server Launcher" Height="447" Width="826"
-        Background="Black"
+
         WindowStartupLocation="CenterScreen"
         >
     <Window.Resources>
@@ -73,7 +73,7 @@
                         </MenuItem>
                         <MenuItem x:Name="mi_Server" Background="Transparent" Header="{DynamicResource text_server}" >
                             <MenuItem.Style>
-                                <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
+                                <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource {x:Type MenuItem}}">
                                     <Setter Property="Foreground" Value="{StaticResource txtColor}"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding currentInstance, Delay=500, Mode=OneWay, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}" Value="{x:Null}">
@@ -84,7 +84,7 @@
                             </MenuItem.Style>
                             <MenuItem x:Name="mi_StartServer" Header="{DynamicResource text_start}">
                                 <MenuItem.Style>
-                                    <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
+                                    <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource {x:Type MenuItem}}">
                                         <Setter Property="IsEnabled" Value="False"/>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding currentInstance.State, Delay=100, IsAsync=True, Mode=OneWay, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static enums:ServerState.Stopped}">
@@ -96,7 +96,7 @@
                             </MenuItem>
                             <MenuItem x:Name="mi_StopServer" Header="{DynamicResource text_stop}" DisplayMemberPath="State">
                                 <MenuItem.Style>
-                                    <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
+                                    <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource {x:Type MenuItem}}">
                                         <Setter Property="IsEnabled" Value="False"/>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding currentInstance.State, Delay=100, IsAsync=True, Mode=OneWay, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static enums:ServerState.Started}">
@@ -108,7 +108,7 @@
                             </MenuItem>
                             <MenuItem x:Name="mi_RestartServer" Header="{DynamicResource text_restart}">
                                 <MenuItem.Style>
-                                    <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
+                                    <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource {x:Type MenuItem}}" >
                                         <Setter Property="IsEnabled" Value="False"/>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding currentInstance.State, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static enums:ServerState.Started}">
@@ -121,7 +121,7 @@
                             <MenuItem x:Name="mi_OpenServerDirectory" Header="{DynamicResource text_open_directory}"/>
                             <MenuItem x:Name="mi_UpdateServer" Header="{DynamicResource text_update_server}">
                                 <MenuItem.Style>
-                                    <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
+                                    <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource {x:Type MenuItem}}">
                                         <Setter Property="IsEnabled" Value="False"/>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding currentInstance.State, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static enums:ServerState.Stopped}">
@@ -134,7 +134,7 @@
                             <Separator/>
                             <MenuItem x:Name="mi_DeleteServerCache" Header="{DynamicResource text_delete_cache}">
                                 <MenuItem.Style>
-                                    <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
+                                    <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource {x:Type MenuItem}}">
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding currentInstance.State, Delay=500, Mode=OneWay, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static enums:ServerState.Started}">
                                                 <Setter Property="IsEnabled" Value="False"/>
@@ -146,7 +146,7 @@
                             <Separator/>
                             <MenuItem x:Name="mi_DeleteServer" Header="{DynamicResource text_delete}" Foreground="Red">
                                 <MenuItem.Style>
-                                    <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource menuItemStyle}">
+                                    <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource {x:Type MenuItem}}">
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding currentInstance, Delay=500, Mode=OneWay, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}" Value="{x:Null}">
                                                 <Setter Property="IsEnabled" Value="False"/>
@@ -169,7 +169,7 @@
                         <DataTemplate>
                             <ListViewItem Content="{Binding Name, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" IsHitTestVisible="False" Padding="2" Margin="0">
                                 <ListViewItem.Style>
-                                    <Style TargetType="{x:Type ListViewItem}">
+                                    <Style TargetType="{x:Type ListViewItem}" BasedOn="{StaticResource {x:Type ListViewItem}}">
                                         <Setter Property="Foreground" Value="{StaticResource txtColor}"/>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding State, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static enums:ServerState.Started}">
@@ -196,7 +196,7 @@
                         </Style>
                     </RichTextBox.Style>
                     <FlowDocument>
-                        <Paragraph FontSize="10" Padding="2">
+                        <Paragraph FontSize="13" Padding="2">
                             <InlineUIContainer>
                                 <ItemsControl ItemsSource="{Binding ServerLog, Delay=500, IsAsync=True, Mode=OneWay, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}" FontSize="10"/>
                             </InlineUIContainer>
@@ -269,9 +269,9 @@
                     <ListView x:Name="lv_ResourceList" ItemsSource="{Binding currentInstance.Resources, Delay=500, IsAsync=True, Mode=OneWay, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}" SelectedItem="{Binding currentResource, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" BorderThickness="0 .2 .2 .2" BorderBrush="#4682B4" Foreground="{StaticResource txtColor}">
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                <Label Content="{Binding Name}"  Margin="0" Padding="0" FontSize="12">
-                                    <Label.Style>
-                                        <Style TargetType="{x:Type Label}">
+                                <ListViewItem Content="{Binding Name, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" IsHitTestVisible="False" Padding="2" Margin="0">
+                                    <ListViewItem.Style>
+                                        <Style TargetType="{x:Type ListViewItem}" BasedOn="{StaticResource {x:Type ListViewItem}}">
                                             <Setter Property="Foreground" Value="{StaticResource txtColor}"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsEnabled}" Value="{StaticResource True}">
@@ -279,10 +279,11 @@
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
-                                    </Label.Style>
-                                </Label>
+                                    </ListViewItem.Style>
+                                </ListViewItem>
                             </DataTemplate>
                         </ListView.ItemTemplate>
+
                         <ListView.Style>
                             <Style TargetType="{x:Type ListView}">
                                 <Setter Property="IsHitTestVisible" Value="False"/>
@@ -305,7 +306,7 @@
                             </Grid.ColumnDefinitions>
                             <Button x:Name="btn_StartResource" Grid.Column="0" Content="{DynamicResource text_start}" Height="25">
                                 <Button.Style>
-                                    <Style TargetType="{x:Type Button}"  BasedOn="{StaticResource btnStyle}">
+                                    <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}" >
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding SelectedIndex, ElementName=lv_ResourceList, UpdateSourceTrigger=PropertyChanged}" Value="-1">
                                                 <Setter Property="IsEnabled" Value="False"/>
@@ -316,7 +317,7 @@
                             </Button>
                             <Button x:Name="btn_StartAllResources" Grid.Column="1" Content="{DynamicResource text_all}" Height="25">
                                 <Button.Style>
-                                    <Style TargetType="{x:Type Button}" BasedOn="{StaticResource btnStyle}">
+                                    <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}" >
                                         <Setter Property="IsEnabled" Value="False"/>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding currentInstance.State, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static enums:ServerState.Started}">
@@ -335,7 +336,7 @@
                             </Grid.ColumnDefinitions>
                             <Button x:Name="btn_StopResource" Content="{DynamicResource text_stop}" Height="25">
                                 <Button.Style>
-                                    <Style TargetType="{x:Type Button}"  BasedOn="{StaticResource btnStyle}">
+                                    <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding SelectedIndex, ElementName=lv_ResourceList, UpdateSourceTrigger=PropertyChanged}" Value="-1">
                                                 <Setter Property="IsEnabled" Value="False"/>
@@ -346,7 +347,7 @@
                             </Button>
                             <Button x:Name="btn_StopAllResources" Grid.Column="1" Content="{DynamicResource text_all}" Height="25">
                                 <Button.Style>
-                                    <Style TargetType="{x:Type Button}" BasedOn="{StaticResource btnStyle}">
+                                    <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
                                         <Setter Property="IsEnabled" Value="False"/>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding currentInstance.State, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static enums:ServerState.Started}">
@@ -365,7 +366,7 @@
                             </Grid.ColumnDefinitions>
                             <Button x:Name="btn_ReloadResource" Content="{DynamicResource text_reload}" Height="25">
                                 <Button.Style>
-                                    <Style TargetType="{x:Type Button}" BasedOn="{StaticResource btnStyle}">
+                                    <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}" >
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding SelectedIndex, ElementName=lv_ResourceList, UpdateSourceTrigger=PropertyChanged}" Value="-1">
                                                 <Setter Property="IsEnabled" Value="False"/>
@@ -376,7 +377,7 @@
                             </Button>
                             <Button x:Name="btn_ReloadAllResources" Grid.Column="1" Content="{DynamicResource text_all}" Height="25">
                                 <Button.Style>
-                                    <Style TargetType="{x:Type Button}" BasedOn="{StaticResource btnStyle}">
+                                    <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
                                         <Setter Property="IsEnabled" Value="False"/>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding currentInstance.State, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static enums:ServerState.Started}">
@@ -463,11 +464,11 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
 
-                                <TextBox Grid.Column="0" Background="Transparent" Margin="5 0 5 0" Padding="0 0 0 0" HorizontalContentAlignment="Center" Foreground="{StaticResource txtColor}" Text="{Binding currentInstance.RestartTimer_Hours, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                <TextBox Grid.Column="0"  Margin="5 0 5 0" Padding="0 0 0 0" HorizontalContentAlignment="Center" Foreground="{StaticResource txtColor}" Text="{Binding currentInstance.RestartTimer_Hours, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                                 <Label Grid.Column="1" Margin="0" Padding="0" HorizontalContentAlignment="Center" Content=":" Foreground="{StaticResource txtColor}" FontWeight="Bold"/>
-                                <TextBox Grid.Column="2" Background="Transparent" Margin="5 0 5 0" Padding="0 0 0 0" HorizontalContentAlignment="Center" Foreground="{StaticResource txtColor}" Text="{Binding currentInstance.RestartTimer_Minutes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                <TextBox Grid.Column="2"  Margin="5 0 5 0" Padding="0 0 0 0" HorizontalContentAlignment="Center" Foreground="{StaticResource txtColor}" Text="{Binding currentInstance.RestartTimer_Minutes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                                 <Label Grid.Column="3" Margin="0" Padding="0" HorizontalContentAlignment="Center" Content=":" Foreground="{StaticResource txtColor}" FontWeight="Bold"/>
-                                <TextBox Grid.Column="4" Background="Transparent" Margin="5 0 5 0" Padding="0 0 0 0" HorizontalContentAlignment="Center" Foreground="{StaticResource txtColor}" Text="{Binding currentInstance.RestartTimer_Seconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                <TextBox Grid.Column="4"  Margin="5 0 5 0" Padding="0 0 0 0" HorizontalContentAlignment="Center" Foreground="{StaticResource txtColor}" Text="{Binding currentInstance.RestartTimer_Seconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 
                             </Grid>
                             <Grid Grid.Row="3">

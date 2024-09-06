@@ -63,6 +63,7 @@ namespace HSL.Windows
             {
                 Languages.Add(new HSL.Language() { Key = key, Name = languages[key].ToString() });
             }
+
             
             // Load External Language
             string external_language_file = Utils.CurrentDirectory.CombinePath("lang.xaml");
@@ -70,10 +71,8 @@ namespace HSL.Windows
             {
                 try
                 {
-                    ResourceDictionary dictionary = new ResourceDictionary() { Source = new Uri(external_language_file) };
-                    ResourceDictionary[] dictionaries = Application.Current.Resources.MergedDictionaries.ToArray();
-                    Application.Current.Resources.MergedDictionaries.Clear();
-                    Application.Current.Resources.MergedDictionaries.Add(dictionary);
+                    UnloadLanguages();
+                    Application.Current.Resources.MergedDictionaries.Add(new ResourceDictionary() { Source = new Uri(external_language_file) });
                     Config.lang = null;
                 }
                 catch(Exception e) { MessageBox.Show("Failed to load external language; " + e.ToString()); }
@@ -190,9 +189,22 @@ namespace HSL.Windows
             Title = currentInstance != null ? String.Format("HSL - {0}", currentInstance.Name) : "Happiness Server Launcher";
         }
 
+        private void UnloadLanguages()
+        {
+            ResourceDictionary[] dictionaries = Application.Current.Resources.MergedDictionaries.Where(r => r.Source != null && r.Source.AbsolutePath.IndexOf("pack://application:,,,/MahApps.Metro") < 0).ToArray();
+            if(dictionaries != null && dictionaries.Count() > 0)
+            {
+                foreach(ResourceDictionary dictionary in dictionaries)
+                {
+                    Trace.WriteLine("Removing " + dictionary.Source);
+                    Application.Current.Resources.MergedDictionaries.Remove(dictionary);
+                }
+            }
+        }
+
         private async void LoadLanguage(Language lang)
         {
-            if (lang == null || lang.Key == Config.lang)
+            if (lang == null || string.IsNullOrEmpty(lang.Key) || lang.Key == Config.lang)
             {
                 return;
             }
@@ -201,7 +213,7 @@ namespace HSL.Windows
                 ResourceDictionary language = (ResourceDictionary)Application.LoadComponent(new Uri($"/HSL;component/Lang/{lang.Key}.xaml", UriKind.Relative));
                 if (language != null)
                 {
-                    Application.Current.Resources.MergedDictionaries.Clear();
+                    UnloadLanguages();
                     Application.Current.Resources.MergedDictionaries.Add(language);
                     Config.lang = lang.Key;
                     await Config.Save();
@@ -321,8 +333,15 @@ namespace HSL.Windows
 
             btn_ReloadAllResources.Click += (s, e) => currentInstance?.ReloadAllResources();
 
-            (lv_ResourceList.ContextMenu = new System.Windows.Controls.ContextMenu()).Items.Add(new System.Windows.Controls.MenuItem() { Header = Utils.GetLang("text_open_folder") });
-            (lv_ServerList.ContextMenu = new System.Windows.Controls.ContextMenu()).Items.Add(new System.Windows.Controls.MenuItem() { Header = Utils.GetLang("text_open_folder") });
+            lv_ResourceList.ContextMenu = new ContextMenu();
+            lv_ServerList.ContextMenu = new ContextMenu();
+
+            lv_ResourceList.ContextMenu.Items.Add(new System.Windows.Controls.MenuItem() { Header = Utils.GetLang("text_open_folder") });
+            lv_ServerList.ContextMenu.Items.Add(new System.Windows.Controls.MenuItem() { Header = Utils.GetLang("text_start") });
+            lv_ServerList.ContextMenu.Items.Add(new System.Windows.Controls.MenuItem() { Header = Utils.GetLang("text_stop") });
+            lv_ServerList.ContextMenu.Items.Add(new System.Windows.Controls.MenuItem() { Header = Utils.GetLang("text_restart") });
+            lv_ServerList.ContextMenu.Items.Add(new System.Windows.Controls.MenuItem() { Header = Utils.GetLang("text_open_folder") });
+
             (lv_ResourceList.ContextMenu.Items[0] as System.Windows.Controls.MenuItem).Click += (s, e) =>
             {
                 if (lv_ResourceList.SelectedIndex >= 0 && lv_ResourceList.SelectedItems is ServerInstance.ResourceMeta meta)
@@ -331,6 +350,27 @@ namespace HSL.Windows
                 }
             };
             (lv_ServerList.ContextMenu.Items[0] as System.Windows.Controls.MenuItem).Click += (s, e) =>
+            {
+                if (lv_ServerList.SelectedIndex >= 0 && lv_ServerList.SelectedItem is ServerInstance instance)
+                {
+                    instance.Start();
+                }
+            };
+            (lv_ServerList.ContextMenu.Items[1] as System.Windows.Controls.MenuItem).Click += (s, e) =>
+            {
+                if (lv_ServerList.SelectedIndex >= 0 && lv_ServerList.SelectedItem is ServerInstance instance)
+                {
+                    instance.Stop(true);
+                }
+            };
+            (lv_ServerList.ContextMenu.Items[2] as System.Windows.Controls.MenuItem).Click += (s, e) =>
+            {
+                if (lv_ServerList.SelectedIndex >= 0 && lv_ServerList.SelectedItem is ServerInstance instance)
+                {
+                    instance.Restart();
+                }
+            };
+            (lv_ServerList.ContextMenu.Items[3] as System.Windows.Controls.MenuItem).Click += (s, e) =>
             {
                 if (lv_ServerList.SelectedIndex >= 0 && lv_ServerList.SelectedItem is ServerInstance instance)
                 {
