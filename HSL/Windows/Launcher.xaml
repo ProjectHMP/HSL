@@ -437,7 +437,7 @@
                         </Label>
                         <CheckBox Grid.Row="3" Grid.Column="1" IsChecked="{Binding currentInstance.Listed, FallbackValue={StaticResource False}, IsAsync=True, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" Foreground="White" VerticalContentAlignment="Center" FontSize="13" Margin="0 0 0 0" HorizontalAlignment="Left"/>
                         <Label Grid.Row="4" Grid.Column="0" Content="{DynamicResource text_episode}" Foreground="{StaticResource txtColor}" FontSize="10" Padding="5 0 0 0" Margin="0" FontWeight="Bold" VerticalContentAlignment="Center"/>
-                        <ComboBox Grid.Row="4" Grid.Column="2"  Margin="0" Padding="0 0 0 0" FontSize="13" ItemsSource="{x:Static local:Constants.Episodes}" Background="{StaticResource cmdBgColor}" VerticalContentAlignment="Center">
+                        <ComboBox Grid.Row="4" Grid.Column="2"  Margin="0" Padding="0 0 0 0" FontSize="13" SelectedItem="{Binding currentInstance.Episode}" ItemsSource="{x:Static local:Constants.Episodes}" Background="{StaticResource cmdBgColor}" VerticalContentAlignment="Center">
 
                         </ComboBox>
                     </Grid>

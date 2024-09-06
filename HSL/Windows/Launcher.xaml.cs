@@ -37,7 +37,6 @@ namespace HSL.Windows
         {
             InitializeComponent();
 
-
             AppDomain.CurrentDomain.UnhandledException += (s, e) =>
             {
                 Utils.AppendToCrashReport(((Exception)e.ExceptionObject).ToString());
@@ -52,7 +51,6 @@ namespace HSL.Windows
             manager = new ServerManager(this);
             _timer = new Timer() { Enabled = true, Interval = 2500 };
 
-            RegisterListeners();
             LoadConfiguration().ConfigureAwait(false).GetAwaiter(); // intentional thread lock
 
             // Load Languages
@@ -64,7 +62,6 @@ namespace HSL.Windows
                 Languages.Add(new HSL.Language() { Key = key, Name = languages[key].ToString() });
             }
 
-            
             // Load External Language
             string external_language_file = Utils.CurrentDirectory.CombinePath("lang.xaml");
             if (File.Exists(external_language_file))
@@ -81,13 +78,11 @@ namespace HSL.Windows
             // Load Language
             else if(Config.lang != "en")
             {
-                Trace.WriteLine("Loading Language: " + Config.lang);
                 foreach (Language lang in Languages)
                 {
                     if (Config.lang == lang.Key)
                     {
                         LoadLanguage(lang);
-                        Trace.WriteLine("Language Loaded");
                         break;
                     }
                 }
@@ -98,6 +93,7 @@ namespace HSL.Windows
                 ShowServerContext(manager.servers.FirstOrDefault());
             }
 
+            RegisterListeners();
             DataContext = this;
 
             _timer.Start();
@@ -187,7 +183,6 @@ namespace HSL.Windows
                     rtb_ServerLog.ScrollToVerticalOffset(double.MaxValue);
                 });
             }
-
             Title = currentInstance != null ? String.Format("HSL - {0}", currentInstance.Name) : "Happiness Server Launcher";
         }
 
@@ -245,9 +240,7 @@ namespace HSL.Windows
             mi_Language.Click += (s, e) =>
             {
                 MenuItem mi = (MenuItem)e.OriginalSource;
-                HSL.Language lang = (HSL.Language)mi.Header;
-                if(lang != null)
-                {
+                if(mi != null && mi.Header is HSL.Language lang) {
                     LoadLanguage(lang);
                 }
             };
@@ -436,10 +429,7 @@ namespace HSL.Windows
 
                 string zip = currentInstance.ServerDirectory.CombinePath(filename + ".tmp");
 
-                if (File.Exists(zip))
-                {
-                    File.Delete(zip);
-                }
+                Utils.DeleteFile(zip);
 
                 try
                 {
@@ -466,27 +456,19 @@ namespace HSL.Windows
                                 }
 
                                 string file = currentInstance.ServerDirectory.CombinePath(archive.Entries[i].FullName.Substring(archive.Entries[0].FullName.Length));
-
-                                if (File.Exists(file))
-                                {
-                                    File.Delete(file);
-                                }
+                                Utils.DeleteFile(file);
                                 archive.Entries[i].ExtractToFile(file);
                             }
                         }
                     }
-
-                    File.Delete(zip);
-
+                    Utils.DeleteFile(zip);
                     MessageBox.Show(Utils.GetLang("text_updated_server") + ": " + version);
 
                 }
                 catch (Exception ee)
                 {
-                    if (File.Exists(zip))
-                    {
-                        File.Delete(zip);
-                    }
+                    Utils.DeleteFile(zip);
+                    Utils.AppendToCrashReport(ee.ToString());
                     MessageBox.Show(Utils.GetLang("text_server_install_failed") + " " + ee.ToString(), Utils.GetLang("text_error"), MessageBoxButton.OK);
                 }
 
@@ -538,10 +520,7 @@ namespace HSL.Windows
 
                 string zip = directory.CombinePath(filename + ".tmp");
 
-                if (!File.Exists(zip))
-                {
-                    File.Delete(zip);
-                }
+                Utils.DeleteFile(zip);
 
                 try
                 {
@@ -567,14 +546,12 @@ namespace HSL.Windows
                             }
                         }
                     }
-                    File.Delete(zip);
+
+                    Utils.DeleteFile(zip);
                 }
                 catch (Exception ee)
                 {
-                    if (!File.Exists(zip))
-                    {
-                        File.Delete(zip);
-                    }
+                    Utils.DeleteFile(zip);
                     Utils.AppendToCrashReport(ee.ToString());
                     MessageBox.Show(Utils.GetLang("text_server_install_failed") + ": " + ee.ToString(), Utils.GetLang("text_error"), MessageBoxButton.OK);
                     return;

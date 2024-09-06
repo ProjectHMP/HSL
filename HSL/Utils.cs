@@ -18,6 +18,12 @@ namespace HSL
         internal readonly static string CurrentDirectory;
         internal readonly static string CrashReportPath;
 
+        internal class Revisions
+        {
+            public string latest { get; set; } = null;
+            public Dictionary<string, string> hashes { get; set; } = new Dictionary<string, string>();
+        }
+
         static Utils()
         {
             CurrentDirectory ??= Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
@@ -36,12 +42,30 @@ namespace HSL
             Trace.WriteLine(data);
         }
 
+        internal static void DeleteFile(string file)
+        {
+            if (File.Exists(file))
+            {
+                File.Delete(file);
+            }
+        }
+
+        internal static void DeleteDirectory(string directory)
+        {
+            if(Directory.Exists(directory))
+            {
+                Directory.Delete(directory, true);
+            }
+        }
+
         internal static async Task<string> GetLatestServerURL()
         {
-            byte[] _html_content_buffer = await HTTP.GetAsync(@"https://happinessmp.net/docs/server/getting-started/");
-            Match match = Regex.Match(Encoding.UTF8.GetString(_html_content_buffer), @"(https:\/\/happinessmp\.net\/files\/[A-Za-z0-9%_\.]*.zip)");
-            _html_content_buffer = null; // i got the habit of doing this, why, in managed. i should start writing unsafe, and malloc instead heh.
-            return match.Success ? Uri.UnescapeDataString(match.Groups[0].Value) : String.Empty;
+            Revisions revisions = await HTTP.GetAsync<Revisions>("https://raw.githubusercontent.com/ProjectHMP/HSL/hmp-server-revisions/revisions.json");
+            if(revisions != null && revisions.hashes.ContainsKey(revisions.latest))
+            {
+                return Uri.UnescapeDataString(revisions.hashes[revisions.latest]);
+            }
+            return null;
         }
 
 
@@ -130,6 +154,7 @@ namespace HSL
                             }
                             if (typeof(T) != typeof(byte[]))
                             {
+                                ms.Position = 0;
                                 return await JsonSerializer.DeserializeAsync<T>(ms);
                             }
                             buffer = ms.ToArray();
