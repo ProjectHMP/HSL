@@ -19,6 +19,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # Step Fuck Why Checkout No Pull? 
+      - name: Pulling Changes 
+        run: |
+          git pull
+
       # Step 2: Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v3
