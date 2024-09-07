@@ -3,9 +3,6 @@ name: Update Revisions
 # Set the workflow to run every 4 hours
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - 'main'
   schedule:
     - cron: "* */2 * * *"
 permissions:
