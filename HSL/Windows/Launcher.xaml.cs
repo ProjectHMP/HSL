@@ -408,75 +408,11 @@ namespace HSL.Windows
                     return;
                 }
 
-
-                string url = await Utils.GetLatestServerURL();
-
-                if (string.IsNullOrEmpty(url))
-                {
-                    MessageBox.Show(Utils.GetLang("text_server_download_failed"), Utils.GetLang("text_error"), MessageBoxButton.OK);
-                    return;
-                }
-
-                string filename = url.Split("/")[^1];
-
-                byte[] _server_archive = await Utils.HTTP.GetBinaryAsync(url);
-
-                if (_server_archive == null || _server_archive.Length < 1024)
-                {
-                    MessageBox.Show(Utils.GetLang("text_server_download_failed"), Utils.GetLang("text_error"), MessageBoxButton.OK);
-                    return;
-                }
-
-                string zip = currentInstance.ServerDirectory.CombinePath(filename + ".tmp");
-
-                Utils.DeleteFile(zip);
-
-                try
-                {
-                    await File.WriteAllBytesAsync(zip, _server_archive);
-
-                    string version = string.Empty;
-
-                    using (FileStream fs = File.Open(zip, FileMode.Open, FileAccess.Read))
-                    {
-                        using (ZipArchive archive = new ZipArchive(fs))
-                        {
-                            if (!archive.Entries.Any(x => x.Name.IndexOf(".exe") > 0))
-                            {
-                                throw new Exception(Utils.GetLang("text_server_install_failed"));
-                            }
-
-                            version = archive.Entries[0].FullName;
-
-                            for (int i = 1; i < archive.Entries.Count; i++)
-                            {
-                                if (archive.Entries[i].FullName.IndexOf("resources") >= 0 || archive.Entries[i].Name == "settings.xml")
-                                {
-                                    continue;
-                                }
-
-                                string file = currentInstance.ServerDirectory.CombinePath(archive.Entries[i].FullName.Substring(archive.Entries[0].FullName.Length));
-                                Utils.DeleteFile(file);
-                                archive.Entries[i].ExtractToFile(file);
-                            }
-                        }
-                    }
-                    Utils.DeleteFile(zip);
-                    MessageBox.Show(Utils.GetLang("text_updated_server") + ": " + version);
-
-                }
-                catch (Exception ee)
-                {
-                    Utils.DeleteFile(zip);
-                    Utils.AppendToCrashReport(ee.ToString());
-                    MessageBox.Show(Utils.GetLang("text_server_install_failed") + " " + ee.ToString(), Utils.GetLang("text_error"), MessageBoxButton.OK);
-                }
-
+                await ServerInstance.UpdateInstance(currentInstance.ServerDirectory);
             };
 
             mi_CreateServer.Click += async (s, e) =>
             {
-
                 string directory = string.Empty;
                 using (System.Windows.Forms.FolderBrowserDialog fbd = new System.Windows.Forms.FolderBrowserDialog())
                 {
@@ -485,78 +421,18 @@ namespace HSL.Windows
                         MessageBox.Show(Utils.GetLang("text_no_server_directory"), Utils.GetLang("text_error"), MessageBoxButton.OK);
                         return;
                     }
-
                     directory = fbd.SelectedPath;
                 }
-
-                if (!Utils.IsDirectoryEmpty(directory))
-                {
-                    MessageBox.Show(Utils.GetLang("text_directory_not_empty"));
-                    return;
-                }
-
-                if (!Directory.Exists(directory))
-                {
-                    Directory.CreateDirectory(directory);
-                }
-
-                string url = await Utils.GetLatestServerURL();
-
-                if (string.IsNullOrEmpty(url))
-                {
-                    MessageBox.Show(Utils.GetLang("text_server_download_failed"), Utils.GetLang("text_error"), MessageBoxButton.OK);
-                    return;
-                }
-
-                string filename = url.Split("/")[^1];
-
-                byte[] _server_archive = await Utils.HTTP.GetBinaryAsync(url);
-
-                if (_server_archive == null || _server_archive.Length < 1024)
-                {
-                    MessageBox.Show(Utils.GetLang("text_server_download_failed"), Utils.GetLang("text_error"), MessageBoxButton.OK);
-                    return;
-                }
-
-                string zip = directory.CombinePath(filename + ".tmp");
-
-                Utils.DeleteFile(zip);
-
                 try
                 {
-                    await File.WriteAllBytesAsync(zip, _server_archive);
-                    using (FileStream fs = File.Open(zip, FileMode.Open, FileAccess.Read))
+                    if (await ServerInstance.CreateInstance(directory))
                     {
-                        using (ZipArchive archive = new ZipArchive(fs))
-                        {
-                            if (!archive.Entries.Any(x => x.Name.IndexOf(".exe") > 0))
-                            {
-                                throw new Exception(Utils.GetLang("text_corrupted_server_download"));
-                            }
-
-                            for (int i = 1; i < archive.Entries.Count; i++)
-                            {
-                                string destination = directory.CombinePath(archive.Entries[i].FullName.Substring(archive.Entries[0].FullName.Length));
-                                if (archive.Entries[i].Length == 0)
-                                {
-                                    Directory.CreateDirectory(destination);
-                                    continue;
-                                }
-                                archive.Entries[i].ExtractToFile(destination);
-                            }
-                        }
+                        manager.Create(Directory.GetFiles(directory, "*.exe").FirstOrDefault(), false);
                     }
-
-                    Utils.DeleteFile(zip);
-                }
-                catch (Exception ee)
+                }catch(Exception ee)
                 {
-                    Utils.DeleteFile(zip);
-                    Utils.AppendToCrashReport(ee.ToString());
-                    MessageBox.Show(Utils.GetLang("text_server_install_failed") + ": " + ee.ToString(), Utils.GetLang("text_error"), MessageBoxButton.OK);
-                    return;
+                    MessageBox.Show(ee.ToString(), Utils.GetLang("text_error"));
                 }
-                manager.Create(Directory.GetFiles(directory, "*.exe").FirstOrDefault(), false);
             };
         }
 

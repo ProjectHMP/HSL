@@ -5,7 +5,11 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Security.RightsManagement;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -614,6 +618,173 @@ namespace HSL.Core
             }
             DisposeProcess();
             return Task.CompletedTask;
+        }
+
+        internal static async Task<bool> UpdateInstance(string directory)
+        {
+            if (!Directory.Exists(directory))
+            {
+                return false;
+            }
+
+            if (!ServerInstance.IsValidInstallation(directory))
+            {
+                MessageBox.Show("This instance cannot be updated because it's not a valid HMP directory.", Utils.GetLang("text_error"));
+                return false;
+            }
+
+            Utils.Revisions.RevisionInfo? revision = await Utils.GetLatestServerRevision();
+
+            if(revision != null)
+            {
+                byte[] buffer = await Utils.HTTP.GetBinaryAsync(revision.url);
+                using (MD5 md5 = MD5.Create())
+                {
+                    byte[] b_hash = md5.ComputeHash(buffer);
+                    StringBuilder builder = new StringBuilder();
+                    for (int i = 0; i < b_hash.Length; i++)
+                    {
+                        builder.Append(b_hash[i].ToString("x2"));
+                    }
+                    if (revision.hash != builder.ToString())
+                    {
+                        Trace.WriteLine("Failed to create instance because of invalid hash vs revision.");
+                        return false;
+                    }
+                }
+
+                string zip = directory.CombinePath(".sever.tmp");
+                Utils.DeleteFile(zip);
+
+                try
+                {
+                    await File.WriteAllBytesAsync(zip, buffer);
+                    string? version;
+                    using(FileStream fs = File.Open(zip, FileMode.Open, FileAccess.ReadWrite))
+                    {
+                        using(ZipArchive archive = new ZipArchive(fs))
+                        {
+                            if(!archive.Entries.Any(x => x.Name.IndexOf(".exe") > 0))
+                            {
+                                throw new Exception(Utils.GetLang("text_corrupted_server_download"));
+                            }
+
+                            version = archive.Entries[0].FullName;
+
+                            for(int i = 1; i < archive.Entries.Count; i++)
+                            {
+                                // ignore resource paths && settings.xml
+                                if (archive.Entries[i].FullName.IndexOf("resources") >= 0 || archive.Entries[i].Name == "settings.xml")
+                                {
+                                    continue;
+                                }
+                                string dest = directory.CombinePath(archive.Entries[i].FullName.Substring(version.Length));
+                                if (archive.Entries[i].Length == 0)
+                                {
+                                    Directory.CreateDirectory(dest);
+                                    continue;
+                                }
+                                Utils.DeleteFile(dest);
+                                archive.Entries[i].ExtractToFile(dest);
+                            }
+                        }
+                    }
+
+                    Utils.DeleteFile(zip);
+
+                    // validate installation
+                    if (!ServerInstance.IsValidInstallation(directory))
+                    {
+                        MessageBox.Show("Failed to validate server directory after update.", Utils.GetLang("text_error"));
+                        return false;
+                    }
+
+                    MessageBox.Show(Utils.GetLang("text_updated_server") + ": " + version);
+                    return true;
+                }
+                catch(Exception e) {
+                    Utils.DeleteFile(zip);
+                    Utils.AppendToCrashReport(e.ToString());
+                    MessageBox.Show("Failed to update server");
+                }
+            }
+            return false;
+        }
+
+        internal static async Task<bool> CreateInstance(string directory) {
+
+            if(!Directory.Exists(directory) || !Utils.IsDirectoryEmpty(directory))
+            {
+                return false;
+            }
+
+            Utils.Revisions.RevisionInfo? revision = await Utils.GetLatestServerRevision();
+
+            if (revision != null)
+            {
+                byte[] buffer = await Utils.HTTP.GetBinaryAsync(revision.url);
+                using(MD5 md5 = MD5.Create())
+                {
+                    byte[] b_hash = md5.ComputeHash(buffer);
+                    StringBuilder builder = new StringBuilder();
+                    for(int i = 0; i < b_hash.Length; i++)
+                    {
+                        builder.Append(b_hash[i].ToString("x2"));
+                    }
+                    if(revision.hash != builder.ToString())
+                    {
+                        Trace.WriteLine("Failed to create instance because of invalid hash vs revision.");
+                        return false;
+                    }
+                }
+
+                string zip = directory.CombinePath(".sever.tmp");
+                Utils.DeleteFile(zip);
+
+                try
+                {
+                    await File.WriteAllBytesAsync(zip, buffer);
+                    using (FileStream fs = File.Open(zip, FileMode.Open, FileAccess.ReadWrite))
+                    {
+                        using (ZipArchive archive = new ZipArchive(fs))
+                        {
+                            if (!archive.Entries.Any(x => x.Name.IndexOf(".exe") > 0))
+                            {
+                                throw new Exception(Utils.GetLang("text_corrupted_server_download"));
+                            }
+
+                            for (int i = 1; i < archive.Entries.Count(); i++)
+                            {
+                                string dest = directory.CombinePath(archive.Entries[i].FullName.Substring(archive.Entries[0].FullName.Length));
+                                if (archive.Entries[i].Length == 0)
+                                {
+                                    Directory.CreateDirectory(dest);
+                                    continue;
+                                }
+                                archive.Entries[i].ExtractToFile(dest);
+                            }
+                        }
+                    }
+                    Utils.DeleteFile(zip);
+
+                    // validate installation
+                    if (!ServerInstance.IsValidInstallation(directory))
+                    {
+                        MessageBox.Show("Failed to validate server update. Uninstalling.", Utils.GetLang("text_error"));
+                        Utils.DeleteDirectory(directory);
+                        return false;
+                    }
+
+                    return true;
+                }
+                catch (Exception e) {
+                    Utils.DeleteFile(zip);
+                    Utils.AppendToCrashReport(e.ToString());
+                    MessageBox.Show(Utils.GetLang("text_server_install_failed") + ": " + e.ToString(), Utils.GetLang("text_error"), MessageBoxButton.OK);
+                    return false;
+                }
+            }
+            return false;
         }
 
         public void DisposeProcess()

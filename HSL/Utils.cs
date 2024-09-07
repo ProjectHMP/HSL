@@ -20,8 +20,16 @@ namespace HSL
 
         internal class Revisions
         {
+
+            internal class RevisionInfo
+            {
+                public string hash { get; set; }
+                public string url { get; set; }
+                public int size { get; set; }
+            }
+
             public string latest { get; set; } = null;
-            public Dictionary<string, string> hashes { get; set; } = new Dictionary<string, string>();
+            public Dictionary<string, RevisionInfo> hashes { get; set; } = new Dictionary<string, RevisionInfo>();
         }
 
         static Utils()
@@ -58,12 +66,13 @@ namespace HSL
             }
         }
 
-        internal static async Task<string> GetLatestServerURL()
+        internal static async Task<Revisions.RevisionInfo?> GetLatestServerRevision()
         {
-            Revisions revisions = await HTTP.GetAsync<Revisions>("https://raw.githubusercontent.com/ProjectHMP/HSL/hmp-server-revisions/revisions.json");
+            Revisions revisions = await HTTP.GetAsync<Revisions>("https://raw.githubusercontent.com/ProjectHMP/HSL/hmp-server-revisions/versions.json");
             if(revisions != null && !string.IsNullOrEmpty(revisions.latest) && revisions.hashes.ContainsKey(revisions.latest))
             {
-                return Uri.UnescapeDataString(revisions.hashes[revisions.latest]);
+                revisions.hashes[revisions.latest].url = Uri.UnescapeDataString(revisions.hashes[revisions.latest].url);
+                return revisions.hashes[revisions.latest];
             }
             return null;
         }
