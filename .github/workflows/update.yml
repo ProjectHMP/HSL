@@ -2,9 +2,8 @@ name: Update Revisions
 
 # Set the workflow to run every 4 hours
 on:
-  workflow_run:
   schedule:
-    - cron: "0 */2 * * *"
+    - cron: "* */2 * * *"
 permissions:
   actions: write          # Required for running actions
   contents: write         # Required for pushing changes to the repository
