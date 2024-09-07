@@ -3,10 +3,18 @@ const URL = require('url').URL;
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
-const revisions = require('./revisions.json');
-
+const revisions = getRevisionsData();
+const ZipHeader = [0x50, 0x4B, 0x03, 0x04]; // PK
 const HMP_SERVER_URL = "https://happinessmp.net/docs/server/getting-started/#download";
 const HMP_SERVER_REGEX = /(https:\/\/happinessmp\.net\/files\/[A-Za-z0-9%_\.]*.zip)/g;
+
+function getRevisionsData(){
+	try{
+		return require('./versions.json');
+	}catch {
+		return { latest: null, hashes: {} };
+	}
+}
 
 function fetch(url, options = {}) {
 	url = new URL(url);
@@ -27,24 +35,29 @@ function fetch(url, options = {}) {
 
 async function main(){
 
-	const buffer = await fetch(HMP_SERVER_URL);
-	const matches = HMP_SERVER_REGEX.exec(buffer.toString());
-	if(matches == null || matches.length == 0){
-		return;
+	const DOM_buffer = await fetch(HMP_SERVER_URL);
+	
+	if(DOM_buffer == null || DOM_buffer.length == 0) {
+		throw "Failed to scrape server URL. (What did you do Kitty?!? lol)"
 	}
 	
-	const archive_buffer = await fetch(matches[0]);
-	const hash = crypto.createHash('md5').update(archive_buffer).digest('hex');
+	const matches = HMP_SERVER_REGEX.exec(DOM_buffer.toString());
+	if(matches == null || matches.length == 0){
+		throw "Failed to find URL for latest server zip. (What did you do Kitty?!? lol)";
+	}
+	
+	const buffer = await fetch(matches[0]);
+	if(buffer == null || buffer.length <= 4 || buffer[0] != ZipHeader[0] || buffer[1] != ZipHeader[1] || buffer[2] != ZipHeader[2] || buffer[3] != ZipHeader[3]){
+		throw "Failed to obtain a proper binary for server, url: " + matches[0];
+	}
+	
+	const hash = crypto.createHash('md5').update(buffer).digest('hex');
 
 	if(!revisions.hashes.hasOwnProperty(hash)){
-		revisions.latest = hash;
-		revisions.hashes[hash] = {
-			hash: hash,
-			url: matches[0],
-			size: archive_buffer.length
-		};
-		await fs.writeFileSync([__dirname, "revisions.json"].join(path.sep), JSON.stringify(revisions));
+		revisions.hashes[revisions.latest = hash] = { hash: hash, url: matches[0], size: buffer.length };
+		await fs.writeFileSync([__dirname, "versions.json"].join(path.sep), JSON.stringify(revisions));
 	}
 }
 
+// entry point (for async reasons)
 main();
