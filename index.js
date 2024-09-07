@@ -58,7 +58,7 @@ async function main(){
 		await fs.writeFileSync([__dirname, "versions.json"].join(path.sep), JSON.stringify(revisions));
 	}
 	// fix in always having a file to commit, and check last epoch when ran successfully
-	await fs.writeFileSync([__dirname, ".date"].join(path.sep), Date.now());
+	await fs.writeFileSync([__dirname, ".date"].join(path.sep), Date.now().toString());
 }
 
 // entry point (for async reasons)
