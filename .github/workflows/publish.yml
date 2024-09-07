@@ -43,8 +43,14 @@ jobs:
       run: dotnet restore -p:RestorePackagesWithLockFile=true
       
     - name: Publish
-      run: dotnet publish -p:PublishProfile=FolderProfile -c Release -f netcoreapp3.1 -r win-x64
+      run: dotnet publish -p:PublishProfile=FolderProfile -c Release -f netcoreapp3.1 -r win-x64 -o ./publish
       
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-output
+        path: ./publish/
+
   release:
     needs: build
     if: github.event_name == 'workflow_dispatch'
@@ -71,7 +77,7 @@ jobs:
       uses: actions/upload-release-asset@v1
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: D:\a\HSL\HSL\HSL\bin\Release\netcoreapp3.1\win-x64\publish\HSL.exe
+        asset_path: ./publish/HSL.exe
         asset_name: HSL.exe
         asset_content_type: application/octet-stream
 
@@ -79,6 +85,6 @@ jobs:
       uses: actions/upload-release-asset@v1
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: D:\a\HSL\HSL\HSL\bin\Release\netcoreapp3.1\win-x64\publish\HSL.pdb
+        asset_path: ./publish/HSL.pdb
         asset_name: HSL.pdb
         asset_content_type: application/octet-stream
