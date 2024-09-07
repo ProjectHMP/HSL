@@ -57,8 +57,8 @@ jobs:
         release_name: ${{ github.event.inputs.release_title }}
         draft: false
         prerelease: true
-        name: Application_Artifact
-        path: D:\a\HSL\HSL\HSL\bin\Release\netcoreapp3.1\win-x64\publish\
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
     - name: Download build artifact
       uses: actions/download-artifact@v4
