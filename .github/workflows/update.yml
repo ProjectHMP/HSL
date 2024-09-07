@@ -3,7 +3,6 @@ name: Update Revisions
 # Set the workflow to run every 4 hours
 on:
   workflow_run:
-    branches: [hmp-server-revisions]
   schedule:
     - cron: "0 */2 * * *"
 permissions:
