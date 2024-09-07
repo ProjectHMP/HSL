@@ -7,6 +7,10 @@
     <Application.Resources>
         <ResourceDictionary>
 
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary x:Name="lang" Source="pack://application:,,,/HSL;component/Lang/en.xaml"></ResourceDictionary>
+            </ResourceDictionary.MergedDictionaries>
+            
             <mscorlib:Boolean x:Key="True">True</mscorlib:Boolean>
             <mscorlib:Boolean x:Key="False">False</mscorlib:Boolean>
 
@@ -18,25 +22,44 @@
             <SolidColorBrush x:Key="txtColor" Color="White"></SolidColorBrush>
             <SolidColorBrush x:Key="auraColor" Color="#4682B4"></SolidColorBrush>
 
-            <!-- Control Keys -->
-
-            <Style x:Key="menuItemStyle" TargetType="MenuItem">
-                <Setter Property="Background" Value="Transparent"></Setter>
-                <Setter Property="Foreground" Value="Black"></Setter>
-            </Style>
-
             <!-- Control Styles -->
 
-            <Style TargetType="Button" x:Key="btnStyle">
-                <Setter Property="BorderThickness" Value=".2"></Setter>
+            <Style x:Key="default" TargetType="{x:Type Control}">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Margin" Value="0"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="BorderBrush" Value="White"/>
+                <Setter Property="Foreground" Value="{StaticResource txtColor}"/>
+            </Style>
 
-                <Setter Property="Background" Value="#7F1B1B1B"></Setter>
-                <Setter Property="Foreground" Value="{StaticResource txtColor}"></Setter>
+            <Style TargetType="{x:Type TextBox}" BasedOn="{StaticResource default}">
+                <Setter Property="BorderThickness" Value=".2"/>
+                <Setter Property="Background" Value="{StaticResource cmdBgColor}"/>
+            </Style>
+            
+            <Style TargetType="{x:Type ComboBox}" BasedOn="{StaticResource default}">
+                <Setter Property="Foreground" Value="Black"></Setter>
+            </Style>
+            
+            <Style TargetType="{x:Type CheckBox}" BasedOn="{StaticResource default}">
+                <Setter Property="BorderThickness" Value=".2"/>
+            </Style>
+
+            <Style TargetType="{x:Type RichTextBox}" BasedOn="{StaticResource default}">
+                <Setter Property="Background" Value="{StaticResource cmdBgColor}"/>
+            </Style>
+
+            <Style TargetType="{x:Type Label}" BasedOn="{StaticResource default}">
+                <Setter Property="VerticalContentAlignment" Value="Center"></Setter>
+            </Style>
+            
+            <Style TargetType="{x:Type Button}" BasedOn="{StaticResource default}">
                 <Setter Property="Cursor" Value="Hand"></Setter>
                 <Setter Property="ForceCursor" Value="True"></Setter>
                 <Setter Property="Opacity" Value=".8"></Setter>
                 <Setter Property="Focusable" Value="False"></Setter>
-
+                <Setter Property="BorderThickness" Value=".2"/>
                 <Style.Triggers>
                     <Trigger Property="IsMouseOver" Value="True">
                         <Setter Property="Foreground" Value="Black"></Setter>
@@ -45,37 +68,22 @@
                         <Setter Property="Opacity" Value=".1"></Setter>
                     </Trigger>
                 </Style.Triggers>
-
             </Style>
 
-            <Style TargetType="Button" BasedOn="{StaticResource btnStyle}"></Style>
-
-            <Style TargetType="RichTextBox">
-                <Setter Property="BorderThickness" Value=".2"></Setter>
-                <Setter Property="BorderBrush" Value="{StaticResource auraColor}"></Setter>
+            <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource default}">
+                <Setter Property="Foreground" Value="Black"/>
+                <Setter Property="Padding" Value="5"/>
+                <Setter Property="Margin" Value="1 0 1 0"/>
+                <Setter Property="Cursor" Value="Hand"/>
             </Style>
 
-            <Style TargetType="ListView">
-                <Setter Property="BorderThickness" Value=".2"></Setter>
-                <Setter Property="BorderBrush" Value="{StaticResource auraColor}"></Setter>
-                <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Hidden"></Setter>
+            <Style TargetType="{x:Type ListViewItem}" BasedOn="{StaticResource default}">
+                <Setter Property="Padding" Value="2"/>
+                <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Cursor" Value="Hand"/>
             </Style>
-
-            <Style TargetType="TextBox">
-                <Setter Property="BorderThickness" Value=".5"></Setter>
-                <Setter Property="BorderBrush" Value="{StaticResource auraColor}"></Setter>
-                <Setter Property="FontSize" Value="13"></Setter>
-            </Style>
-
-            <Style TargetType="CheckBox">
-                <Setter Property="Background" Value="{StaticResource cmdBgColor}"></Setter>
-                <Setter Property="Foreground" Value="{StaticResource txtColor}"></Setter>
-                <Setter Property="BorderThickness" Value=".5"></Setter>
-                <Setter Property="BorderBrush" Value="{StaticResource auraColor}"></Setter>
-            </Style>
-
-            <Style TargetType="MenuItem" BasedOn="{StaticResource menuItemStyle}"></Style>
-
+            
             <!-- Custom Scroll Bar (Cite: https://stackoverflow.com/a/37095870) -->
 
             <SolidColorBrush x:Key="StandardBorderBrush" Color="#888" />

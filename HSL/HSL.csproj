@@ -11,6 +11,8 @@
     <Platforms>AnyCPU;ARM32;x64</Platforms>
     <StartupObject>HSL.App</StartupObject>
     <Nullable>annotations</Nullable>
+    <ApplicationIcon>Assets\hsl.ico</ApplicationIcon>
+    <SignAssembly>False</SignAssembly>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -44,7 +46,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="Assets\hsl.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Lang\en.xaml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Page>
   </ItemGroup>
 
 </Project>

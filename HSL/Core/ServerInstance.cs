@@ -1,10 +1,15 @@
 ﻿using HSL.Enums;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Security.RightsManagement;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,7 +33,7 @@ namespace HSL.Core
 
         public event PropertyChangedEventHandler? PropertyChanged;
         public ServerState State { get; private set; } = ServerState.Stopped;
-        public List<ResourceMeta> Resources { get; private set; }
+        public ObservableCollection<ResourceMeta> Resources { get; private set; }
         public Dictionary<string, ResourceMeta> ResourceMap { get; private set; }
 
         public List<string> ServerLog { get; private set; }
@@ -81,27 +86,18 @@ namespace HSL.Core
         public uint RestartTimer_Hours
         {
             get => (uint)(RestartTimer.Days * 24 + RestartTimer.Hours);
-            set
-            {
-                RestartTimer = TimeSpan.FromHours(value).Add(TimeSpan.FromMinutes(RestartTimer.Minutes).Add(TimeSpan.FromSeconds(RestartTimer.Seconds)));
-            }
+            set => RestartTimer = TimeSpan.FromHours(value).Add(TimeSpan.FromMinutes(RestartTimer.Minutes).Add(TimeSpan.FromSeconds(RestartTimer.Seconds)));
         }
 
         public uint RestartTimer_Minutes
         {
             get => (uint)RestartTimer.Minutes;
-            set
-            {
-                RestartTimer = TimeSpan.FromMinutes(value).Add(TimeSpan.FromHours(RestartTimer.Days * 24 + RestartTimer.Hours).Add(TimeSpan.FromSeconds(RestartTimer.Seconds)));
-            }
+            set => RestartTimer = TimeSpan.FromMinutes(value).Add(TimeSpan.FromHours(RestartTimer.Days * 24 + RestartTimer.Hours).Add(TimeSpan.FromSeconds(RestartTimer.Seconds)));
         }
         public uint RestartTimer_Seconds
         {
             get => (uint)RestartTimer.Seconds;
-            set
-            {
-                RestartTimer = TimeSpan.FromSeconds(value).Add(TimeSpan.FromHours(RestartTimer.Days * 24 + RestartTimer.Hours).Add(TimeSpan.FromMinutes(RestartTimer.Minutes)));
-            }
+            set => RestartTimer = TimeSpan.FromSeconds(value).Add(TimeSpan.FromHours(RestartTimer.Days * 24 + RestartTimer.Hours).Add(TimeSpan.FromMinutes(RestartTimer.Minutes)));
         }
 
         public bool AutoDeleteLogs
@@ -235,7 +231,6 @@ namespace HSL.Core
 
         internal ServerManager ServerManager;
         internal Guid Guid => ServerData.guid;
-        public string sGuid => Guid.ToString();
 
         internal ServerSettings ServerSettings { get; private set; }
 
@@ -267,7 +262,7 @@ namespace HSL.Core
             ServerSettings = new ServerSettings(ServerSettingsFile);
             ServerSettings.OnSaved += (s, e) => ServerUpdated?.Invoke(null, null);
 
-            Resources = new List<ResourceMeta>();
+            Resources = new ObservableCollection<ResourceMeta>();
             ResourceMap = new Dictionary<string, ResourceMeta>();
             ServerLog = new List<string>();
 
@@ -378,7 +373,7 @@ namespace HSL.Core
                 {
                     if (e.FullPath.IndexOf(ResourceDirectory) >= 0)
                     {
-                        Match match = Regex.Match(e.FullPath, @"[\\\/]{1}resources[\\\/]{1}(.*)[\\\/]{1}?");
+                        Match match = Regex.Match(e.FullPath, @"\\resources\\([A-Za-z0-9\-\.\s]*)\\");
                         if (match.Success && match.Groups.Count > 0)
                         {
                             RefreshServerInformation();
@@ -396,7 +391,6 @@ namespace HSL.Core
                 if (!ServerSettings._wasUpdated)
                 {
                     ServerSettings.LoadDocument();
-                    ServerUpdated?.Invoke(null, null);
                 }
                 else ServerSettings._wasUpdated = false;
             }
@@ -407,12 +401,11 @@ namespace HSL.Core
 
         internal bool Stop(bool ignoreRestart = false)
         {
+            _wasForcedClosed = ignoreRestart;
             if (IsProcessRunning())
             {
-                _wasForcedClosed = true;
                 DisposeProcess();
             }
-            _wasForcedClosed = ignoreRestart;
             State = ServerState.Stopped;
             OnPropertyChanged(nameof(State));
             return true;
@@ -427,15 +420,11 @@ namespace HSL.Core
             }
         }
 
-        internal void ReloadAllResources()
+        internal async void ReloadAllResources()
         {
-            lock (_resourceListLock)
-            {
-                foreach (string resource in ResourceMap.Keys)
-                {
-                    ReloadResource(resource);
-                }
-            }
+            StopAllResources();
+            await Task.Delay(1000);
+            StartAllResources();
         }
 
         internal void StartAllResources()
@@ -473,7 +462,6 @@ namespace HSL.Core
             {
                 ResourceMap[name].IsEnabled = true;
                 OnPropertyChanged(nameof(Resources));
-                OnPropertyChanged(nameof(ResourceMap));
             }
         }
         internal void StopResource(string name)
@@ -482,7 +470,6 @@ namespace HSL.Core
             {
                 ResourceMap[name].IsEnabled = false;
                 OnPropertyChanged(nameof(Resources));
-                OnPropertyChanged(nameof(ResourceMap));
             }
         }
 
@@ -509,7 +496,7 @@ namespace HSL.Core
 
             if (processes != null && processes.Count() > 0)
             {
-                if (MessageBox.Show("This server is already running. Do you want to terminate and start new?", "Hmm..", MessageBoxButton.YesNo) == MessageBoxResult.No)
+                if (MessageBox.Show(Utils.GetLang("text_server_already_running_start_new"), Utils.GetLang("text_caution"), MessageBoxButton.YesNo) == MessageBoxResult.No)
                 {
                     return false;
                 }
@@ -541,29 +528,30 @@ namespace HSL.Core
                 ProcessStopped?.Invoke(null, null);
                 if (AutoRestart && !_wasForcedClosed)
                 {
-                    _wasForcedClosed = false;
                     await Task.Delay(1500);
                     Start();
                 }
+                _wasForcedClosed = false;
             };
 
-            if (File.Exists("server.log"))
+            if (AutoDeleteLogs && File.Exists(LogFile))
             {
                 File.AppendAllText(LogFile + ".tmp", File.ReadAllText(LogFile));
-                File.Delete("server.log");
+                File.Delete(LogFile);
             }
+
+            ClearServerLog();
 
             if (process.Start())
             {
                 _StartTime = DateTime.Now;
-                _task = new Task(async () => await ServerUpdateThread(), _cts.Token);
-                _task.Start();
+                _task = Task.Run(ServerUpdateThread, _cts.Token);
                 State = ServerState.Started;
                 OnPropertyChanged(nameof(State));
                 ProcessStarted?.Invoke(null, null);
                 return true;
             }
-            else Trace.WriteLine("Failed to start process: " + Name);
+            else MessageBox.Show(Utils.GetLang("text_server_failed_start_process") + ": " + Name, Utils.GetLang("text_error"), MessageBoxButton.OK);
             State = ServerState.Stopped;
             OnPropertyChanged(nameof(State));
             return false;
@@ -628,9 +616,175 @@ namespace HSL.Core
             {
                 Utils.AppendToCrashReport(e.ToString());
             }
-
             DisposeProcess();
             return Task.CompletedTask;
+        }
+
+        internal static async Task<bool> UpdateInstance(string directory)
+        {
+            if (!Directory.Exists(directory))
+            {
+                return false;
+            }
+
+            if (!ServerInstance.IsValidInstallation(directory))
+            {
+                MessageBox.Show("This instance cannot be updated because it's not a valid HMP directory.", Utils.GetLang("text_error"));
+                return false;
+            }
+
+            Utils.Revisions.RevisionInfo? revision = await Utils.GetLatestServerRevision();
+
+            if(revision != null)
+            {
+                byte[] buffer = await Utils.HTTP.GetBinaryAsync(revision.url);
+                using (MD5 md5 = MD5.Create())
+                {
+                    byte[] b_hash = md5.ComputeHash(buffer);
+                    StringBuilder builder = new StringBuilder();
+                    for (int i = 0; i < b_hash.Length; i++)
+                    {
+                        builder.Append(b_hash[i].ToString("x2"));
+                    }
+                    if (revision.hash != builder.ToString())
+                    {
+                        Trace.WriteLine("Failed to create instance because of invalid hash vs revision.");
+                        return false;
+                    }
+                }
+
+                string zip = directory.CombinePath(".sever.tmp");
+                Utils.DeleteFile(zip);
+
+                try
+                {
+                    await File.WriteAllBytesAsync(zip, buffer);
+                    string? version;
+                    using(FileStream fs = File.Open(zip, FileMode.Open, FileAccess.ReadWrite))
+                    {
+                        using(ZipArchive archive = new ZipArchive(fs))
+                        {
+                            if(!archive.Entries.Any(x => x.Name.IndexOf(".exe") > 0))
+                            {
+                                throw new Exception(Utils.GetLang("text_corrupted_server_download"));
+                            }
+
+                            version = archive.Entries[0].FullName;
+
+                            for(int i = 1; i < archive.Entries.Count; i++)
+                            {
+                                // ignore resource paths && settings.xml
+                                if (archive.Entries[i].FullName.IndexOf("resources") >= 0 || archive.Entries[i].Name == "settings.xml")
+                                {
+                                    continue;
+                                }
+                                string dest = directory.CombinePath(archive.Entries[i].FullName.Substring(version.Length));
+                                if (archive.Entries[i].Length == 0)
+                                {
+                                    Directory.CreateDirectory(dest);
+                                    continue;
+                                }
+                                Utils.DeleteFile(dest);
+                                archive.Entries[i].ExtractToFile(dest);
+                            }
+                        }
+                    }
+
+                    Utils.DeleteFile(zip);
+
+                    // validate installation
+                    if (!ServerInstance.IsValidInstallation(directory))
+                    {
+                        MessageBox.Show("Failed to validate server directory after update.", Utils.GetLang("text_error"));
+                        return false;
+                    }
+
+                    MessageBox.Show(Utils.GetLang("text_updated_server") + ": " + version);
+                    return true;
+                }
+                catch(Exception e) {
+                    Utils.DeleteFile(zip);
+                    Utils.AppendToCrashReport(e.ToString());
+                    MessageBox.Show("Failed to update server");
+                }
+            }
+            return false;
+        }
+
+        internal static async Task<bool> CreateInstance(string directory) {
+
+            if(!Directory.Exists(directory) || !Utils.IsDirectoryEmpty(directory))
+            {
+                return false;
+            }
+
+            Utils.Revisions.RevisionInfo? revision = await Utils.GetLatestServerRevision();
+
+            if (revision != null)
+            {
+                byte[] buffer = await Utils.HTTP.GetBinaryAsync(revision.url);
+                using(MD5 md5 = MD5.Create())
+                {
+                    byte[] b_hash = md5.ComputeHash(buffer);
+                    StringBuilder builder = new StringBuilder();
+                    for(int i = 0; i < b_hash.Length; i++)
+                    {
+                        builder.Append(b_hash[i].ToString("x2"));
+                    }
+                    if(revision.hash != builder.ToString())
+                    {
+                        Trace.WriteLine("Failed to create instance because of invalid hash vs revision.");
+                        return false;
+                    }
+                }
+
+                string zip = directory.CombinePath(".sever.tmp");
+                Utils.DeleteFile(zip);
+
+                try
+                {
+                    await File.WriteAllBytesAsync(zip, buffer);
+                    using (FileStream fs = File.Open(zip, FileMode.Open, FileAccess.ReadWrite))
+                    {
+                        using (ZipArchive archive = new ZipArchive(fs))
+                        {
+                            if (!archive.Entries.Any(x => x.Name.IndexOf(".exe") > 0))
+                            {
+                                throw new Exception(Utils.GetLang("text_corrupted_server_download"));
+                            }
+
+                            for (int i = 1; i < archive.Entries.Count(); i++)
+                            {
+                                string dest = directory.CombinePath(archive.Entries[i].FullName.Substring(archive.Entries[0].FullName.Length));
+                                if (archive.Entries[i].Length == 0)
+                                {
+                                    Directory.CreateDirectory(dest);
+                                    continue;
+                                }
+                                archive.Entries[i].ExtractToFile(dest);
+                            }
+                        }
+                    }
+                    Utils.DeleteFile(zip);
+
+                    // validate installation
+                    if (!ServerInstance.IsValidInstallation(directory))
+                    {
+                        MessageBox.Show("Failed to validate server update. Uninstalling.", Utils.GetLang("text_error"));
+                        Utils.DeleteDirectory(directory);
+                        return false;
+                    }
+
+                    return true;
+                }
+                catch (Exception e) {
+                    Utils.DeleteFile(zip);
+                    Utils.AppendToCrashReport(e.ToString());
+                    MessageBox.Show(Utils.GetLang("text_server_install_failed") + ": " + e.ToString(), Utils.GetLang("text_error"), MessageBoxButton.OK);
+                    return false;
+                }
+            }
+            return false;
         }
 
         public void DisposeProcess()
@@ -643,13 +797,14 @@ namespace HSL.Core
             {
                 process.Kill();
             }
+
+            OnPropertyChanged(nameof(Resources));
         }
 
         public void Dispose()
         {
             DisposeProcess();
             _fileWatchHandler.Dispose();
-            ClearServerLog();
         }
 
     }

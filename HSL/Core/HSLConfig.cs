@@ -41,6 +41,8 @@ namespace HSL.Core
 
         public Dictionary<Guid, ServerData> servers { get; set; } = new Dictionary<Guid, ServerData>();
 
+        public string lang { get; set; } = "en";
+
         private HSLConfig() { }
 
         private HSLConfig(string file) => _fileName = file;

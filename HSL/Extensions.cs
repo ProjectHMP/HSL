@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Threading;
 
@@ -23,6 +24,17 @@ namespace HSL
                 return false;
             }
             return true;
+        }
+
+        internal static void RemoveAll<T>(this ObservableCollection<T> collection, Predicate<T> pre)
+        {
+            for (int i = collection.Count - 1; i >= 0; i--)
+            {
+                if (pre(collection[i]))
+                {
+                    collection.RemoveAt(i);
+                }
+            }
         }
 
         internal static string CombinePath(this string s, string s1) => Path.Combine(s, s1);

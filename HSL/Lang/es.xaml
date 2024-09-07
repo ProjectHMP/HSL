@@ -1,0 +1,53 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib">
+
+    <s:String x:Key="text_server">Servidor</s:String>
+    <s:String x:Key="text_start">Iniciar</s:String>
+    <s:String x:Key="text_stop">Detener</s:String>
+    <s:String x:Key="text_delete">Eliminar</s:String>
+    <s:String x:Key="text_restart">Reiniciar</s:String>
+    <s:String x:Key="text_reload">Recargar</s:String>
+    <s:String x:Key="text_clear">Limpiar</s:String>
+    <s:String x:Key="text_all">Todo</s:String>
+    <s:String x:Key="text_file">Archivo</s:String>
+    <s:String x:Key="text_about">Acerca de</s:String>
+    <s:String x:Key="text_hostname">Nombre de Host</s:String>
+    <s:String x:Key="text_port">Puerto</s:String>
+    <s:String x:Key="text_listed">Listado</s:String>
+    <s:String x:Key="text_episode">Episodio</s:String>
+    <s:String x:Key="text_error">Error</s:String>
+    <s:String x:Key="text_server_settings">Configuración del Servidor</s:String>
+    <s:String x:Key="text_automatic_settings">Configuración Automática</s:String>
+    <s:String x:Key="text_reload_resources">Recargar Recursos</s:String>
+    <s:String x:Key="text_delete_cache">Eliminar Caché</s:String>
+    <s:String x:Key="text_delete_logs">Eliminar Registros</s:String>
+    <s:String x:Key="text_open_directory">Abrir Directorio</s:String>
+    <s:String x:Key="text_enter_command_here">Ingrese Comando Aquí</s:String>
+    <s:String x:Key="text_caution">¡Precaución!</s:String>
+    <s:String x:Key="text_update_server">Actualizar Servidor</s:String>
+    <s:String x:Key="text_updated_server">Servidor Actualizado</s:String>
+    <s:String x:Key="text_open_folder">Abrir Carpeta</s:String>
+    <s:String x:Key="text_ask_server_delete">¿Estás seguro de que deseas eliminar {0}? ¡Los archivos NO se eliminarán!</s:String>
+    <s:String x:Key="text_delete_server">¿Eliminar Servidor?</s:String>
+    <s:String x:Key="text_corrupted_server_download">Descarga del servidor corrupta. Cancelado</s:String>
+    <s:String x:Key="text_no_server_directory">No se ha dado ningún directorio para instalar el servidor.</s:String>
+    <s:String x:Key="text_directory_not_empty">¡El directorio seleccionado no está vacío!</s:String>
+    <s:String x:Key="text_stop_server_before_updating">¡Por favor, detén el servidor antes de actualizarlo!</s:String>
+    <s:String x:Key="text_server_load_failed">No se pudo cargar el servidor existente en {0}.{1}¿Deseas cambiar la ubicación?</s:String>
+    <s:String x:Key="text_server_download_failed">No se pudieron descargar los archivos del servidor.</s:String>
+    <s:String x:Key="text_server_install_failed">No se pudieron instalar los archivos del servidor.</s:String>
+    <s:String x:Key="text_server_failed_start_process">No se pudo iniciar el proceso</s:String>
+    <s:String x:Key="text_invalid_server_location">Esta ruta no contiene una instalación válida de HappinessMP.</s:String>
+    <s:String x:Key="text_server_already_added">Este servidor ya ha sido añadido.</s:String>
+    <s:String x:Key="text_open_server_path">Abrir Ruta del Servidor</s:String>
+    <s:String x:Key="text_create_new_server">Crear Nuevo Servidor</s:String>
+    <s:String x:Key="text_server_already_running_start_new">Este servidor ya está en ejecución. ¿Deseas detenerlo y comenzar uno nuevo?</s:String>
+
+    <s:String x:Key="text_autorestart_label_content">Temporizador de Reinicio (H:M:S)</s:String>
+    <s:String x:Key="text_automatic_restart_notice">El reinicio solo está activo mientras está en ejecución. Predeterminado: (24 Horas)</s:String>
+
+    <s:String x:Key="text_tooltip_1">Recargar recurso(s) automáticamente cuando se modifiquen.</s:String>
+    <s:String x:Key="text_tooltip_2">Iniciar el servidor cuando comience HSL.</s:String>
+    <s:String x:Key="text_tooltip_3">Reiniciar si hay un fallo inesperado.</s:String>
+    <s:String x:Key="text_tooltip_4">Eliminar los registros del servidor antes de iniciar. (Serán respaldados como server.logs.tmp)</s:String>
+
+</ResourceDictionary>

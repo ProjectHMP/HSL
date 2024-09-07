@@ -7,6 +7,18 @@ on:
     branches: [ main ]
     paths:
     - '**.csproj'
+  workflow_call:
+    inputs:
+      version_tag:
+        type: string
+        description: 'Version Tag (e.g., v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+      release_title:
+        type: string
+        description: 'Release Title'
+        required: true
+        default: 'Release Title'
 
 env:
   DOTNET_VERSION: '3.1' # The .NET SDK version to use
@@ -14,14 +26,12 @@ env:
 jobs:
   build:
 
-    name: build-${{matrix.os}}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-latest]
+    name: Windows Build
+    runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v3
+    
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v3
       with:
@@ -32,8 +42,41 @@ jobs:
       
     - name: Publish
       run: dotnet publish -p:PublishProfile=FolderProfile -c Release -f netcoreapp3.1 -r win-x64
-    - name: Upload Build Artifact
-      uses: actions/upload-artifact@v4
+      
+  release:
+    needs: build
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: windows-latest
+
+    steps: 
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
       with:
+        tag_name: ${{ github.event.inputs.version_tag }}
+        release_name: ${{ github.event.inputs.release_title }}
+        draft: false
+        prerelease: true
         name: Application_Artifact
         path: D:\a\HSL\HSL\HSL\bin\Release\netcoreapp3.1\win-x64\publish\
+        
+    - name: Download build artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+
+    - name: Uploading Published Binary
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: D:\a\HSL\HSL\HSL\bin\Release\netcoreapp3.1\win-x64\publish\HSL.exe
+        asset_name: HSL.exe
+        asset_content_type: application/octet-stream
+
+    - name: Uploading Published Symbols (.pdb)
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: D:\a\HSL\HSL\HSL\bin\Release\netcoreapp3.1\win-x64\publish\HSL.pdb
+        asset_name: HSL.pdb
+        asset_content_type: application/octet-stream
