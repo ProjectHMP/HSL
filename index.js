@@ -54,7 +54,7 @@ async function main(){
 	const hash = crypto.createHash('md5').update(buffer).digest('hex');
 
 	if(!revisions.hashes.hasOwnProperty(hash)){
-		revisions.hashes[revisions.latest = hash] = { hash: hash, url: matches[0], size: buffer.length };
+		revisions.hashes[revisions.latest = hash] = { url: matches[0], size: buffer.length };
 		await fs.writeFileSync([__dirname, "versions.json"].join(path.sep), JSON.stringify(revisions));
 	}
 	// fix in always having a file to commit, and check last epoch when ran successfully
