@@ -1,12 +1,6 @@
-name: build
+name: publish
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-    paths:
-    - '**.csproj'
   workflow_dispatch:
     inputs:
       version_tag:
@@ -26,8 +20,8 @@ env:
 permissions: write-all
 
 jobs:
-  build:
-
+  publish:
+    if: github.event_name == 'workflow_dispatch'
     name: Windows Build
     runs-on: windows-latest
 
@@ -40,7 +34,7 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
         
     - name: Install dependencies
-      run: dotnet restore -p:RestorePackagesWithLockFile=true
+      run: dotnet restore
       
     - name: Publish
       run: dotnet publish -p:PublishProfile=FolderProfile -c Release -f netcoreapp3.1 -r win-x64 -o ./publish
@@ -51,12 +45,6 @@ jobs:
         name: build-output
         path: ./publish/
 
-  release:
-    needs: build
-    if: github.event_name == 'workflow_dispatch'
-    runs-on: windows-latest
-
-    steps: 
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
