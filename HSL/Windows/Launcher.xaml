@@ -175,6 +175,10 @@
                                             <DataTrigger Binding="{Binding State, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static enums:ServerState.Started}">
                                                 <Setter Property="Foreground" Value="#FF01BD0C"/>
                                             </DataTrigger>
+                                            <DataTrigger Binding="{Binding HasUpdate, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Value="{StaticResource True}">
+                                                <Setter Property="BorderBrush" Value="Orange"/>
+                                                <Setter Property="BorderThickness" Value="0 0 0 1"/>
+                                            </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
                                 </ListViewItem.Style>
@@ -206,7 +210,7 @@
 
                 <!-- Clear Console Button -->
                 <Button x:Name="btn_ClearServerLog" Grid.Column="1" Grid.Row="1" Grid.RowSpan="2" Background="Transparent" Width="40" Height="20" HorizontalAlignment="Right" VerticalAlignment="Bottom" FontSize="10" Foreground="{StaticResource txtColor}" BorderThickness=".005" Content="{DynamicResource text_clear}"/>
-                
+
                 <!-- Console Input -->
                 <TextBox x:Name="tb_ServerCmd" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Background="{StaticResource cmdBgColor}" Foreground="{StaticResource txtColor}" VerticalContentAlignment="Center" Padding="3 0 0 0" BorderThickness="0 .2 .2 0" BorderBrush="#4682B4">
                     <TextBox.Style>

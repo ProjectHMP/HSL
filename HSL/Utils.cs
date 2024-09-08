@@ -3,10 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
-using System.Reflection;
-using System.Text;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -60,7 +57,7 @@ namespace HSL
 
         internal static void DeleteDirectory(string directory)
         {
-            if(Directory.Exists(directory))
+            if (Directory.Exists(directory))
             {
                 Directory.Delete(directory, true);
             }
@@ -69,9 +66,10 @@ namespace HSL
         internal static async Task<Revisions.RevisionInfo?> GetLatestServerRevision()
         {
             Revisions revisions = await HTTP.GetAsync<Revisions>("https://raw.githubusercontent.com/ProjectHMP/HSL/hmp-server-revisions/versions.json");
-            if(revisions != null && !string.IsNullOrEmpty(revisions.latest) && revisions.hashes.ContainsKey(revisions.latest))
+            if (revisions != null && !string.IsNullOrEmpty(revisions.latest) && revisions.hashes.ContainsKey(revisions.latest))
             {
                 revisions.hashes[revisions.latest].url = Uri.UnescapeDataString(revisions.hashes[revisions.latest].url);
+                revisions.hashes[revisions.latest].hash = revisions.latest;
                 return revisions.hashes[revisions.latest];
             }
             return null;
@@ -99,7 +97,8 @@ namespace HSL
             private static HttpClientHandler _clientHandler;
             private static HttpClient _client;
 
-            static HTTP() {
+            static HTTP()
+            {
                 _client = new HttpClient(_clientHandler = new HttpClientHandler()
                 {
                     AllowAutoRedirect = true,

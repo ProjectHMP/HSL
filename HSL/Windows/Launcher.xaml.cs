@@ -5,15 +5,12 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Resources;
-using System.Xml;
 
 namespace HSL.Windows
 {
@@ -72,11 +69,11 @@ namespace HSL.Windows
                     Application.Current.Resources.MergedDictionaries.Add(new ResourceDictionary() { Source = new Uri(external_language_file) });
                     Config.lang = null;
                 }
-                catch(Exception e) { MessageBox.Show("Failed to load external language; " + e.ToString()); }
+                catch (Exception e) { MessageBox.Show("Failed to load external language; " + e.ToString()); }
             }
 
             // Load Language
-            else if(Config.lang != "en")
+            else if (Config.lang != "en")
             {
                 foreach (Language lang in Languages)
                 {
@@ -137,6 +134,10 @@ namespace HSL.Windows
                 await Config.Save();
             }
 
+            // check versions
+
+            manager.InvokeCompareVersionHash();
+
         }
 
         private async void Manager_OnDeleted(object sender, ServerInstance e)
@@ -189,9 +190,9 @@ namespace HSL.Windows
         private void UnloadLanguages()
         {
             ResourceDictionary[] dictionaries = Application.Current.Resources.MergedDictionaries.Where(r => r.Source != null && r.Source.AbsolutePath.IndexOf("pack://application:,,,/MahApps.Metro") < 0).ToArray();
-            if(dictionaries != null && dictionaries.Count() > 0)
+            if (dictionaries != null && dictionaries.Count() > 0)
             {
-                foreach(ResourceDictionary dictionary in dictionaries)
+                foreach (ResourceDictionary dictionary in dictionaries)
                 {
                     Application.Current.Resources.MergedDictionaries.Remove(dictionary);
                 }
@@ -211,7 +212,7 @@ namespace HSL.Windows
                 {
                     UnloadLanguages();
                     Application.Current.Resources.MergedDictionaries.Add(language);
-                    if(Config.lang != lang.Key)
+                    if (Config.lang != lang.Key)
                     {
                         Config.lang = lang.Key;
                         await Config.Save();
@@ -240,7 +241,8 @@ namespace HSL.Windows
             mi_Language.Click += (s, e) =>
             {
                 MenuItem mi = (MenuItem)e.OriginalSource;
-                if(mi != null && mi.Header is HSL.Language lang) {
+                if (mi != null && mi.Header is HSL.Language lang)
+                {
                     LoadLanguage(lang);
                 }
             };
@@ -408,7 +410,7 @@ namespace HSL.Windows
                     return;
                 }
 
-                await ServerInstance.UpdateInstance(currentInstance.ServerDirectory);
+                await ServerManager.UpdateInstance(currentInstance);
             };
 
             mi_CreateServer.Click += async (s, e) =>
@@ -425,11 +427,12 @@ namespace HSL.Windows
                 }
                 try
                 {
-                    if (await ServerInstance.CreateInstance(directory))
+                    if (await ServerManager.CreateInstance(directory))
                     {
                         manager.Create(Directory.GetFiles(directory, "*.exe").FirstOrDefault(), false);
                     }
-                }catch(Exception ee)
+                }
+                catch (Exception ee)
                 {
                     MessageBox.Show(ee.ToString(), Utils.GetLang("text_error"));
                 }
