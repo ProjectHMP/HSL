@@ -127,6 +127,12 @@ namespace HSL
 
                 using (HttpResponseMessage response = await _client.SendAsync(message))
                 {
+
+                    if (response.StatusCode != System.Net.HttpStatusCode.OK)
+                    {
+                        return default(T);
+                    }
+
                     // todo, check content size to be more efficient/async than dynamic
                     byte[] buffer;
                     int read = 0;

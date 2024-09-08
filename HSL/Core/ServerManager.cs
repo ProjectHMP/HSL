@@ -31,16 +31,17 @@ namespace HSL.Core
             servers = new ObservableCollection<ServerInstance>();
             _timer = new System.Timers.Timer() { Interval = 60000 * 5, Enabled = true, AutoReset = true };
             _timer.Elapsed += _timer_Elapsed;
+            _timer.Start();
         }
 
         private async void _timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
             Utils.Revisions.RevisionInfo? revision = await Utils.GetLatestServerRevision();
-            if(revision != null)
+            if (revision != null)
             {
-                lock(_serverLock)
+                lock (_serverLock)
                 {
-                    foreach(ServerInstance instance in servers)
+                    foreach (ServerInstance instance in servers)
                     {
                         instance.CompareVersionHash(revision.hash);
                     }
@@ -99,7 +100,7 @@ namespace HSL.Core
         {
             lock (_serverLock)
             {
-                foreach(ServerInstance instance in servers)
+                foreach (ServerInstance instance in servers)
                 {
                     instance.CompareVersionHash(hash);
                 }
@@ -126,7 +127,7 @@ namespace HSL.Core
         {
 
             byte[] buffer = await Utils.HTTP.GetBinaryAsync(revision.url);
-            if (buffer.Length != revision.size || buffer.Length <= 4 || buffer[0] != 0x50 || buffer[1] != 0x4B || buffer[2] != 0x03 || buffer[3] != 0x04)
+            if (buffer == null || buffer.Length != revision.size || buffer.Length <= 4 || buffer[0] != 0x50 || buffer[1] != 0x4B || buffer[2] != 0x03 || buffer[3] != 0x04)
             {
                 MessageBox.Show(Utils.GetLang("text_corrupted_server_download"), Utils.GetLang("text_error"));
                 return false;
@@ -326,6 +327,8 @@ namespace HSL.Core
                 }
                 servers.Clear();
             }
+
+            _timer.Elapsed -= _timer_Elapsed;
         }
 
     }

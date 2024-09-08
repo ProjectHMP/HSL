@@ -14,6 +14,8 @@ using System.Windows.Input;
 
 namespace HSL.Windows
 {
+
+
     public partial class Launcher : Window, IDisposable, INotifyPropertyChanged
     {
 
@@ -28,7 +30,7 @@ namespace HSL.Windows
         internal HSLConfig Config { get; private set; }
         private OpenFileDialog _ofd;
         private object _configLock { get; set; } = new object();
-        private Timer _timer;
+        private Timer _timer = new Timer();
 
         public Launcher()
         {

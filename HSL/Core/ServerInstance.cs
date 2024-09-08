@@ -33,8 +33,11 @@ namespace HSL.Core
         public Dictionary<string, ResourceMeta> ResourceMap { get; private set; }
 
         private bool _HasUpdate { get; set; } = false;
-        public bool HasUpdate { get => _HasUpdate;
-            set {
+        public bool HasUpdate
+        {
+            get => _HasUpdate;
+            set
+            {
                 _HasUpdate = value;
                 OnPropertyChanged(nameof(HasUpdate));
             }
@@ -619,7 +622,7 @@ namespace HSL.Core
 
         internal async void CompareVersionHash(string hash)
         {
-            if(File.Exists(ServerVersionFile) && await File.ReadAllTextAsync(ServerVersionFile) != hash)
+            if (File.Exists(ServerVersionFile) && await File.ReadAllTextAsync(ServerVersionFile) != hash)
             {
                 HasUpdate = true;
             }
