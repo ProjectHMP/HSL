@@ -2,7 +2,7 @@
 
 Happiness Server Launcher. A Launcher & Manager for [HappinessMP](https://happinessmp.net/)
 
-<img src="hsl.png"/>
+<img src="HSL/Assets/hsl.png"/>
 
 ## Features
 - Add, Create & Update Server(s).
@@ -36,42 +36,28 @@ Everyone _should_ have this, though if program doesn't launch, you probably don'
 
 ### Language Context
 
-Inside of [Lang](HSL/Lang), will contain language (`.xaml`) files and a `languages.xaml` file.
+[Lang](HSL/Lang) directory contains `.xaml` language files, and `languages.xaml`.
 
-`languages.xaml` is used to define a language to be loaded.
-`x:Key` is the filename without extension, and the inner text the display name.
+- `languages.xaml` is used to define languages HSL will load. Each defined language has a `x:Key` attribute of the language file name _without extension_.
 
-Take & Copy `en.xaml` to a new language file. Translate, and define your language in `language.xaml`
+Duplicate `en.xaml` creating a new language file. Translate and define your language in `language.xaml`.
 
-### Language Testing
+### Language Testing (_Without Building_)
 
-You can place a language file by `HSL.exe` named `lang.xaml`.
+You can place language file named `lang.xaml` next to `HSL.exe`. **HSL** will load and use this external language. 
 
-It will not be a registered language, but it will _now_ be the default language.
 
 ## Build
-You can clone this project and open it with **Visual Studio**, supporting .net core 3.1.
 
-Otherwise, you _could_ build using with `dotnet` without **Visual Studio**. 
-**Visual Studio Code** with extensions may also work, though this would be needed.
+Clone, and use **Visual Studio** to build/publish.
 
-Install **[.Net Core 3.1](https://dotnet.microsoft.com/en-us/download/dotnet/3.1)**
+Optionally, you _could_ also build using with `dotnet`. **Visual Studio Code** w/ extensions may work, though you would still need **[.net core 3.1](https://dotnet.microsoft.com/en-us/download/dotnet/3.1)**
 
 ### Build Command Executions
 
 ```batch
-#REM dev? addon: -b dev
 git clone https://github.com/ProjectHMP/HSL
-
-#REM change directory (cd)
 cd HSL/HSL
-
-#REM build (creates a debug exe)
-dotnet build
-
-#REM build run (builds, then run)
-dotnet run
-
-#REM publish (release build)
-dotnet publish
+dotnet build | run | publish
 ```
+

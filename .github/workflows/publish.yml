@@ -13,6 +13,16 @@ on:
         description: 'Release Title'
         required: true
         default: 'Release Title'
+      is_pre_release:
+        type: boolean
+        description: 'Is Pre-Release?'
+        required: true
+        default: true
+      is_draft:
+        type: boolean
+        description: 'Is Draft?'
+        required: true
+        default: false
 
 env:
   DOTNET_VERSION: '3.1' # The .NET SDK version to use
@@ -37,10 +47,10 @@ jobs:
       run: dotnet restore
       
     - name: Publish
-      run: dotnet publish -p:PublishProfile=FolderProfile -c Release -f netcoreapp3.1 -r win-x64 -o ./publish
+      run: dotnet publish -p:PublishProfile=FolderProfile -c Release -f netcoreapp3.1 -r win-x64 -o ./publish/
       
     - name: Upload Build Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: build-output
         path: ./publish/
@@ -51,8 +61,8 @@ jobs:
       with:
         tag_name: ${{ github.event.inputs.version_tag }}
         release_name: ${{ github.event.inputs.release_title }}
-        draft: false
-        prerelease: true
+        draft: ${{ github.event.inputs.is_draft }}
+        prerelease: ${{ github.event.inputs.is_pre_release }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         

@@ -1,20 +1,19 @@
-name: Update Revisions
+name: Fetching Latest HMP Server Version
 
-# Set the workflow to run every 4 hours
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 */2 * * *"
+    - cron: "0 */1 * * *"
+    
 permissions:
   actions: write          # Required for running actions
   contents: write         # Required for pushing changes to the repository
   issues: read            # Optional, if you need access to issues
   pull-requests: read     # Optional, if you need access to pull requests
-# Workflow jobs
+
 jobs:
   update-revisions:
     runs-on: ubuntu-latest
-
     steps:
       # Step 1: Checkout the repo
       - name: Checkout repository
@@ -33,10 +32,6 @@ jobs:
         with:
           node-version: '18' # or whichever version you're using
 
-      # Step 3: Install dependencies
-      - name: Install dependencies
-        run: npm install
-
       # Step 4: Run the Node.js script to update revisions.json
       - name: Run update script
         run: node index.js
@@ -49,5 +44,5 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add versions.json .date
-          git commit -m "Updated versions.json"
+          git commit -m "update"
           git push
