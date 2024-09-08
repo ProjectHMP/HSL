@@ -26,6 +26,7 @@ on:
 
 env:
   DOTNET_VERSION: '3.1' # The .NET SDK version to use
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 permissions: write-all
 
@@ -63,8 +64,6 @@ jobs:
         release_name: ${{ github.event.inputs.release_title }}
         draft: ${{ github.event.inputs.is_draft }}
         prerelease: ${{ github.event.inputs.is_pre_release }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
     - name: Download build artifact
       uses: actions/download-artifact@v4
