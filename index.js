@@ -7,11 +7,13 @@ const revisions = getRevisionsData();
 const ZipHeader = [0x50, 0x4B, 0x03, 0x04]; // PK
 const HMP_SERVER_URL = "https://happinessmp.net/docs/server/getting-started/#download";
 const HMP_SERVER_REGEX = /(https:\/\/happinessmp\.net\/files\/[A-Za-z0-9%_\.]*.zip)/g;
+const jszip = require('./dist/jszip.js');
+const IGNORED_MATCH = ['resources/', 'settings.xml'];
 
 function getRevisionsData() {
     try {
         return require('./versions.json');
-    } catch { return { latest: null, hashes: {} }; }
+    } catch { return { latest: null, hashes: {}, updated: Date.now() }; }
 }
 
 function fetch(url, options = {}) {
@@ -38,7 +40,7 @@ async function main() {
     if (DOM_buffer == null || DOM_buffer.length == 0) {
         throw "Failed to scrape server URL. (What did you do Kitty?!? lol)"
     }
-
+	
     const matches = HMP_SERVER_REGEX.exec(DOM_buffer.toString());
     if (matches == null || matches.length == 0) {
         throw "Failed to find URL for latest server zip. (What did you do Kitty?!? lol)";
@@ -55,12 +57,27 @@ async function main() {
 	    
         if (!revisions.hashes.hasOwnProperty(hash)) {
             revisions.hashes[revisions.latest = hash] = { url: matches[0], size: buffer.length };
-            await fs.writeFileSync([__dirname, "versions.json"].join(path.sep), JSON.stringify(revisions));
+			
+			const d = await jszip.loadAsync(buffer);
+			const files = [];
+			var root = null;
+			for(var name in d.files){
+				root ??= name;
+				const _buffer = d.file(name);
+				if(_buffer == null || IGNORED_MATCH.some(x => name.indexOf(x) >= 0)) {
+					continue;
+				}
+				const fbuffer = await _buffer.async('nodebuffer')
+				files.push({
+					name: name.substr(root.length),
+					hash: crypto.createHash('md5').update(fbuffer).digest('hex')
+				});
+			}		
+			revisions.hashes[revisions.latest = hash].files = files;
         }
     }
-
-    // fix in always having a file to commit, and check last epoch when ran successfully
-    await fs.writeFileSync([__dirname, ".date"].join(path.sep), Date.now().toString());
+	revisions.updated = Date.now();
+	await fs.writeFileSync([__dirname, "versions.json"].join(path.sep), JSON.stringify(revisions));
 }
 
 // entry point (for async reasons)
