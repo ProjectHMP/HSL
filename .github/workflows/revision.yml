@@ -3,7 +3,7 @@ name: Fetching Latest HMP Server Version
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 */1 * * *"
+    - cron: "0 */2 * * *"
     
 permissions:
   actions: write          # Required for running actions
