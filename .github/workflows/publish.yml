@@ -27,7 +27,7 @@ on:
         type: string
         description: 'Body Insert..'
         required: false
-        default: 'Release v${{ github.event.inputs.version_tag }}'
+        default: 'Release Info'
 
 env:
   DOTNET_VERSION: '3.1' # The .NET SDK version to use
