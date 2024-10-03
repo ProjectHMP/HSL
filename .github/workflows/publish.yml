@@ -23,6 +23,11 @@ on:
         description: 'Is Draft?'
         required: true
         default: false
+      body:
+        type: string
+        description: 'Body Insert..'
+        required: false
+        default: 'Release v${{ github.event.inputs.version_tag }}'
 
 env:
   DOTNET_VERSION: '3.1' # The .NET SDK version to use
@@ -49,6 +54,9 @@ jobs:
       
     - name: Publish
       run: dotnet publish -p:PublishProfile=FolderProfile -c Release -f netcoreapp3.1 -r win-x64 -o ./publish/
+
+    - name: Create Hash
+      run: CertUtil -hashfile HSL.exe md5 | find /i /v "md5" | find /i /v "certutil" > ./publish/HSL.md5
       
     - name: Upload Build Artifact
       uses: actions/upload-artifact@v4
@@ -62,6 +70,7 @@ jobs:
       with:
         tag_name: ${{ github.event.inputs.version_tag }}
         release_name: ${{ github.event.inputs.release_title }}
+        body: ${{ github.event.inputs.body }}
         draft: ${{ github.event.inputs.is_draft }}
         prerelease: ${{ github.event.inputs.is_pre_release }}
         
@@ -70,7 +79,7 @@ jobs:
       with:
         name: build-output
 
-    - name: Uploading Published Binary
+    - name: Uploading HSL.exe
       uses: actions/upload-release-asset@v1
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
@@ -78,7 +87,15 @@ jobs:
         asset_name: HSL.exe
         asset_content_type: application/octet-stream
 
-    - name: Uploading Published Symbols (.pdb)
+    - name: Uploading HSL.md5
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./publish/HSL.md5
+        asset_name: HSL.md5
+        asset_content_type: application/octet-stream
+
+    - name: Uploading Symbols (.pdb)
       uses: actions/upload-release-asset@v1
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
