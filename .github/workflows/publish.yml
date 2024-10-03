@@ -31,6 +31,7 @@ on:
 
 env:
   DOTNET_VERSION: '3.1' # The .NET SDK version to use
+  DOTNET_INSTALL_DIR: '.\.dotnet'
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 permissions: write-all
@@ -43,11 +44,23 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+
+    - name: Cache dotnet
+      id: cache-dotnet
+      uses: actions/cache@v3
+      with:
+        path: ${{ env.DOTNET_INSTALL_DIR }}
+        key: ${{ runner.os }}-dotnet-3
+        restore-keys: ${{ runner.os }}-dotnet-3
     
     - name: Setup .NET Core
+      if: ${{ steps.cache-dotnet.outputs.cache-hit != 'true' }}
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Set installed/cached dotnet path [${{ env.DOTNET_INSTALL_DIR }}]
+      run: echo "${{ env.DOTNET_INSTALL_DIR }}" | Out-File -FilePath $ENV:GITHUB_PATH -Encoding utf8 -Append
         
     - name: Install dependencies
       run: dotnet restore
@@ -56,7 +69,7 @@ jobs:
       run: dotnet publish -p:PublishProfile=FolderProfile -c Release -f netcoreapp3.1 -r win-x64 -o ./publish/
 
     - name: Create Hash
-      run: CertUtil -hashfile HSL.exe md5 | find /i /v "md5" | find /i /v "certutil" > ./publish/HSL.md5
+      run: certutil.exe -hashfile ./publish/HSL.exe MD5 | find /i /v "md5" | find /i /v "certutil" > ./publish/HSL.md5
       
     - name: Upload Build Artifact
       uses: actions/upload-artifact@v4
