@@ -2,6 +2,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mscorlib="clr-namespace:System;assembly=mscorlib"
+             xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
              StartupUri="Windows\Launcher.xaml">
     
     <Application.Resources>
@@ -31,23 +32,69 @@
                 <Setter Property="BorderThickness" Value="0"/>
                 <Setter Property="BorderBrush" Value="White"/>
                 <Setter Property="Foreground" Value="{StaticResource txtColor}"/>
+                <Setter Property="BorderBrush" Value="#4682B4"></Setter>
             </Style>
 
             <Style TargetType="{x:Type TextBox}" BasedOn="{StaticResource default}">
                 <Setter Property="BorderThickness" Value=".2"/>
                 <Setter Property="Background" Value="{StaticResource cmdBgColor}"/>
             </Style>
-            
+
+
             <Style TargetType="{x:Type ComboBox}" BasedOn="{StaticResource default}">
                 <Setter Property="Foreground" Value="Black"></Setter>
             </Style>
             
             <Style TargetType="{x:Type CheckBox}" BasedOn="{StaticResource default}">
                 <Setter Property="BorderThickness" Value=".2"/>
+                <Setter Property="Opacity" Value=".8"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type CheckBox}">
+                            <BulletDecorator>
+                                <BulletDecorator.Bullet>
+                                    <Grid Margin="0 1 0 0">
+                                        <Rectangle Width="10" Height="15" Margin="0 0 0 0" Fill="#FF252525"/>
+                                        <Ellipse Width="15" Height="15" Fill="#FF252525" Margin="-10 0 0 0"></Ellipse>
+                                        <Ellipse Width="15" Height="15" Fill="#FF252525" Margin="10 0 0 0"></Ellipse>
+                                        <Ellipse Width="15" Height="15">
+                                            <Ellipse.Style>
+                                                <Style TargetType="{x:Type Ellipse}">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource TemplatedParent}}" Value="{StaticResource True}">
+                                                            <Setter Property="Margin" Value="10 0 0 0"></Setter>
+                                                            <Setter Property="Fill" Value="Green"></Setter>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource TemplatedParent}}" Value="{StaticResource False}">
+                                                            <Setter Property="Margin" Value="-10 0 0 0"></Setter>
+                                                            <Setter Property="Fill" Value="Red"></Setter>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Ellipse.Style>
+                                        </Ellipse>
+                                    </Grid>
+                                </BulletDecorator.Bullet>
+                                <ContentPresenter/>
+                            </BulletDecorator>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Opacity" Value="1"></Setter>
+                    </Trigger>
+                </Style.Triggers>
             </Style>
 
             <Style TargetType="{x:Type RichTextBox}" BasedOn="{StaticResource default}">
                 <Setter Property="Background" Value="{StaticResource cmdBgColor}"/>
+            </Style>
+
+            <Style TargetType="{x:Type TreeView}" BasedOn="{StaticResource default}"></Style>
+            <Style TargetType="{x:Type TreeViewItem}" BasedOn="{StaticResource default}">
+                
             </Style>
 
             <Style TargetType="{x:Type Label}" BasedOn="{StaticResource default}">
@@ -70,6 +117,12 @@
                 </Style.Triggers>
             </Style>
 
+            <Style TargetType="{x:Type Menu}" BasedOn="{StaticResource default}">
+                <Setter Property="BorderThickness" Value="0"/>
+            </Style>
+
+            <Style TargetType="{x:Type avalonEdit:TextEditor}" BasedOn="{StaticResource default}"></Style>
+            
             <Style TargetType="{x:Type MenuItem}" BasedOn="{StaticResource default}">
                 <Setter Property="Foreground" Value="Black"/>
                 <Setter Property="Padding" Value="5"/>
@@ -77,9 +130,18 @@
                 <Setter Property="Cursor" Value="Hand"/>
             </Style>
 
+            <Style TargetType="{x:Type ListView}" BasedOn="{StaticResource default}">
+                <Style.Triggers>
+                    <Trigger Property="IsHitTestVisible" Value="False">
+                        <Setter Property="Opacity" Value="0.5"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
             <Style TargetType="{x:Type ListViewItem}" BasedOn="{StaticResource default}">
                 <Setter Property="Padding" Value="2"/>
                 <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                 <Setter Property="Width" Value="Auto"></Setter>
                 <Setter Property="BorderThickness" Value="0"/>
                 <Setter Property="Cursor" Value="Hand"/>

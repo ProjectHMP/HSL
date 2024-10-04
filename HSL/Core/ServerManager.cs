@@ -9,6 +9,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Threading;
 
 namespace HSL.Core
 {
@@ -16,9 +17,10 @@ namespace HSL.Core
     {
 
         public event PropertyChangedEventHandler PropertyChanged;
-        public ObservableCollection<ServerInstance> servers { get; private set; }
+        public ObservableCollection<ServerInstance> Instances { get; private set; }
 
         internal event EventHandler<ServerInstance> OnCreated, OnDeleted, OnProcessStarted, OnProcessStopped;
+        internal event EventHandler OnContextUpdate;
 
         private bool _dirtyConfig = false;
         private object _serverLock = new object();
@@ -28,7 +30,7 @@ namespace HSL.Core
         internal ServerManager(Windows.Launcher launcher)
         {
             _launcher = launcher;
-            servers = new ObservableCollection<ServerInstance>();
+            Instances = new ObservableCollection<ServerInstance>();
             _timer = new System.Timers.Timer() { Interval = 60000 * 5, Enabled = true, AutoReset = true };
             _timer.Elapsed += _timer_Elapsed;
             _timer.Start();
@@ -41,7 +43,7 @@ namespace HSL.Core
             {
                 lock (_serverLock)
                 {
-                    foreach (ServerInstance instance in servers)
+                    foreach (ServerInstance instance in Instances)
                     {
                         instance.CompareVersionHash(revision.hash);
                     }
@@ -59,13 +61,19 @@ namespace HSL.Core
                 ServerInstance instance = new ServerInstance(this, data);
                 instance.ProcessStarted += (s, e) => HandleEvent(OnProcessStarted, instance);
                 instance.ProcessStopped += (s, e) => HandleEvent(OnProcessStopped, instance);
-                instance.ServerUpdated += (s, e) => OnPropertyChanged(nameof(servers));
+                
+                instance.ServerUpdated += (s, e) =>
+                {
+                    OnPropertyChanged(nameof(Instances));
+                    OnContextUpdate?.Invoke(null, null);
+                };
+                
                 lock (_serverLock)
                 {
-                    servers.Add(instance);
+                    Instances.Add(instance);
                 }
                 OnCreated?.Invoke(null, instance);
-                OnPropertyChanged(nameof(servers));
+                OnPropertyChanged(nameof(Instances));
                 return instance;
             }
             catch (Exception e)
@@ -84,23 +92,23 @@ namespace HSL.Core
 
             lock (_serverLock)
             {
-                if (servers.Remove(instance))
+                if (Instances.Remove(instance))
                 {
                     OnDeleted?.Invoke(null, instance);
-                    OnPropertyChanged(nameof(servers));
+                    OnPropertyChanged(nameof(Instances));
                     return true;
                 }
                 return false;
             }
         }
 
-        internal bool Delete(Guid guid) => Delete(servers.Where(x => x.Guid == guid).FirstOrDefault());
+        internal bool Delete(Guid guid) => Delete(Instances.Where(x => x.Guid == guid).FirstOrDefault());
 
         internal void CompareVersionHashes(string hash)
         {
             lock (_serverLock)
             {
-                foreach (ServerInstance instance in servers)
+                foreach (ServerInstance instance in Instances)
                 {
                     instance.CompareVersionHash(hash);
                 }
@@ -133,21 +141,11 @@ namespace HSL.Core
                 return false;
             }
 
-            using (MD5 md5 = MD5.Create())
+            if(revision.hash != Utils.GetBufferHash(ref buffer))
             {
-                byte[] b_hash = md5.ComputeHash(buffer);
-                StringBuilder builder = new StringBuilder();
-                for (int i = 0; i < b_hash.Length; i++)
-                {
-                    builder.Append(b_hash[i].ToString("x2"));
-                }
-                if (revision.hash != builder.ToString())
-                {
-                    MessageBox.Show("Failed to create instance because of invalid hash vs revision.", Utils.GetLang("text_error"));
-                    return false;
-                }
+                MessageBox.Show("Failed to create instance because of invalid hash vs revision.", Utils.GetLang("text_error"));
+                return false;
             }
-
             await File.WriteAllBytesAsync(file, buffer);
             return true;
         }
@@ -223,8 +221,7 @@ namespace HSL.Core
 
                 Utils.DeleteFile(zip);
 
-                // validate installation
-                if (!ServerInstance.IsValidInstallation(instance.ServerDirectory))
+                if (!ServerInstance.IsValidInstallation(instance.ServerDirectory, revision))
                 {
                     MessageBox.Show("Failed to validate server directory after update.", Utils.GetLang("text_error"));
                     return false;
@@ -296,7 +293,7 @@ namespace HSL.Core
 
                 Utils.DeleteFile(zip);
 
-                if (!ServerInstance.IsValidInstallation(directory))
+                if (!ServerInstance.IsValidInstallation(directory, revision))
                 {
                     MessageBox.Show("Failed to validate server update. Uninstalling.", Utils.GetLang("text_error"));
                     Utils.DeleteDirectory(directory);
@@ -321,11 +318,11 @@ namespace HSL.Core
         {
             lock (_serverLock)
             {
-                foreach (ServerInstance instance in servers)
+                foreach (ServerInstance instance in Instances)
                 {
                     instance.Dispose();
                 }
-                servers.Clear();
+                Instances.Clear();
             }
 
             _timer.Elapsed -= _timer_Elapsed;

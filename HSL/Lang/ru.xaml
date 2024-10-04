@@ -1,0 +1,54 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib">
+
+    <s:String x:Key="text_server">Сервер</s:String>
+    <s:String x:Key="text_start">Запустить</s:String>
+    <s:String x:Key="text_stop">Остановить</s:String>
+    <s:String x:Key="text_delete">Удалить</s:String>
+    <s:String x:Key="text_restart">Перезапустить</s:String>
+    <s:String x:Key="text_reload">Перезагрузить</s:String>
+    <s:String x:Key="text_clear">Очистить</s:String>
+    <s:String x:Key="text_all">Все</s:String>
+    <s:String x:Key="text_file">Файл</s:String>
+    <s:String x:Key="text_about">О программе</s:String>
+    <s:String x:Key="text_hostname">Имя хоста</s:String>
+    <s:String x:Key="text_port">Порт</s:String>
+    <s:String x:Key="text_listed">Список</s:String>
+    <s:String x:Key="text_episode">Эпизод</s:String>
+    <s:String x:Key="text_error">Ошибка</s:String>
+    <s:String x:Key="text_server_settings">Настройки сервера</s:String>
+    <s:String x:Key="text_automatic_settings">Автоматические настройки</s:String>
+    <s:String x:Key="text_reload_resources">Перезагрузить ресурсы</s:String>
+    <s:String x:Key="text_delete_cache">Удалить кэш</s:String>
+    <s:String x:Key="text_delete_logs">Удалить журналы</s:String>
+    <s:String x:Key="text_open_directory">Открыть директорию</s:String>
+    <s:String x:Key="text_restart_hsl">Необходимо перезапустить HSL. Перезапустить сейчас?</s:String>
+    <s:String x:Key="text_enter_command_here">Введите команду здесь</s:String>
+    <s:String x:Key="text_caution">Внимание!</s:String>
+    <s:String x:Key="text_update_server">Обновить сервер</s:String>
+    <s:String x:Key="text_updated_server">Сервер обновлен</s:String>
+    <s:String x:Key="text_open_folder">Открыть папку</s:String>
+    <s:String x:Key="text_ask_server_delete">Вы уверены, что хотите удалить {0}? Файлы НЕ будут удалены!</s:String>
+    <s:String x:Key="text_delete_server">Удалить сервер?</s:String>
+    <s:String x:Key="text_corrupted_server_download">Загрузка сервера повреждена. Прервано</s:String>
+    <s:String x:Key="text_no_server_directory">Не указана директория для установки сервера.</s:String>
+    <s:String x:Key="text_directory_not_empty">Выбранная директория не пуста!</s:String>
+    <s:String x:Key="text_stop_server_before_updating">Пожалуйста, остановите сервер перед обновлением!</s:String>
+    <s:String x:Key="text_server_load_failed">Не удалось загрузить существующий сервер по адресу {0}.{1} Изменить расположение?</s:String>
+    <s:String x:Key="text_server_download_failed">Не удалось загрузить файлы сервера.</s:String>
+    <s:String x:Key="text_server_install_failed">Не удалось установить файлы сервера.</s:String>
+    <s:String x:Key="text_server_failed_start_process">Не удалось запустить процесс</s:String>
+    <s:String x:Key="text_invalid_server_location">Этот путь не содержит действительной установки HappinessMP.</s:String>
+    <s:String x:Key="text_server_already_added">Этот сервер уже добавлен.</s:String>
+    <s:String x:Key="text_open_server_path">Открыть путь к серверу</s:String>
+    <s:String x:Key="text_create_new_server">Создать новый сервер</s:String>
+    <s:String x:Key="text_server_already_running_start_new">Этот сервер уже запущен. Завершить его и запустить новый?</s:String>
+
+    <s:String x:Key="text_autorestart_label_content">Таймер перезапуска (Ч:М:С)</s:String>
+    <s:String x:Key="text_automatic_restart_notice">Перезапуски активны только при работе. По умолчанию: (24 часа)</s:String>
+
+    <s:String x:Key="text_tooltip_1">Автоматически перезагружать ресурсы при изменении.</s:String>
+    <s:String x:Key="text_tooltip_2">Запускать сервер при старте HSL.</s:String>
+    <s:String x:Key="text_tooltip_3">Перезапуск при непредвиденных сбоях.</s:String>
+    <s:String x:Key="text_tooltip_4">Удалить логи сервера перед запуском. (Будет создана резервная копия server.logs.tmp)</s:String>
+
+</ResourceDictionary>

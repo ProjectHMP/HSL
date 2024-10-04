@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Xml;
 
@@ -7,8 +8,7 @@ namespace HSL.Core
     internal class ServerSettings
     {
 
-        internal bool _wasUpdated = false;
-        internal event EventHandler OnSaved;
+        internal Queue<object?> saveEvents;
 
         private XmlDocument _document;
         private string _file;
@@ -17,6 +17,7 @@ namespace HSL.Core
         public ServerSettings(string settingsFile)
         {
             _file = settingsFile;
+            saveEvents = new Queue<object?>();
             LoadDocument();
         }
 
@@ -151,9 +152,8 @@ namespace HSL.Core
             {
                 try
                 {
-                    _wasUpdated = true;
+                    saveEvents.Enqueue(null);
                     _document.Save(_file);
-                    OnSaved?.Invoke(null, null);
                 }
                 catch { }
             }

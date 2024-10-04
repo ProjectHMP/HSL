@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Security.Policy;
 using System.Threading.Tasks;
 using System.Timers;
 using System.Windows;
@@ -14,7 +15,6 @@ using System.Windows.Input;
 
 namespace HSL.Windows
 {
-
 
     public partial class Launcher : Window, IDisposable, INotifyPropertyChanged
     {
@@ -29,8 +29,8 @@ namespace HSL.Windows
 
         internal HSLConfig Config { get; private set; }
         private OpenFileDialog _ofd;
-        private object _configLock { get; set; } = new object();
-        private Timer _timer = new Timer();
+        private object _configLock  = new object();
+        private Timer _timer;
 
         public Launcher()
         {
@@ -46,6 +46,16 @@ namespace HSL.Windows
             };
 
             Closing += (s, e) => Dispose();
+
+#if !DEBUG
+            bool hasUpdate = Task.Run<bool>(async () => await Utils.CheckUpdate().ConfigureAwait(true).GetAwaiter().GetResult();
+
+            if (hasUpdate)
+            {
+                Close();
+                return;
+            }
+#endif
 
             manager = new ServerManager(this);
             _timer = new Timer() { Enabled = true, Interval = 2500 };
@@ -67,7 +77,7 @@ namespace HSL.Windows
             {
                 try
                 {
-                    UnloadLanguages();
+                    // UnloadLanguages();
                     Application.Current.Resources.MergedDictionaries.Add(new ResourceDictionary() { Source = new Uri(external_language_file) });
                     Config.lang = null;
                 }
@@ -81,15 +91,15 @@ namespace HSL.Windows
                 {
                     if (Config.lang == lang.Key)
                     {
-                        LoadLanguage(lang);
+                        LoadLanguage(lang, false);
                         break;
                     }
                 }
             }
 
-            if (manager.servers.Count > 0)
+            if (manager.Instances.Count > 0)
             {
-                ShowServerContext(manager.servers.FirstOrDefault());
+                ShowServerContext(manager.Instances.FirstOrDefault());
             }
 
             RegisterListeners();
@@ -97,9 +107,10 @@ namespace HSL.Windows
 
             _timer.Start();
             Show();
+            BringIntoView();
         }
 
-        private async Task LoadConfiguration()
+        private async Task<Task> LoadConfiguration()
         {
             Config = await HSLConfig.Load("hsl.json");
             bool markdirty = false;
@@ -131,15 +142,22 @@ namespace HSL.Windows
                 }
             }
 
+            string chash = Utils.GetFileHash(Utils.CurrentDirectory.CombinePath(Process.GetCurrentProcess().MainModule.FileName));
+
+            if (Config._version != chash)
+            {
+                Config._version = chash;
+                markdirty = true;
+                MessageBox.Show("HSL has been updated!", "Updated!", MessageBoxButton.OK);
+            }
+
             if (markdirty)
             {
                 await Config.Save();
             }
 
-            // check versions
-
             manager.InvokeCompareVersionHash();
-
+            return Task.CompletedTask;
         }
 
         private async void Manager_OnDeleted(object sender, ServerInstance e)
@@ -173,22 +191,26 @@ namespace HSL.Windows
             {
                 currentInstance.StdOutput -= null;
             }
-
-            currentInstance = instance;
-            OnPropertyChanged(nameof(currentInstance));
-
-            if (currentInstance != null)
+            
+            if(instance != null)
             {
-                currentInstance.StdOutput += (s, e) => Dispatcher.Invoke(() =>
-                {
-                    rtb_ServerLog.UpdateLayout();
-                    rtb_ServerLog.ScrollToEnd();
-                    rtb_ServerLog.ScrollToVerticalOffset(double.MaxValue);
-                });
-            }
-            Title = currentInstance != null ? String.Format("HSL - {0}", currentInstance.Name) : "Happiness Server Launcher";
-        }
+                currentInstance = instance;
+                OnPropertyChanged(nameof(currentInstance));
 
+                if (currentInstance != null)
+                {
+                    currentInstance.StdOutput += (s, e) => Dispatcher.Invoke(() =>
+                    {
+                        rtb_ServerLog.UpdateLayout();
+                        rtb_ServerLog.ScrollToEnd();
+                        rtb_ServerLog.ScrollToVerticalOffset(double.MaxValue);
+                    });
+                }
+                Title = currentInstance != null ? String.Format("HSL - {0}", currentInstance.Name) : "Happiness Server Launcher";
+            }
+         
+        }
+        /*
         private void UnloadLanguages()
         {
             ResourceDictionary[] dictionaries = Application.Current.Resources.MergedDictionaries.Where(r => r.Source != null && r.Source.AbsolutePath.IndexOf("pack://application:,,,/MahApps.Metro") < 0).ToArray();
@@ -200,8 +222,9 @@ namespace HSL.Windows
                 }
             }
         }
+        */
 
-        private async void LoadLanguage(Language lang)
+        private async void LoadLanguage(Language lang, bool restart = true)
         {
             if (lang == null || string.IsNullOrEmpty(lang.Key))
             {
@@ -212,13 +235,22 @@ namespace HSL.Windows
                 ResourceDictionary language = (ResourceDictionary)Application.LoadComponent(new Uri($"/HSL;component/Lang/{lang.Key}.xaml", UriKind.Relative));
                 if (language != null)
                 {
-                    UnloadLanguages();
+                    //UnloadLanguages();
                     Application.Current.Resources.MergedDictionaries.Add(language);
                     if (Config.lang != lang.Key)
                     {
                         Config.lang = lang.Key;
                         await Config.Save();
                     }
+
+                    if(restart && MessageBox.Show(Utils.GetLang("text_restart_hsl"), Utils.GetLang("text_restart"), MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                    {
+                        Utils.Restart(2);
+                        Dispose();
+                        Close();
+                        return;
+                    }
+
                     return;
                 }
             }
@@ -231,6 +263,13 @@ namespace HSL.Windows
 
             manager.OnCreated += Manager_OnCreated;
             manager.OnDeleted += Manager_OnDeleted;
+            manager.OnContextUpdate += (s, e) => {
+                Dispatcher.Invoke(() =>
+                {
+                    lv_ServerList.SelectedItem = currentInstance;
+                    lv_ResourceList.SelectedItem = currentResource;
+                });
+            };
 
             _timer.Elapsed += async (s, e) =>
             {
@@ -253,7 +292,7 @@ namespace HSL.Windows
 
             lv_ServerList.SelectionChanged += (s, e) =>
             {
-                if (lv_ServerList.SelectedItem is ServerInstance instance)
+                if (lv_ServerList.SelectedItem is ServerInstance instance && instance != null)
                 {
                     currentResource = null;
                     OnPropertyChanged(nameof(currentResource));
@@ -263,7 +302,7 @@ namespace HSL.Windows
 
             lv_ResourceList.SelectionChanged += (s, e) =>
             {
-                if (lv_ResourceList.SelectedItem is ServerInstance.ResourceMeta meta)
+                if (lv_ResourceList.SelectedItem is ServerInstance.ResourceMeta meta && meta != null)
                 {
                     currentResource = meta;
                     OnPropertyChanged(nameof(currentResource));
@@ -338,18 +377,30 @@ namespace HSL.Windows
             lv_ServerList.ContextMenu = new ContextMenu();
 
             lv_ResourceList.ContextMenu.Items.Add(new System.Windows.Controls.MenuItem() { Header = Utils.GetLang("text_open_folder") });
+            lv_ResourceList.ContextMenu.Items.Add(new System.Windows.Controls.MenuItem() { Header = "Open Resource Meta" });
             lv_ServerList.ContextMenu.Items.Add(new System.Windows.Controls.MenuItem() { Header = Utils.GetLang("text_start") });
             lv_ServerList.ContextMenu.Items.Add(new System.Windows.Controls.MenuItem() { Header = Utils.GetLang("text_stop") });
             lv_ServerList.ContextMenu.Items.Add(new System.Windows.Controls.MenuItem() { Header = Utils.GetLang("text_restart") });
+            lv_ServerList.ContextMenu.Items.Add(new System.Windows.Controls.MenuItem() { Header = "Edit Settings" });
             lv_ServerList.ContextMenu.Items.Add(new System.Windows.Controls.MenuItem() { Header = Utils.GetLang("text_open_folder") });
 
             (lv_ResourceList.ContextMenu.Items[0] as System.Windows.Controls.MenuItem).Click += (s, e) =>
             {
-                if (lv_ResourceList.SelectedIndex >= 0 && lv_ResourceList.SelectedItems is ServerInstance.ResourceMeta meta)
+                if (lv_ResourceList.SelectedIndex >= 0 && lv_ResourceList.SelectedItem is ServerInstance.ResourceMeta meta)
                 {
                     Process.Start("explorer.exe", currentInstance.ResourceDirectory.CombinePath(meta.Name));
                 }
             };
+
+            (lv_ResourceList.ContextMenu.Items[1] as System.Windows.Controls.MenuItem).Click += (s, e) =>
+            {
+                if(currentInstance != null && lv_ResourceList.SelectedIndex >= 0 && lv_ResourceList.SelectedItem is ServerInstance.ResourceMeta meta)
+                {
+                    IDE ide = new IDE(currentInstance.ResourceDirectory.CombinePath(meta.Name, "meta.xml"));
+                    ide.Show();
+                }
+            };
+
             (lv_ServerList.ContextMenu.Items[0] as System.Windows.Controls.MenuItem).Click += (s, e) =>
             {
                 if (lv_ServerList.SelectedIndex >= 0 && lv_ServerList.SelectedItem is ServerInstance instance)
@@ -371,7 +422,17 @@ namespace HSL.Windows
                     instance.Restart();
                 }
             };
+
             (lv_ServerList.ContextMenu.Items[3] as System.Windows.Controls.MenuItem).Click += (s, e) =>
+            {
+                if(lv_ServerList.SelectedIndex >= 0 && lv_ServerList.SelectedItem is ServerInstance instance)
+                {
+                    IDE ide = new IDE(instance.ServerSettingsFile);
+                    ide.Show();
+                }
+            };
+
+            (lv_ServerList.ContextMenu.Items[4] as System.Windows.Controls.MenuItem).Click += (s, e) =>
             {
                 if (lv_ServerList.SelectedIndex >= 0 && lv_ServerList.SelectedItem is ServerInstance instance)
                 {

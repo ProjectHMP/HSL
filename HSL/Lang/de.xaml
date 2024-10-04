@@ -1,53 +1,54 @@
-<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-   
-   <s:String x:Key="text_server">Server</s:String>
-   <s:String x:Key="text_start">Starten</s:String>
-   <s:String x:Key="text_stop">Stoppen</s:String>
-   <s:String x:Key="text_delete">Löschen</s:String>
-   <s:String x:Key="text_restart">Neustarten</s:String>
-   <s:String x:Key="text_reload">Neu Laden</s:String>
-   <s:String x:Key="text_clear">Leeren</s:String>
-   <s:String x:Key="text_all">Alle</s:String>
-   <s:String x:Key="text_file">Datei</s:String>
-   <s:String x:Key="text_about">Über</s:String>
-   <s:String x:Key="text_hostname">Hostname</s:String>
-   <s:String x:Key="text_port">Port</s:String>
-   <s:String x:Key="text_listed">Aufgeführt</s:String>
-   <s:String x:Key="text_episode">Episode</s:String>
-   <s:String x:Key="text_error">Fehler</s:String>
-   
-   <s:String x:Key="text_server_settings">Server-Einstellungen</s:String>
-   <s:String x:Key="text_automatic_settings">Automatische Einstellungen</s:String>
-   <s:String x:Key="text_reload_resources">Ressourcen neu laden</s:String>
-   <s:String x:Key="text_delete_cache">Cache löschen</s:String>
-   <s:String x:Key="text_delete_logs">Protokolle löschen</s:String>
-   <s:String x:Key="text_open_directory">Verzeichnis öffnen</s:String>
-   <s:String x:Key="text_enter_command_here">Befehl hier eingeben</s:String>
-   <s:String x:Key="text_caution">Vorsicht!</s:String>
-   <s:String x:Key="text_update_server">Server aktualisieren</s:String>
-   <s:String x:Key="text_updated_server">Server aktualisiert</s:String>
-   <s:String x:Key="text_open_folder">Ordner öffnen</s:String>
-   <s:String x:Key="text_ask_server_delete">Möchten Sie {0} wirklich löschen? Dateien werden NICHT gelöscht!</s:String>
-   <s:String x:Key="text_delete_server">Server löschen?</s:String>
-   <s:String x:Key="text_corrupted_server_download">Beschädigter Server-Download. Abgebrochen</s:String>
-   <s:String x:Key="text_no_server_directory">Kein Verzeichnis angegeben, um den Server zu installieren.</s:String>
-   <s:String x:Key="text_directory_not_empty">Das ausgewählte Verzeichnis ist nicht leer!</s:String>
-   <s:String x:Key="text_stop_server_before_updating">Bitte stoppen Sie zuerst den Server, bevor Sie ihn aktualisieren!</s:String>
-   <s:String x:Key="text_server_load_failed">Das Laden des vorhandenen Servers bei {0} ist fehlgeschlagen.{1} Möchten Sie den Speicherort ändern?</s:String>
-   <s:String x:Key="text_server_download_failed">Fehler beim Herunterladen der Serverdateien.</s:String>
-   <s:String x:Key="text_server_install_failed">Fehler bei der Installation der Serverdateien.</s:String>
-   <s:String x:Key="text_server_failed_start_process">Fehler beim Starten des Prozesses</s:String>
-   <s:String x:Key="text_invalid_server_location">Dieser Pfad enthält keine gültige HappinessMP-Installation.</s:String>
-   <s:String x:Key="text_server_already_added">Dieser Server wurde bereits hinzugefügt.</s:String>
-   <s:String x:Key="text_open_server_path">Server-Pfad öffnen</s:String>
-   <s:String x:Key="text_create_new_server">Neuen Server erstellen</s:String>
-   <s:String x:Key="text_server_already_running_start_new">Dieser Server läuft bereits. Möchten Sie ihn beenden und einen neuen starten?</s:String>
-   <s:String x:Key="text_autorestart_label_content">Automatische Neustartzeit (H:M:S)</s:String>
-   <s:String x:Key="text_automatic_restart_notice">Neustarts sind nur aktiv, während der Server läuft. Standardmäßig 24 Stunden.</s:String>
-   
-   <s:String x:Key="text_tooltip_1">Ressource(n) automatisch neu laden, wenn sie geändert wird/werden.</s:String>
-   <s:String x:Key="text_tooltip_2">Starten Sie den Server, wenn HSL startet.</s:String>
-   <s:String x:Key="text_tooltip_3">Neustarten, wenn es zu einem unerwarteten Absturz kommt.</s:String>
-   <s:String x:Key="text_tooltip_4">Server-Protokolle vor dem Starten löschen. (Sicherheitskopie wird in server.logs.tmp erstellt)</s:String>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib">
+
+    <s:String x:Key="text_server">Server</s:String>
+    <s:String x:Key="text_start">Starten</s:String>
+    <s:String x:Key="text_stop">Stoppen</s:String>
+    <s:String x:Key="text_delete">Löschen</s:String>
+    <s:String x:Key="text_restart">Neustarten</s:String>
+    <s:String x:Key="text_reload">Neu Laden</s:String>
+    <s:String x:Key="text_clear">Leeren</s:String>
+    <s:String x:Key="text_all">Alle</s:String>
+    <s:String x:Key="text_file">Datei</s:String>
+    <s:String x:Key="text_about">Über</s:String>
+    <s:String x:Key="text_hostname">Hostname</s:String>
+    <s:String x:Key="text_port">Port</s:String>
+    <s:String x:Key="text_listed">Aufgelistet</s:String>
+    <s:String x:Key="text_episode">Episode</s:String>
+    <s:String x:Key="text_error">Fehler</s:String>
+    <s:String x:Key="text_server_settings">Server-Einstellungen</s:String>
+    <s:String x:Key="text_automatic_settings">Automatische Einstellungen</s:String>
+    <s:String x:Key="text_reload_resources">Ressourcen Neu Laden</s:String>
+    <s:String x:Key="text_delete_cache">Cache Löschen</s:String>
+    <s:String x:Key="text_delete_logs">Logs Löschen</s:String>
+    <s:String x:Key="text_open_directory">Verzeichnis Öffnen</s:String>
+    <s:String x:Key="text_restart_hsl">HSL muss neu gestartet werden. Jetzt Neustarten?</s:String>
+    <s:String x:Key="text_enter_command_here">Befehl Hier Eingeben</s:String>
+    <s:String x:Key="text_caution">Vorsicht!</s:String>
+    <s:String x:Key="text_update_server">Server Aktualisieren</s:String>
+    <s:String x:Key="text_updated_server">Server Aktualisiert</s:String>
+    <s:String x:Key="text_open_folder">Ordner Öffnen</s:String>
+    <s:String x:Key="text_ask_server_delete">Sind Sie sicher, dass Sie {0} löschen möchten? Dateien werden NICHT gelöscht!</s:String>
+    <s:String x:Key="text_delete_server">Server Löschen?</s:String>
+    <s:String x:Key="text_corrupted_server_download">Beschädigter Server-Download. Abgebrochen</s:String>
+    <s:String x:Key="text_no_server_directory">Kein Verzeichnis für die Server-Installation angegeben.</s:String>
+    <s:String x:Key="text_directory_not_empty">Das ausgewählte Verzeichnis ist nicht leer!</s:String>
+    <s:String x:Key="text_stop_server_before_updating">Bitte stoppen Sie zuerst den Server, bevor Sie ein Update durchführen!</s:String>
+    <s:String x:Key="text_server_load_failed">Fehler beim Laden des vorhandenen Servers unter {0}.{1} Möchten Sie den Speicherort ändern?</s:String>
+    <s:String x:Key="text_server_download_failed">Fehler beim Herunterladen der Server-Dateien.</s:String>
+    <s:String x:Key="text_server_install_failed">Fehler bei der Installation der Server-Dateien.</s:String>
+    <s:String x:Key="text_server_failed_start_process">Fehler beim Starten des Prozesses</s:String>
+    <s:String x:Key="text_invalid_server_location">Dieser Pfad enthält keine gültige HappinessMP-Installation.</s:String>
+    <s:String x:Key="text_server_already_added">Dieser Server wurde bereits hinzugefügt.</s:String>
+    <s:String x:Key="text_open_server_path">Server-Pfad Öffnen</s:String>
+    <s:String x:Key="text_create_new_server">Neuen Server Erstellen</s:String>
+    <s:String x:Key="text_server_already_running_start_new">Dieser Server läuft bereits. Möchten Sie ihn beenden und einen neuen starten?</s:String>
+
+    <s:String x:Key="text_autorestart_label_content">Neustart-Timer (H:M:S)</s:String>
+    <s:String x:Key="text_automatic_restart_notice">Neustarts sind nur aktiv, während der Server läuft. Standard: (24 Stunden)</s:String>
+
+    <s:String x:Key="text_tooltip_1">Ressource(n) automatisch neu laden, wenn sie geändert wurden.</s:String>
+    <s:String x:Key="text_tooltip_2">Den Server starten, wenn HSL startet.</s:String>
+    <s:String x:Key="text_tooltip_3">Neustarten bei Absturz (unabsichtlich).</s:String>
+    <s:String x:Key="text_tooltip_4">Server-Logs vor dem Start löschen. (Wird als server.logs.tmp gesichert)</s:String>
 
 </ResourceDictionary>

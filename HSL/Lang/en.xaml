@@ -21,6 +21,7 @@
     <s:String x:Key="text_delete_cache">Delete Cache</s:String>
     <s:String x:Key="text_delete_logs">Delete Logs</s:String>
     <s:String x:Key="text_open_directory">Open Directory</s:String>
+    <s:String x:Key="text_restart_hsl">HSL needs a restart. Restart now?</s:String>
     <s:String x:Key="text_enter_command_here">Enter Command Here</s:String>
     <s:String x:Key="text_caution">Caution!</s:String>
     <s:String x:Key="text_update_server">Update Server</s:String>

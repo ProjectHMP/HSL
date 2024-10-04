@@ -13,6 +13,7 @@
     <Nullable>annotations</Nullable>
     <ApplicationIcon>Assets\hsl.ico</ApplicationIcon>
     <SignAssembly>False</SignAssembly>
+    <AssemblyOriginatorKeyFile>C:\Users\LegitSoulja\source\repos\2022\HSL\hsl.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -46,14 +47,26 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="_HSLCheckbox.xaml.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Remove="_HSLCheckbox.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="Assets\hsl.ico" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="AvalonEdit" Version="6.2.0.78" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
   <ItemGroup>
+    <Page Update="Lang\ru.xaml">
+      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+    </Page>
     <Page Update="Lang\en.xaml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Page>

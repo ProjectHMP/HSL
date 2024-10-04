@@ -3,4 +3,5 @@
     <s:String x:Key="es">Español</s:String>
     <s:String x:Key="de">Deutsch</s:String>
     <s:String x:Key="sq">Shqiptare</s:String>
+    <s:String x:Key="ru">Russian</s:String>
 </ResourceDictionary>

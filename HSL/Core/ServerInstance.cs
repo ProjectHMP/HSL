@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Threading;
 using System.Xml;
 
 namespace HSL.Core
@@ -23,6 +24,12 @@ namespace HSL.Core
         {
             public string Name { get; set; }
             public bool IsEnabled { get; set; } = false;
+
+            public override int GetHashCode()
+            {
+                return Name.GetHashCode();
+            }
+
         }
 
         internal ServerData ServerData { get; private set; }
@@ -269,7 +276,6 @@ namespace HSL.Core
             State = ServerState.Stopped;
 
             ServerSettings = new ServerSettings(ServerSettingsFile);
-            ServerSettings.OnSaved += (s, e) => ServerUpdated?.Invoke(null, null);
 
             Resources = new ObservableCollection<ResourceMeta>();
             ResourceMap = new Dictionary<string, ResourceMeta>();
@@ -296,13 +302,26 @@ namespace HSL.Core
             }
         }
 
-        internal static bool IsValidInstallation(string directory)
+        internal static bool IsValidInstallation(string directory, Utils.Revisions.RevisionInfo? info = null)
         {
-            return !string.IsNullOrEmpty(directory) ||
+            bool valid = !string.IsNullOrEmpty(directory) ||
                 !Directory.Exists(directory) ||
                 string.IsNullOrEmpty(Directory.GetFiles(directory, "*.exe", SearchOption.TopDirectoryOnly).FirstOrDefault()) ||
                 !Directory.Exists(directory.CombinePath("resources")) ||
                 !File.Exists(directory.CombinePath("settings.xml"));
+
+            if(valid && info != null && info.files != null)
+            {
+                foreach(Utils.Revisions.RevisionInfo.FileInfo fi in info.files)
+                {
+                    if(fi.hash != Utils.GetFileHash(directory.CombinePath(fi.name)))
+                    {
+                        valid = false;
+                        break;
+                    }
+                }
+            }
+            return valid;
         }
 
         private bool SyncServerSettings()
@@ -388,11 +407,11 @@ namespace HSL.Core
             }
             else
             {
-                if (!ServerSettings._wasUpdated)
+                if(!ServerSettings.saveEvents.TryDequeue(out _))
                 {
                     ServerSettings.LoadDocument();
                 }
-                else ServerSettings._wasUpdated = false;
+                ServerUpdated?.Invoke(null, null);
             }
             _fileWatchHandlerCts.CancelAfter(500);
         }

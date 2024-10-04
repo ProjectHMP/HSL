@@ -1,10 +1,11 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using Newtonsoft;
+using Newtonsoft.Json;
 
 namespace HSL.Core
 {
@@ -41,6 +42,8 @@ namespace HSL.Core
 
         public Dictionary<Guid, ServerData> servers { get; set; } = new Dictionary<Guid, ServerData>();
 
+        public string _version { get; set; } = "51d111a880e0cdbbfdeec86de4b926a5";
+
         public string lang { get; set; } = "en";
 
         private HSLConfig() { }
@@ -56,7 +59,7 @@ namespace HSL.Core
             {
                 try
                 {
-                    config = Newtonsoft.Json.JsonConvert.DeserializeObject<HSLConfig>(await File.ReadAllTextAsync(file));
+                    config = JsonConvert.DeserializeObject<HSLConfig>(await File.ReadAllTextAsync(file));
                     config._fileName = file;
                 }
                 catch

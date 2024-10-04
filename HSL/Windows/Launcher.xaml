@@ -164,7 +164,7 @@
                 </DockPanel>
 
                 <!-- Server List -->
-                <ListView x:Name="lv_ServerList" Grid.Column="0" Grid.Row="1" Grid.RowSpan="2" ItemsSource="{Binding manager.servers, Delay=500, IsAsync=True, Mode=OneWay, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" SelectionMode="Single" Foreground="{StaticResource txtColor}" BorderThickness="0 .2 0 .2" SelectedItem="{Binding currentInstance, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                <ListView x:Name="lv_ServerList" Grid.Column="0" Grid.Row="1" Grid.RowSpan="2" ItemsSource="{Binding manager.Instances, Delay=500, IsAsync=True, Mode=OneWay, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" SelectionMode="Single" Foreground="{StaticResource txtColor}" BorderThickness="0 .2 0 .2" SelectedItem="{Binding currentInstance, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <ListViewItem Content="{Binding Name, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" IsHitTestVisible="False" Padding="2" Margin="0">
@@ -270,7 +270,7 @@
                     </Grid.RowDefinitions>
 
                     <!-- Resource List -->
-                    <ListView x:Name="lv_ResourceList" ItemsSource="{Binding currentInstance.Resources, Delay=500, IsAsync=True, Mode=OneWay, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}" SelectedItem="{Binding currentResource, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" BorderThickness="0 .2 .2 .2" BorderBrush="#4682B4" Foreground="{StaticResource txtColor}">
+                    <ListView x:Name="lv_ResourceList" ItemsSource="{Binding currentInstance.Resources, Delay=500, IsAsync=True, Mode=OneWay, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}" SelectedItem="{Binding currentResource, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"  BorderThickness="0 .2 .2 .2">
                         <ListView.ItemTemplate>
                             <DataTemplate>
                                 <ListViewItem Content="{Binding Name, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" IsHitTestVisible="False" Padding="2" Margin="0">
@@ -289,7 +289,7 @@
                         </ListView.ItemTemplate>
 
                         <ListView.Style>
-                            <Style TargetType="{x:Type ListView}">
+                            <Style TargetType="{x:Type ListView}" BasedOn="{StaticResource {x:Type ListView}}">
                                 <Setter Property="IsHitTestVisible" Value="False"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding currentInstance.State, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static enums:ServerState.Started}">
@@ -441,7 +441,7 @@
                         </Label>
                         <CheckBox Grid.Row="3" Grid.Column="1" IsChecked="{Binding currentInstance.Listed, FallbackValue={StaticResource False}, IsAsync=True, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" Foreground="White" VerticalContentAlignment="Center" FontSize="13" Margin="0 0 0 0" HorizontalAlignment="Left"/>
                         <Label Grid.Row="4" Grid.Column="0" Content="{DynamicResource text_episode}" Foreground="{StaticResource txtColor}" FontSize="10" Padding="5 0 0 0" Margin="0" FontWeight="Bold" VerticalContentAlignment="Center"/>
-                        <ComboBox Grid.Row="4" Grid.Column="2"  Margin="0" Padding="0 0 0 0" FontSize="13" SelectedItem="{Binding currentInstance.Episode}" ItemsSource="{x:Static local:Constants.Episodes}" Background="{StaticResource cmdBgColor}" VerticalContentAlignment="Center">
+                        <ComboBox Grid.Row="4" Grid.Column="2" Margin="0" Padding="0 0 0 0" FontSize="13" SelectedItem="{Binding currentInstance.Episode}" ItemsSource="{x:Static local:Constants.Episodes}" Background="{StaticResource cmdBgColor}" VerticalContentAlignment="Center">
 
                         </ComboBox>
                     </Grid>
@@ -449,54 +449,51 @@
                 <Grid Grid.Row="2" >
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
+                        <RowDefinition Height="25"/>
                     </Grid.RowDefinitions>
 
-                    <Border Grid.Row="1" Background="Transparent"  BorderBrush="#4682B4" BorderThickness="0 .2 0 .2">
+                    <Border Grid.Row="0" Background="Transparent" BorderBrush="#4682B4" BorderThickness="0 .2 0 .2" Padding="0 10 0 0">
                         <Grid IsEnabled="{Binding currentInstance.AutoRestart, Mode=OneWay}">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="30"/>
                                 <RowDefinition Height="20"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-                            <Label Grid.Row="0" Grid.ColumnSpan="5" Foreground="{StaticResource txtColor}" FontSize="10" VerticalContentAlignment="Center" Padding="5 0 0 0" FontWeight="Bold" Content="{DynamicResource text_autorestart_label_content}"/>
-                            <Grid Grid.Row="1" >
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="5" Foreground="{StaticResource txtColor}" FontSize="10" VerticalContentAlignment="Center" Padding="5 0 0 0" FontWeight="Bold" Content="{DynamicResource text_autorestart_label_content}"/>
+                            <Grid Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="30"/>
                                     <ColumnDefinition Width="10"/>
-                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="30"/>
                                     <ColumnDefinition Width="10"/>
-                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="30"/>
                                 </Grid.ColumnDefinitions>
-
-                                <TextBox Grid.Column="0"  Margin="5 0 5 0" Padding="0 0 0 0" HorizontalContentAlignment="Center" Foreground="{StaticResource txtColor}" Text="{Binding currentInstance.RestartTimer_Hours, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                                <Label Grid.Column="1" Margin="0" Padding="0" HorizontalContentAlignment="Center" Content=":" Foreground="{StaticResource txtColor}" FontWeight="Bold"/>
-                                <TextBox Grid.Column="2"  Margin="5 0 5 0" Padding="0 0 0 0" HorizontalContentAlignment="Center" Foreground="{StaticResource txtColor}" Text="{Binding currentInstance.RestartTimer_Minutes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                                <Label Grid.Column="3" Margin="0" Padding="0" HorizontalContentAlignment="Center" Content=":" Foreground="{StaticResource txtColor}" FontWeight="Bold"/>
-                                <TextBox Grid.Column="4"  Margin="5 0 5 0" Padding="0 0 0 0" HorizontalContentAlignment="Center" Foreground="{StaticResource txtColor}" Text="{Binding currentInstance.RestartTimer_Seconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-
-                            </Grid>
-                            <Grid Grid.Row="3">
-                                <RichTextBox Foreground="White" FontSize="8" Background="Transparent" Padding="5" VerticalAlignment="Bottom" BorderThickness=".2" BorderBrush="Yellow" IsReadOnly="True" IsReadOnlyCaretVisible="False" IsHitTestVisible="False">
-                                    <FlowDocument>
-                                        <Paragraph Foreground="Wheat">
-                                            <Run>
-                                                <Run.Style>
-                                                    <Style TargetType="{x:Type Run}">
-                                                        <Setter Property="Text" Value="{DynamicResource text_automatic_restart_notice}"/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding currentInstance.AutoRestart, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Value="{StaticResource True}">
-                                                                <Setter Property="Text" Value="{Binding currentInstance.RestartDateTime, Mode=OneWay}"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Run.Style>
-                                            </Run>
-                                        </Paragraph>
-                                    </FlowDocument>
-                                </RichTextBox>
+                                <TextBox Grid.Column="0" Width="30" Height="25" Margin="0" HorizontalAlignment="Left" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Foreground="{StaticResource txtColor}" Text="{Binding currentInstance.RestartTimer_Hours, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                <Label   Grid.Column="1" Width="10" Margin="0" HorizontalAlignment="Left" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Content=":" Foreground="{StaticResource txtColor}" FontWeight="Bold"/>
+                                <TextBox Grid.Column="2" Width="30" Height="25" HorizontalAlignment="Left" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Foreground="{StaticResource txtColor}" Text="{Binding currentInstance.RestartTimer_Minutes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                <Label   Grid.Column="3" Width="10" Margin="0" HorizontalAlignment="Left" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Content=":" Foreground="{StaticResource txtColor}" FontWeight="Bold"/>
+                                <TextBox Grid.Column="4" Width="30" Height="25" HorizontalAlignment="Left" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Foreground="{StaticResource txtColor}" Text="{Binding currentInstance.RestartTimer_Seconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                             </Grid>
 
                         </Grid>
+                    </Border>
+                    <Border Grid.Row="1" Grid.ColumnSpan="2"  Height="25" VerticalAlignment="Bottom" BorderThickness=".2" BorderBrush="Yellow">
+                        <Label Foreground="White" FontSize="9" VerticalContentAlignment="Center" Padding="5 0 0 0" Margin="0">
+                            <Label.Style>
+                                <Style TargetType="{x:Type Label}">
+                                    <Setter Property="Content" Value="{DynamicResource text_automatic_restart_notice}"></Setter>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding currentInstance.AutoRestart, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Value="{StaticResource True}">
+                                            <Setter Property="Content" Value="{Binding currentInstance.RestartDateTime, Mode=OneWay}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Label.Style>
+                        </Label>
                     </Border>
                 </Grid>
             </Grid>
