@@ -7,13 +7,12 @@
     <UseWindowsForms>True</UseWindowsForms>
     <IsPublishable>True</IsPublishable>
     <PlatformTarget>x64</PlatformTarget>
-	<PublishSingleFile>true</PublishSingleFile>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+	  <PublishSingleFile>true</PublishSingleFile>
     <Platforms>AnyCPU;ARM32;x64</Platforms>
     <StartupObject>HSL.App</StartupObject>
     <Nullable>annotations</Nullable>
     <ApplicationIcon>Assets\hsl.ico</ApplicationIcon>
-    <SignAssembly>False</SignAssembly>
-    <AssemblyOriginatorKeyFile>C:\Users\LegitSoulja\source\repos\2022\HSL\hsl.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
