@@ -44,7 +44,7 @@ jobs:
       run: dotnet restore
       
     - name: Building
-      run: dotnet build -c Release -o ./build/
+      run: dotnet build -o ./build/
       shell: cmd
       
     - name: Upload Build Artifact
