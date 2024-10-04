@@ -44,7 +44,8 @@ jobs:
       run: dotnet restore
       
     - name: Building
-      run: dotnet build -c Release -f netcoreapp3.1 -o ./build/
+      run: dotnet build -c Release -o ./build/
+      shell: cmd
       
     - name: Upload Build Artifact
       uses: actions/upload-artifact@v4
