@@ -42,7 +42,7 @@ namespace HSL.Core
 
         public Dictionary<Guid, ServerData> servers { get; set; } = new Dictionary<Guid, ServerData>();
 
-        public string _version { get; set; } = "51d111a880e0cdbbfdeec86de4b926a5";
+        public string _version { get; set; } = String.Empty;
 
         public string lang { get; set; } = "en";
 

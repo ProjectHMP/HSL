@@ -144,6 +144,8 @@ namespace HSL.Windows
 
             string chash = Utils.GetFileHash(Utils.CurrentDirectory.CombinePath(Process.GetCurrentProcess().MainModule.FileName));
 
+            Config._version = String.IsNullOrEmpty(Config._version) ? chash : Config._version;
+
             if (Config._version != chash)
             {
                 Config._version = chash;

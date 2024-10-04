@@ -22,14 +22,31 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
+    - name: Cache dotnet
+      id: cache-dotnet
+      uses: actions/cache@v3
+      with:
+        path: ${{ env.DOTNET_INSTALL_DIR }}
+        key: ${{ runner.os }}-dotnet-3
+        restore-keys: ${{ runner.os }}-dotnet-3
+    
     - name: Setup .NET Core
+      if: ${{ steps.cache-dotnet.outputs.cache-hit != 'true' }}
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Set installed/cached dotnet path [${{ env.DOTNET_INSTALL_DIR }}]
+      run: echo "${{ env.DOTNET_INSTALL_DIR }}" | Out-File -FilePath $ENV:GITHUB_PATH -Encoding utf8 -Append
         
     - name: Install dependencies
       run: dotnet restore
       
     - name: Building
-      run: dotnet build
+      run: dotnet build -c Release -f netcoreapp3.1 -r win-x64 -o ./build/
       
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: build
+        path: ./build/
