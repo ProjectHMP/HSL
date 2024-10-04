@@ -48,7 +48,7 @@ namespace HSL.Windows
             Closing += (s, e) => Dispose();
 
 #if !DEBUG
-            bool hasUpdate = Task.Run<bool>(async () => await Utils.CheckUpdate().ConfigureAwait(true).GetAwaiter().GetResult();
+            bool hasUpdate = Task.Run<bool>(async () => await Utils.CheckUpdate()).ConfigureAwait(true).GetAwaiter().GetResult();
 
             if (hasUpdate)
             {
